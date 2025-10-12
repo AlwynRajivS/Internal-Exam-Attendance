@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>CoE Report & CSV Download</title>
@@ -10,51 +10,154 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
-body { font-family: Arial; margin: 18px; background: #f7f9fc; }
-.card { background: #fff; padding: 18px; border-radius: 8px; max-width: 1100px; margin: 0 auto; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
-.btn { background: #2463eb; color: #fff; padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; }
-.btn-secondary { background: #ccc; color: #333; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; margin-left: 8px; }
-table { font-size: 13px; }
+  /* ==== Base Theme ==== */
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #e0f7fa, #e3f2fd, #f3e5f5);
+    background-attachment: fixed;
+  }
+
+  .card {
+    background: #ffffffcc;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    color: #1e3a8a;
+    margin-bottom: 5px;
+  }
+
+  h3 {
+    color: #2563eb;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+
+  .btn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+    transform: scale(1.03);
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #111;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+
+  table {
+    font-size: 13px;
+    border-collapse: collapse;
+    width: 100%;
+    background: #fff;
+  }
+
+  th {
+    background: #2563eb;
+    color: #fff;
+    text-align: left;
+  }
+
+  td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background: #f9fafb;
+  }
+
+  /* ==== Responsive Layout ==== */
+  @media (max-width: 768px) {
+    .card {
+      padding: 15px;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    .btn {
+      font-size: 12px;
+      padding: 8px 10px;
+      margin-top: 6px;
+    }
+
+    div[style*="display:flex"] {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
+
 </style>
 </head>
+
 <body onload="initReport()">
 
 <div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
     <div>
       <h1>Attendance Report</h1>
-      <div id="welcome" class="small"></div>
+      <div id="welcome" class="small" style="color:#555;"></div>
     </div>
-    <div>
-      <button class="btn" onclick="window.location.href='coe.html'">Go to Dashboard</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn" onclick="window.location.href='coe.html'">Dashboard</button>
       <button class="btn" onclick="window.location.href='lock.html'">Lock Editing</button>
       <button class="btn" onclick="window.location.href='upload.html'">Upload Users</button>
       <button class="btn" onclick="logout()">Logout</button>
     </div>
   </div>
+
   <hr>
 
-  <div style="margin:12px 0">
-    <label>Filter By:</label>
+  <div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+    <label>Filter:</label>
     <select id="filterType" onchange="onFilterChange()">
       <option value="Overall">Overall</option>
       <option value="Department">Department</option>
       <option value="Hall">Hall</option>
       <option value="Date">Date</option>
     </select>
+
     <select id="filterValue" style="display:none"></select>
     <input type="date" id="filterDate" style="display:none" />
-    <select id="filterBatch" style="display:none; margin-left:8px;">
+    <select id="filterBatch" style="display:none;">
       <option value="">Select Batch</option>
       <option value="FN">FN</option>
       <option value="AN">AN</option>
     </select>
-    <button class="btn" onclick="loadReport()">Load Report</button>
-    <button class="btn" onclick="downloadCSV()">Download CSV</button>
-    <button class="btn" onclick="downloadPDF()">Download PDF</button>
+
+    <button class="btn" onclick="loadReport()">Load</button>
+    <button class="btn" onclick="downloadCSV()">CSV</button>
+    <button class="btn" onclick="downloadPDF()">PDF</button>
   </div>
   
-  <div id="reportTable" style="margin-top:20px;"></div>
+  <div id="reportTable" style="margin-top:20px;overflow-x:auto;"></div>
 </div>
 
 <script>
@@ -68,18 +171,14 @@ async function initReport(){
   const res = await apiFetch({ action:'report' });
   if(!res.success){ alert("Failed to load data"); return; }
   allData = res.rows || [];
-  
   populateFilters();
 }
 
 function populateFilters(){
   const depts=[...new Set(allData.map(r=>r.Department).filter(Boolean))].sort();
   const halls=[...new Set(allData.map(r=>r.HallNo).filter(Boolean))].sort();
-
   const sel=document.getElementById('filterValue');
   sel.innerHTML='';
-  
-  // Create all options and mark type
   depts.forEach(d=>{
     const op=document.createElement('option');
     op.value=d; op.text=d; op.dataset.type='Department';
@@ -126,16 +225,15 @@ async function loadReport(){
   selectedBatch=batchVal;
 
   let filtered = [...allData];
-
   if(type==='Department') filtered = filtered.filter(r=>r.Department===val);
   if(type==='Hall') filtered = filtered.filter(r=>r.HallNo===val);
   if(type==='Date' && dateVal) filtered = filtered.filter(r=>r.Date===dateVal);
   if(batchVal) filtered = filtered.filter(r => ((r.Batch||'').trim().toUpperCase()) === batchVal.toUpperCase());
 
-lastReport = filtered.filter(r => {
-  const st = (r.Status || '').trim().toUpperCase();
-  return st === 'ABSENT' || st === 'OD';
-});
+  lastReport = filtered.filter(r => {
+    const st = (r.Status || '').trim().toUpperCase();
+    return st === 'ABSENT' || st === 'OD';
+  });
 
   renderReportTable();
 }
@@ -144,26 +242,16 @@ function renderReportTable(){
   const container=document.getElementById('reportTable');
   const headers=["Date","Batch","RollNo","Name","Department","Year","Section","HallNo","SeatNo","SubjectCode","Subject","Status","Reason"];
 
-  let html='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;background:#fff;">';
-  html+='<thead><tr style="background:#2463eb;color:#fff;">';
+  let html='<table><thead><tr>';
   headers.forEach(h=>html+=`<th>${h}</th>`);
   html+='</tr></thead><tbody>';
 
   lastReport.forEach(r=>{
     html+=`<tr>
-      <td>${r.Date||''}</td>
-      <td>${r.Batch||''}</td>
-      <td>${r.RollNo}</td>
-      <td>${r.Name}</td>
-      <td>${r.Department}</td>
-      <td>${r.Year}</td>
-      <td>${r.Section}</td>
-      <td>${r.HallNo}</td>
-      <td>${r.SeatNo}</td>
-      <td>${r.SubjectCode}</td>
-      <td>${r.Subject}</td>
-      <td>${r.Status}</td>
-      <td>${r.Reason}</td>
+      <td>${r.Date||''}</td><td>${r.Batch||''}</td><td>${r.RollNo}</td><td>${r.Name}</td>
+      <td>${r.Department}</td><td>${r.Year}</td><td>${r.Section}</td>
+      <td>${r.HallNo}</td><td>${r.SeatNo}</td><td>${r.SubjectCode}</td>
+      <td>${r.Subject}</td><td>${r.Status}</td><td>${r.Reason}</td>
     </tr>`;
   });
 
@@ -173,13 +261,11 @@ function renderReportTable(){
 
 function downloadCSV(){
   if(!lastReport.length) return alert('No data');
-
   const headers=["Date","Batch","RollNo","Name","Department","Year","Section","HallNo","SeatNo","SubjectCode","Subject","Status","Reason"];
   const rows=lastReport.map(r=>[
     r.Date, r.Batch || selectedBatch || '', r.RollNo, r.Name, r.Department, r.Year, r.Section,
     r.HallNo, r.SeatNo, r.SubjectCode, r.Subject, r.Status, r.Reason
   ]);
-
   const csv=[headers.join(","), ...rows.map(r=>r.map(s=>`"${s}"`).join(","))].join("\n");
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
@@ -193,50 +279,45 @@ function downloadCSV(){
 
 async function downloadPDF(){
   if(!lastReport.length) return alert('No data');
-
   const container=document.getElementById('reportTable');
   const clone=container.cloneNode(true);
-
   const logo=document.createElement('img');
   logo.src='logo.jpeg';
   logo.style.width='300px';
   logo.style.display='block';
   logo.style.margin='0 auto 10px auto';
   clone.insertBefore(logo,clone.firstChild);
-
   const title=document.createElement('h3');
   title.innerText=`Absentees/OD Report - ${document.getElementById('filterDate').value || 'All Dates'} (${selectedBatch || 'All Batches'})`;
   title.style.textAlign='center';
   clone.insertBefore(title,logo.nextSibling);
-
   const table=clone.querySelector('table');
   if(table) table.style.fontSize='10px';
-
   clone.style.position='absolute';
   clone.style.left='-9999px';
   document.body.appendChild(clone);
-
   const canvas=await html2canvas(clone,{scale:2});
   document.body.removeChild(clone);
-
   const { jsPDF }=window.jspdf;
   const pdf=new jsPDF('p','pt','a4');
   const pdfWidth=pdf.internal.pageSize.getWidth();
   const pdfHeight=pdf.internal.pageSize.getHeight();
   const imgHeight=(canvas.height*pdfWidth)/canvas.width;
   const imgData=canvas.toDataURL('image/png');
-
   let y=0;
   while(y<imgHeight){
     pdf.addImage(imgData,'PNG',0,-y,pdfWidth,imgHeight);
     y+=pdfHeight;
     if(y<imgHeight) pdf.addPage();
   }
-
   const date=document.getElementById('filterDate').value || 'All';
   pdf.save(`absentees_OD_${date}_${selectedBatch || 'All'}.pdf`);
 }
-</script>
 
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "index.html";
+}
+</script>
 </body>
 </html>
