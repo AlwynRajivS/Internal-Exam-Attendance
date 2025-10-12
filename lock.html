@@ -129,7 +129,12 @@ async function toggleLockState() {
     alert(`Attendance is now ${newStatus} for ${date}`);
   } else alert("Failed: "+res.message);
 }
+  function logout() {
+  localStorage.removeItem("user");
+  location.href = "index.html";
+}
 </script>
 
 </body>
 </html>
+
