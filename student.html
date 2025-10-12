@@ -96,13 +96,15 @@
       body { padding: 10px; }
       .exam-box { padding: 16px; font-size: 14px; }
       .exam-hall { font-size: 22px; }
-       .exam-detail {
-      font-size: 15px;
-      margin: 4px 0;
-      color: #333;
+      .grid-container {
+      display: grid;
+      justify-content: center;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 350px));
+      gap: 20px;
+      margin-top: 20px;
     }
-
-    .locked {
+      .exam-detail {font-size: 15px; margin: 4px ; color: #333}
+      .locked {
       color: #d9534f;
       font-weight: bold;
       text-align: center;
@@ -195,5 +197,6 @@
   </script>
 </body>
 </html>
+
 
 
