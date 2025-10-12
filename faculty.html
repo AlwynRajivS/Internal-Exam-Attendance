@@ -4,65 +4,38 @@
   <meta charset="utf-8" />
   <title>Faculty Dashboard - Exam Attendance</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="common.js"></script>
+
   <style>
-    /* ---------- Base Layout ---------- */
+    /* === Global Styles === */
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #e3f2fd, #e8eaf6);
-      color: #111;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
+      justify-content: center;
+      color: #111;
     }
 
-    .card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      max-width: 1100px;
+    .container {
       width: 95%;
-      margin: 18px auto;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      max-width: 1200px;
+      margin: 20px auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      padding: 20px;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    h1, h2, h3 {
-      color: #1a237e;
-      margin-top: 0;
-    }
-
-    hr {
-      border: none;
-      height: 1px;
-      background: #e0e0e0;
-      margin: 20px 0;
-    }
-
-    /* ---------- Buttons ---------- */
-    .btn {
-      background: linear-gradient(90deg, #2962ff, #3949ab);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    .btn:hover {
-      background: linear-gradient(90deg, #1e40ff, #283593);
-      transform: scale(1.05);
+    /* === Typography === */
+    h1, h2, h3, h4 {
+      color: #1e3c72;
+      margin-bottom: 8px;
     }
 
     .small {
@@ -70,6 +43,24 @@
       color: #666;
     }
 
+    /* === Buttons === */
+    .btn {
+      background: #2463eb;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #1a4fd0;
+      transform: translateY(-1px);
+    }
+
+    /* === Layouts === */
     .u-row {
       display: flex;
       flex-wrap: wrap;
@@ -77,117 +68,104 @@
       align-items: center;
     }
 
+    hr {
+      border: none;
+      height: 1px;
+      background: #e5e9f2;
+      margin: 20px 0;
+    }
+
     input[type="file"],
     input[type="date"],
     select {
       padding: 6px 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #d0d7e2;
       border-radius: 6px;
       font-size: 14px;
     }
 
-    /* ---------- Table Styling ---------- */
+    /* === Table Styles === */
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
       overflow-x: auto;
-      display: block;
     }
 
     th, td {
       padding: 10px;
-      border: 1px solid #e3e8f0;
+      border: 1px solid #eef2f7;
       text-align: left;
       font-size: 14px;
     }
 
     th {
-      background: #e8eaf6;
-      color: #1a237e;
-      font-weight: 600;
+      background: #f1f4fb;
+      color: #333;
     }
 
-    tr:nth-child(even) {
-      background: #f7f9fc;
+    td input {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
     }
 
-    /* ---------- Responsive Design ---------- */
-    @media (max-width: 768px) {
-      .card {
-        width: 95%;
-        padding: 14px;
-      }
-
-      h1 {
-        font-size: 22px;
-      }
-
-      .u-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      table {
-        font-size: 12px;
-      }
-
-      th, td {
-        padding: 6px;
-      }
-
-      .btn {
-        width: 100%;
-        text-align: center;
-      }
-    }
-
-    /* ---------- Year Cards Grid ---------- */
+    /* === Year Card Grid === */
     #yearCardArea {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 12px;
-      margin-top: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
     }
 
-    #yearCardArea .card {
-      background: linear-gradient(135deg, #f5f7ff, #e8eaf6);
-      border-left: 5px solid #3949ab;
+    .card-section {
+      background: #f7f9fc;
+      border-radius: 10px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      transition: 0.3s;
       cursor: pointer;
-      text-align: left;
-      transition: all 0.3s ease;
     }
 
-    #yearCardArea .card:hover {
-      background: linear-gradient(135deg, #e8eaf6, #c5cae9);
-      transform: scale(1.02);
+    .card-section:hover {
+      background: #e8f0ff;
+      transform: translateY(-2px);
     }
 
-    #yearCardArea p {
-      margin: 4px 0;
-      font-size: 14px;
-    }
-
-    #yearCardArea b {
-      color: #1a237e;
-    }
-
-    /* ---------- Header Layout ---------- */
+    /* === Header === */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      gap: 10px;
     }
 
-    #welcome {
-      margin-top: 6px;
+    /* === Responsive Design === */
+    @media (max-width: 768px) {
+      .u-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
     }
   </style>
 </head>
 
 <body onload="initFaculty()">
-  <div class="card">
+  <div class="container">
     <div class="header">
       <div>
         <h1>Faculty Dashboard</h1>
@@ -196,7 +174,7 @@
       <button class="btn" onclick="logout()">Logout</button>
     </div>
 
-    <div class="u-row" style="margin-top:10px">
+    <div class="u-row" style="margin-top:8px">
       <button class="btn" onclick="downloadExcelTemplate()">Download Excel Template</button>
       <span class="small">Use this template to upload seating data</span>
     </div>
@@ -218,7 +196,7 @@
     <!-- Absentees & Summary -->
     <section>
       <h2>Absentees & Summary</h2>
-      <div class="u-row">
+      <div class="u-row" style="margin-bottom:8px">
         <label>Date:</label>
         <input type="date" id="dateFilter" />
 
@@ -235,18 +213,215 @@
         <button class="btn" onclick="downloadAbsenteesCSV()">Download CSV</button>
       </div>
 
-      <div id="deptStats" style="margin-top:10px" class="small"></div>
+      <div id="deptStats" class="small" style="margin-top:8px"></div>
       <div id="absenteesArea" style="margin-top:12px"></div>
 
-      <h3 style="margin-top:14px">Year & Section Summary</h3>
+      <h3 style="margin-top:18px">Year & Section Summary</h3>
       <div id="yearCardArea"></div>
-      <div id="yearSummaryArea"></div>
+      <div id="yearSummaryArea" style="margin-top:10px"></div>
     </section>
   </div>
 
-  <!-- Your existing script remains unchanged -->
+  <!-- === Script Section === -->
   <script>
-    /* existing JS code from your version here — unchanged */
+    let user = null;
+    let absentees = [];
+    let currentTotals = null;
+    let currentYearSummary = null;
+
+    function initFaculty(){
+      user = requireRole('Faculty');
+      if(!user) return;
+      document.getElementById('welcome').innerText = `Signed in as: ${user.name} — Dept: ${user.department || ''}`;
+      populateDepartments();
+    }
+
+    async function populateDepartments(){
+      const sel = document.getElementById('deptSelect');
+      sel.innerHTML = '';
+      if(user.department){
+        const op = document.createElement('option');
+        op.value = user.department;
+        op.textContent = user.department;
+        sel.appendChild(op);
+        sel.disabled = true;
+      }
+    }
+
+    function downloadExcelTemplate(){
+      const headers = ["Date","Department","Batch","Hall No","Student Roll No","Name","Seating No","Subject Code","Subject","Year","Section"];
+      const wb = XLSX.utils.book_new();
+      const ws_data = [headers];
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      ws['!cols'] = headers.map(() => ({ wch: 15 }));
+      XLSX.utils.book_append_sheet(wb, ws, "SeatingTemplate");
+      XLSX.writeFile(wb, "Faculty_Seating_Template.xlsx");
+    }
+
+    async function uploadExcel(){
+      const f = document.getElementById('excelFile').files[0];
+      const msg = document.getElementById('uploadMsg'); msg.textContent='';
+      if(!f){ msg.textContent='Choose a file'; return; }
+      document.getElementById('btnUpload').disabled = true; msg.textContent='Parsing...';
+      try {
+        const data = await f.arrayBuffer();
+        const wb = XLSX.read(data,{type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        if(!rows.length){ msg.textContent='No rows'; document.getElementById('btnUpload').disabled=false; return; }
+        const normalized = rows.map(r=>({
+          Date: r['Date']||'',
+          Department: r['Department']||'',
+          Batch: r['Batch']||'',
+          "Hall No": r['Hall No']||'',
+          "Student Roll No": r['Student Roll No']||'',
+          Name: r['Name']||'',
+          "Seating No": r['Seating No']||'',
+          "Subject Code": r['Subject Code']||'',
+          Subject: r['Subject']||'',
+          Year: r['Year']||'',
+          Section: r['Section']||''
+        }));
+        const res = await apiFetch({ action:'uploadSeating', rows: normalized });
+        msg.textContent = res.success ? `Uploaded ${res.count} rows` : 'Upload failed: '+(res.message||'');
+      } catch(err){ msg.textContent='Error: '+err.message; }
+      finally{ document.getElementById('btnUpload').disabled=false; }
+    }
+
+    async function loadAbsentees(){
+      const dept = document.getElementById('deptSelect').value || user.department;
+      const date = document.getElementById('dateFilter').value || '';
+      const batch = document.getElementById('batchSelect').value || '';
+      document.getElementById('absenteesArea').innerHTML = '<div class="small">Loading...</div>';
+      const res = await apiFetch({ action:'getAbsentees', department: dept, date, batch });
+      if(!res.success){ document.getElementById('absenteesArea').innerHTML = 'Error: '+(res.message||''); return; }
+      absentees = res.absentees || [];
+      currentTotals = res.totals || null;
+      currentYearSummary = res.yearSummary || null;
+      renderAbsentees(); renderTotals(); renderYearSummary(); renderYearCards();
+    }
+
+    function renderAbsentees(){
+      const area = document.getElementById('absenteesArea');
+      const filtered = (absentees || []).filter(r => (r.Status || "").toUpperCase()==="ABSENT" || (r.Status || "").toUpperCase()==="OD");
+      if(!filtered.length){ area.innerHTML = '<div class="small">No absentees / OD entries</div>'; return; }
+      let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
+      filtered.forEach((r, idx)=>{
+        html += `<tr>
+          <td>${escapeHtml(r.Date)}</td><td>${escapeHtml(r.HallNo)}</td><td>${escapeHtml(r.SeatNo)}</td>
+          <td>${escapeHtml(r.RollNo)}</td><td>${escapeHtml(r.Name)}</td>
+          <td>${escapeHtml(r.Year)}</td><td>${escapeHtml(r.Section)}</td>
+          <td>${escapeHtml(r.Status)}</td>
+          <td><input id="reason_${idx}" value="${escapeHtml(r.Reason||'')}"></td>
+          <td><button class="btn" onclick="saveReason(${idx})">Save</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      area.innerHTML = html;
+    }
+
+    function renderTotals(){
+      const el = document.getElementById('deptStats');
+      if(!currentTotals){ el.innerText=''; return; }
+      el.innerHTML = `Total: ${currentTotals.total} | Present: ${currentTotals.present} | Absent: ${currentTotals.absent} | OD: ${currentTotals.od} | Attendance: ${currentTotals.attendancePercent}%`;
+    }
+
+    function renderYearSummary(){
+      const area = document.getElementById('yearSummaryArea');
+      if(!currentYearSummary){ area.innerHTML=''; return; }
+      let html = '<table><thead><tr><th>Year</th><th>Section</th><th>Total</th><th>Present</th><th>Absent</th><th>OD</th><th>%</th></tr></thead><tbody>';
+      for(const yr of Object.keys(currentYearSummary)){
+        const y = currentYearSummary[yr];
+        for(const sec of Object.keys(y.sections)){
+          const s = y.sections[sec];
+          const pct = s.total ? ((s.present/s.total)*100).toFixed(2) : 0;
+          html += `<tr><td>${yr}</td><td>${sec}</td><td>${s.total}</td><td>${s.present}</td><td>${s.absent}</td><td>${s.od}</td><td>${pct}%</td></tr>`;
+        }
+      }
+      html += '</tbody></table>';
+      area.innerHTML = html;
+    }
+
+    function renderYearCards(){
+      const area = document.getElementById('yearCardArea');
+      if(!currentYearSummary){ area.innerHTML=''; return; }
+      let html = '';
+      for(const yr of Object.keys(currentYearSummary)){
+        const y = currentYearSummary[yr];
+        for(const sec of Object.keys(y.sections)){
+          const s = y.sections[sec];
+          const pct = s.total ? ((s.present/s.total)*100).toFixed(2) : 0;
+          html += `<div class="card-section" onclick="viewSection('${yr}','${sec}')">
+            <h4>${yr} - ${sec}</h4>
+            <p>Total: ${s.total}</p>
+            <p>Present: ${s.present}</p>
+            <p>Absent: ${s.absent}</p>
+            <p>OD: ${s.od}</p>
+            <p><b>${pct}% Attendance</b></p>
+          </div>`;
+        }
+      }
+      area.innerHTML = html;
+    }
+
+    function viewSection(year, section){
+      const rows = absentees.filter(r=>r.Year==year && r.Section==section);
+      renderAbsenteesTable(rows);
+    }
+
+    function renderAbsenteesTable(rows){
+      const area = document.getElementById('absenteesArea');
+      if(!rows.length){ area.innerHTML='<div class="small">No data</div>'; return; }
+      let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
+      rows.forEach((r, idx)=>{
+        html += `<tr>
+          <td>${escapeHtml(r.Date)}</td><td>${escapeHtml(r.HallNo)}</td><td>${escapeHtml(r.SeatNo)}</td>
+          <td>${escapeHtml(r.RollNo)}</td><td>${escapeHtml(r.Name)}</td>
+          <td>${escapeHtml(r.Year)}</td><td>${escapeHtml(r.Section)}</td>
+          <td>${escapeHtml(r.Status)}</td>
+          <td><input id="reason_${idx}" value="${escapeHtml(r.Reason||'')}"></td>
+          <td><button class="btn" onclick="saveReason(${idx})">Save</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      area.innerHTML = html;
+    }
+
+    async function saveReason(idx){
+      const r = absentees[idx];
+      if(!r) return alert("Invalid record");
+      const lockRes = await apiFetch({ action: "getLockStatus", date: r.Date });
+      if (lockRes.lock === "Locked") {
+        alert(`Editing disabled — ${r.Date} is locked by CoE.`);
+        document.querySelectorAll("button.btn").forEach(b => { if (b.textContent === "Save") b.disabled = true; });
+        document.querySelectorAll("input[id^='reason_']").forEach(i => (i.disabled = true));
+        return;
+      }
+      const reason = document.getElementById("reason_" + idx).value;
+      const res = await apiFetch({ action:"saveReason", rollNo:r.RollNo, reason, date:r.Date, role:user.role });
+      if(res.success){ alert("Saved successfully"); absentees[idx].Reason = reason; }
+      else alert("Save failed: " + (res.message || ""));
+    }
+
+    function escapeHtml(s){ if(!s && s!==0) return ''; return String(s).replace(/[&<>"'`]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[m])); }
+
+    function downloadAbsenteesCSV(){
+      if(!absentees.length){ alert('No data'); return; }
+      const batch = document.getElementById('batchSelect').value || '';
+      const hdr = ["Date","Batch","Department","HallNo","SeatNo","RollNo","Name","Year","Section","Status","Reason"];
+      const rows = absentees.map(r=>[r.Date,batch,r.Department,r.HallNo,r.SeatNo,r.RollNo,r.Name||"",r.Year||"",r.Section||"",r.Status,r.Reason||""]);
+      const csv = [hdr.join(","), ...rows.map(r=>r.map(s=>`"${String(s).replace(/"/g,'""')}"`).join(","))].join("\n");
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`absentees_${batch}.csv`;
+      a.click();
+    }
+
+    function logout() {
+      localStorage.removeItem("user");
+      location.href = "index.html";
+}
   </script>
 </body>
 </html>
