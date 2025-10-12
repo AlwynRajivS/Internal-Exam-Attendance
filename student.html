@@ -3,59 +3,70 @@
 <head>
   <title>Student - Exam Seating</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
   <script src="common.js"></script>
   <style>
+    /* === Body & Background === */
     body {
       font-family: "Poppins", sans-serif;
-      background: #f7f9fc;
-      padding: 20px;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      padding: 16px;
+      margin: 0;
+      min-height: 100vh;
     }
-    h1, h2 { text-align: center; }
 
+    h1, h2 { text-align: center; color: #1e3a8a; }
+
+    /* === Card === */
     .card {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
       padding: 18px;
-      border-radius: 12px;
+      border-radius: 16px;
       max-width: 1000px;
-      margin: 0 auto;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+      margin: 0 auto 20px auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
     }
 
     .btn {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    .small { font-size: 13px; color: #666; }
+    .btn:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
 
-    /* Centered grid layout */
+    .small { font-size: 13px; color: #555; }
+
+    /* === Grid Layout === */
     .grid-container {
       display: grid;
-      justify-content: center; /* Center the grid */
-      grid-template-columns: repeat(auto-fit, minmax(280px, 350px)); /* Limit width per box */
-      gap: 25px;
+      justify-content: center;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 350px));
+      gap: 20px;
       margin-top: 20px;
     }
 
-    /* Individual box (card) style */
     .exam-box {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 18px;
-      width: 320px;
+      background: linear-gradient(135deg, #ffffff, #f0f4ff);
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
       transition: all 0.3s ease;
       text-align: left;
+      color: #1e3a8a;
     }
 
     .exam-box:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.15);
     }
 
     .exam-hall {
@@ -73,16 +84,24 @@
     }
 
     .locked {
-      color: red;
+      color: #d9534f;
       font-weight: bold;
       text-align: center;
       padding: 30px 0;
+      font-size: 18px;
+    }
+
+    /* === Responsive for Mobile === */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .exam-box { padding: 16px; font-size: 14px; }
+      .exam-hall { font-size: 22px; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <div>
         <h1>Student Dashboard</h1>
         <div id="welcome" class="small"></div>
@@ -122,16 +141,14 @@
       }
 
       let lockedCount = 0;
-      const batchTimes = { "FN": "8:30 AM", "AN": "1:00 PM" };
+      const batchTimes = { "FN": "8.30 AM", "AN": "1:00 PM" };
 
       res.seating.forEach(row => {
         const div = document.createElement("div");
 
         if (row.HallNo === "Locked") {
           div.className = "exam-box";
-          div.innerHTML = `
-            <div class="locked">Seating will be available after ${batchTimes[row.Batch.toUpperCase()]}</div>
-          `;
+          div.innerHTML = `<div class="locked">Seating will be available after ${batchTimes[row.Batch.toUpperCase()]}</div>`;
           lockedCount++;
         } else {
           div.className = "exam-box";
@@ -158,7 +175,7 @@
 
     function logout() {
       localStorage.removeItem("user");
-      location.href = "login.html";
+      location.href = "index.html";
     }
 
     loadSeating();
