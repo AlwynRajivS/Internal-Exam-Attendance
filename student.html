@@ -96,6 +96,19 @@
       body { padding: 10px; }
       .exam-box { padding: 16px; font-size: 14px; }
       .exam-hall { font-size: 22px; }
+       .exam-detail {
+      font-size: 15px;
+      margin: 4px 0;
+      color: #333;
+    }
+
+    .locked {
+      color: #d9534f;
+      font-weight: bold;
+      text-align: center;
+      padding: 30px 0;
+      font-size: 18px;
+    }
     }
   </style>
 </head>
@@ -141,7 +154,7 @@
       }
 
       let lockedCount = 0;
-      const batchTimes = { "FN": "1.00 AM", "AN": "1:00 PM" };
+      const batchTimes = { "FN": "8.30 AM", "AN": "1:00 PM" };
 
       res.seating.forEach(row => {
         const div = document.createElement("div");
@@ -182,4 +195,5 @@
   </script>
 </body>
 </html>
+
 
