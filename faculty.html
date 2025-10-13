@@ -21,7 +21,15 @@
       color: #111;
     }
 
-    
+    .container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 20px auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 20px;
+}
 
     /* === Typography === */
     h1, h2, h3, h4 {
@@ -154,6 +162,15 @@ th {
         font-size: 20px;
       }
     }
+  #absenteesArea {
+  max-height: 60vh;      /* restrict height */
+  overflow-x: auto;      /* horizontal scroll for wide tables */
+  overflow-y: auto;      /* vertical scroll inside container */
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
   </style>
 </head>
 
@@ -418,6 +435,7 @@ th {
   </script>
 </body>
 </html>
+
 
 
 
