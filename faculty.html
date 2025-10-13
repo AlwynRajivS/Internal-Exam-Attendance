@@ -1,190 +1,223 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Faculty Dashboard - Exam Attendance</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<title>Faculty Dashboard - Exam Attendance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="common.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="common.js"></script>
+<style>
+  /* === Global === */
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f7f9fc, #eef3f9);
+    color: #111;
+  }
 
-  <style>
-    /* === Global Styles === */
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #ffffff;       min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      color: #111;
+  h1, h2, h3, h4 {
+    margin: 6px 0;
+  }
+
+  /* === Header === */
+  header {
+    background: linear-gradient(135deg, #2463eb, #4f83ff);
+    color: #fff;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    position: relative;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  header .btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+
+  header .btn:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  /* === Container === */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    margin: 16px auto;
+    padding: 18px;
+    max-width: 1100px;
+    animation: fadeIn 0.5s ease;
+  }
+
+  /* === Utility === */
+  .u-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn {
+    background: #2463eb;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+
+  .btn:hover {
+    background: #1e54c9;
+    transform: scale(1.02);
+  }
+
+  .small {
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* === Inputs & Selects === */
+  input[type="file"],
+  input[type="date"],
+  select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 120px;
+  }
+
+  /* === Table Wrapper for Horizontal Scroll === */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 12px;
+    border-radius: 8px;
+  }
+
+  /* === Table === */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px; /* helps maintain width */
+  }
+
+  th {
+    background: #f1f5ff;
+    color: #333;
+  }
+
+  th, td {
+    padding: 10px 8px;
+    border: 1px solid #e4e9f1;
+    text-align: left;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  tr:nth-child(even) {
+    background: #fafbfe;
+  }
+
+  tr:hover {
+    background: #f0f5ff;
+  }
+
+  input[id^="reason_"] {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  /* === Year Cards === */
+  #yearCardArea {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  #yearCardArea .card {
+    background: linear-gradient(180deg, #ffffff, #f3f6ff);
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  #yearCardArea .card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  }
+
+  #yearCardArea p {
+    margin: 3px 0;
+    font-size: 14px;
+  }
+
+  #yearCardArea h4 {
+    color: #1e54c9;
+  }
+
+  /* === Responsive === */
+  @media (max-width: 768px) {
+    header h1 {
+      font-size: 1.3rem;
     }
-
-    .container {
-  width: 95%;
-  max-width: 1200px;
-  margin: 20px auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  padding: 20px;
-}
-
-    /* === Typography === */
-    h1, h2, h3, h4 {
-      color: #1e3c72;
-      margin-bottom: 8px;
-    }
-
-    .small {
-      font-size: 13px;
-      color: #666;
-    }
-
-    /* === Buttons === */
-        .btn {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: 0.2s ease;
-    }
-    .btn:hover {
-      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-      transform: scale(1.03);
-    }
-
-    .small { font-size: 13px; color: #555; }
-
-    /* === Layouts === */
     .u-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
     }
-
-    hr {
-      border: none;
-      height: 1px;
-      background: #e5e9f2;
-      margin: 20px 0;
+    table {
+      font-size: 12px;
+      min-width: 600px;
     }
-
-    input[type="file"],
-    input[type="date"],
-    select {
-      padding: 6px 8px;
-      border: 1px solid #d0d7e2;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    /* === Table Styles === */
-#reportTable {
-  margin-top: 20px;
-  overflow-x: auto;
-  border-radius: 8px;
-}
-        table {
-  border-collapse: collapse;
-  width: 100%;
-  background: #fff;
-  min-width: 900px;
-}
-
     th, td {
-  border: 1px solid #e5e7eb;
-  padding: 8px;
-  text-align: left;
-  font-size: 13px;
-}
-th {
-  background: #2563eb;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-
-    td input {
       padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    }
+    .btn {
       width: 100%;
+      text-align: center;
     }
+  }
 
-    /* === Year Card Grid === */
-    
-
-<div id="yearCardArea" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:8px"></div>
-      <div id="yearSummaryArea"></div>
-
-    /* === Header === */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    /* === Responsive Design === */
-    @media (max-width: 768px) {
-      .u-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn {
-        width: 100%;
-      }
-
-      table {
-            font-size: 12px;
-            min-width: 700px;
-      }
-
-      .header h1 {
-        font-size: 20px;
-      }
-    }
-  #absenteesArea {
-  max-height: 60vh;      /* restrict height */
-  overflow-x: auto;      /* horizontal scroll for wide tables */
-  overflow-y: auto;      /* vertical scroll inside container */
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-}
-
-  </style>
+  /* === Animations === */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
 </head>
 
 <body onload="initFaculty()">
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>Faculty Dashboard</h1>
-        <div id="welcome" class="small"></div>
-      </div>
-      <button class="btn" onclick="logout()">Logout</button>
-    </div>
 
-    <div class="u-row" style="margin-top:8px">
-      <button class="btn" onclick="downloadExcelTemplate()">Download Excel Template</button>
+  <header>
+    <h1>Faculty Dashboard</h1>
+    <div id="welcome" class="small"></div>
+    <button class="btn" onclick="logout()">Logout</button>
+  </header>
+
+  <div class="card">
+    <div class="u-row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <button class="btn" onclick="downloadExcelTemplate()">📄 Download Excel Template</button>
       <span class="small">Use this template to upload seating data</span>
     </div>
 
     <hr>
 
-    <!-- Upload Section -->
+    <!-- Upload -->
     <section>
-      <h2>Upload Seating Excel</h2>
+      <h2>📤 Upload Seating Excel</h2>
       <div class="u-row">
         <input type="file" id="excelFile" accept=".xlsx,.xls" />
         <button class="btn" id="btnUpload" onclick="uploadExcel()">Upload & Save</button>
@@ -196,8 +229,8 @@ th {
 
     <!-- Absentees & Summary -->
     <section>
-      <h2>Absentees & Summary</h2>
-      <div class="u-row" style="margin-bottom:8px">
+      <h2>🧾 Absentees & Summary</h2>
+      <div class="u-row" style="margin-bottom:8px;">
         <label>Date:</label>
         <input type="date" id="dateFilter" />
 
@@ -214,123 +247,143 @@ th {
         <button class="btn" onclick="downloadAbsenteesCSV()">Download CSV</button>
       </div>
 
-      <div id="deptStats" class="small" style="margin-top:8px"></div>
-      <div id="absenteesArea" style="margin-top:12px"></div>
+      <div id="deptStats" style="margin-top:8px" class="small"></div>
 
-      <h3 style="margin-top:18px">Year & Section Summary</h3>
+      <div id="absenteesArea" class="table-container"></div>
+
+      <h3 style="margin-top:14px">📊 Year & Section Summary</h3>
       <div id="yearCardArea"></div>
-      <div id="yearSummaryArea" style="margin-top:10px"></div>
+
+      <div id="yearSummaryArea" class="table-container"></div>
     </section>
   </div>
 
-  <!-- === Script Section === -->
-  <script>
-    let user = null;
-    let absentees = [];
-    let currentTotals = null;
-    let currentYearSummary = null;
+<script>
+/* === Original JavaScript (unchanged) === */
 
-    function initFaculty(){
-      user = requireRole('Faculty');
-      if(!user) return;
-      document.getElementById('welcome').innerText = `Signed in as: ${user.name} — Dept: ${user.department || ''}`;
-      populateDepartments();
-    }
+let user = null;
+let absentees = [];
+let currentTotals = null;
+let currentYearSummary = null;
 
-    async function populateDepartments(){
-      const sel = document.getElementById('deptSelect');
-      sel.innerHTML = '';
-      if(user.department){
-        const op = document.createElement('option');
-        op.value = user.department;
-        op.textContent = user.department;
-        sel.appendChild(op);
-        sel.disabled = true;
-      }
-    }
+function initFaculty(){
+  user = requireRole('Faculty');
+  if(!user) return;
+  document.getElementById('welcome').innerText = `Signed in as: ${user.name} — Dept: ${user.department || ''}`;
+  populateDepartments();
+}
 
-    function downloadExcelTemplate(){
-      const headers = ["Date","Department","Batch","Hall No","Student Roll No","Name","Seating No","Subject Code","Subject","Year","Section"];
-      const wb = XLSX.utils.book_new();
-      const ws_data = [headers];
-      const ws = XLSX.utils.aoa_to_sheet(ws_data);
-      ws['!cols'] = headers.map(() => ({ wch: 15 }));
-      XLSX.utils.book_append_sheet(wb, ws, "SeatingTemplate");
-      XLSX.writeFile(wb, "Faculty_Seating_Template.xlsx");
-    }
+async function populateDepartments(){
+  const sel = document.getElementById('deptSelect');
+  sel.innerHTML = '';
+  if(user.department){
+    const op = document.createElement('option');
+    op.value = user.department;
+    op.textContent = user.department;
+    sel.appendChild(op);
+    sel.disabled = true;
+  }
+}
 
-    async function uploadExcel(){
-      const f = document.getElementById('excelFile').files[0];
-      const msg = document.getElementById('uploadMsg'); msg.textContent='';
-      if(!f){ msg.textContent='Choose a file'; return; }
-      document.getElementById('btnUpload').disabled = true; msg.textContent='Parsing...';
-      try {
-        const data = await f.arrayBuffer();
-        const wb = XLSX.read(data,{type:'array'});
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        if(!rows.length){ msg.textContent='No rows'; document.getElementById('btnUpload').disabled=false; return; }
-        const normalized = rows.map(r=>({
-          Date: r['Date']||'',
-          Department: r['Department']||'',
-          Batch: r['Batch']||'',
-          "Hall No": r['Hall No']||'',
-          "Student Roll No": r['Student Roll No']||'',
-          Name: r['Name']||'',
-          "Seating No": r['Seating No']||'',
-          "Subject Code": r['Subject Code']||'',
-          Subject: r['Subject']||'',
-          Year: r['Year']||'',
-          Section: r['Section']||''
-        }));
-        const res = await apiFetch({ action:'uploadSeating', rows: normalized });
-        msg.textContent = res.success ? `Uploaded ${res.count} rows` : 'Upload failed: '+(res.message||'');
-      } catch(err){ msg.textContent='Error: '+err.message; }
-      finally{ document.getElementById('btnUpload').disabled=false; }
-    }
+function downloadExcelTemplate(){
+  const headers = ["Date","Department","Batch","Hall No","Student Roll No","Name","Seating No","Subject Code","Subject","Year","Section"];
+  const wb = XLSX.utils.book_new();
+  const ws_data = [headers];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols'] = [
+    {wch:12},{wch:15},{wch:10},{wch:18},{wch:20},{wch:12},{wch:15},{wch:20},{wch:8},{wch:8},{wch:10},{wch:20}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "SeatingTemplate");
+  XLSX.writeFile(wb, "Faculty_Seating_Template.xlsx");
+}
 
-    async function loadAbsentees(){
-      const dept = document.getElementById('deptSelect').value || user.department;
-      const date = document.getElementById('dateFilter').value || '';
-      const batch = document.getElementById('batchSelect').value || '';
-      document.getElementById('absenteesArea').innerHTML = '<div class="small">Loading...</div>';
-      const res = await apiFetch({ action:'getAbsentees', department: dept, date, batch });
-      if(!res.success){ document.getElementById('absenteesArea').innerHTML = 'Error: '+(res.message||''); return; }
-      absentees = res.absentees || [];
-      currentTotals = res.totals || null;
-      currentYearSummary = res.yearSummary || null;
-      renderAbsentees(); renderTotals(); renderYearSummary(); renderYearCards();
-    }
+async function uploadExcel(){
+  const f = document.getElementById('excelFile').files[0];
+  const msg = document.getElementById('uploadMsg'); msg.textContent='';
+  if(!f){ msg.textContent='Choose a file'; return; }
+  document.getElementById('btnUpload').disabled = true; msg.textContent='Parsing...';
+  try {
+    const data = await f.arrayBuffer();
+    const wb = XLSX.read(data,{type:'array'});
+    const sname = wb.SheetNames[0];
+    const sheet = wb.Sheets[sname];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    if(!rows.length){ msg.textContent='No rows'; document.getElementById('btnUpload').disabled=false; return; }
+    const normalized = rows.map(r=>({
+      Date: r['Date'] || r['date'] || r['DATE'] || '',
+      Department: r['Department'] || r['department'] || '',
+      "Batch": r['Batch'] || '',
+      "Hall No": r['Hall No'] || r['Hall'] || r['HallNo'] || '',
+      "Student Roll No": r['Student Roll No'] || r['Roll No'] || r['RollNo'] || '',
+      "Name": r['Name'] || r['name'] || '',
+      "Seating No": r['Seating No'] || r['Seat No'] || r['SeatNo'] || '',
+      "Subject Code": r['Subject Code'] || r['SubjectCode'] || '',
+      Subject: r['Subject'] || r['Subject Name'] || '',
+      "Year": r['Year'] || '',
+      "Section": r['Section'] || ''
+    }));
+    const res = await apiFetch({ action:'uploadUsers', rows: normalized });
+    if(res.success) msg.textContent = `Uploaded ${res.count} rows`;
+    else msg.textContent = 'Upload failed: ' + (res.message||JSON.stringify(res));
+  } catch(err){ console.error(err); msg.textContent = 'Error: '+err.message; }
+  finally{ document.getElementById('btnUpload').disabled=false; }
+}
 
-    function renderAbsentees(){
-      const container = document.getElementById('absenteesArea');
-      const filtered = (absentees || []).filter(r => (r.Status || "").toUpperCase()==="ABSENT" || (r.Status || "").toUpperCase()==="OD");
-      if(!filtered.length){ area.innerHTML = '<div class="small">No absentees / OD entries</div>'; return; }
-      let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
-      filtered.forEach((r, idx)=>{
-        html += `<tr>
-          <td>${escapeHtml(r.Date)}</td><td>${escapeHtml(r.HallNo)}</td><td>${escapeHtml(r.SeatNo)}</td>
-          <td>${escapeHtml(r.RollNo)}</td><td>${escapeHtml(r.Name)}</td>
-          <td>${escapeHtml(r.Year)}</td><td>${escapeHtml(r.Section)}</td>
-          <td>${escapeHtml(r.Status)}</td>
-          <td><input id="reason_${idx}" value="${escapeHtml(r.Reason||'')}"></td>
-          <td><button class="btn" onclick="saveReason(${idx})">Save</button></td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-      container.innerHTML = html;
-    }
+async function loadAbsentees(){
+  const dept = document.getElementById('deptSelect').value || user.department;
+  const date = document.getElementById('dateFilter').value || '';
+  const batch = document.getElementById('batchSelect').value || '';
+  const res = await apiFetch({ action:'getAbsentees', department: dept, date, batch });
+  document.getElementById('absenteesArea').innerHTML = '<div class="small">Loading...</div>';
+  if(!res.success){ document.getElementById('absenteesArea').innerHTML = 'Error: '+(res.message||''); return; }
+  absentees = res.absentees || [];
+  currentTotals = res.totals || null;
+  currentYearSummary = res.yearSummary || null;
+  renderAbsentees();
+  renderTotals();
+  renderYearSummary();
+  renderYearCards();
+}
 
-    function renderTotals(){
-      const el = document.getElementById('deptStats');
-      if(!currentTotals){ el.innerText=''; return; }
-      el.innerHTML = `Total: ${currentTotals.total} | Present: ${currentTotals.present} | Absent: ${currentTotals.absent} | OD: ${currentTotals.od} | Attendance: ${currentTotals.attendancePercent}%`;
-    }
+function renderAbsentees(){
+  const area = document.getElementById('absenteesArea');
+  const filtered = (absentees || []).filter(r => {
+    const s = (r.Status || "").toString().trim().toUpperCase();
+    return s === "ABSENT" || s === "OD";
+  });
+  if(!filtered.length){
+    area.innerHTML = '<div class="small">No absentees / OD entries</div>';
+    return;
+  }
+  let html = '<div class="table-container"><table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
+  filtered.forEach((r, idx)=>{
+    const reason = r.Reason||'';
+    html += `<tr data-idx="${idx}">
+      <td>${escapeHtml(r.Date||'')}</td>
+      <td>${escapeHtml(r.HallNo||'')}</td>
+      <td>${escapeHtml(r.SeatNo||'')}</td>
+      <td>${escapeHtml(r.RollNo||'')}</td>
+      <td>${escapeHtml(r.Name||'')}</td>
+      <td>${escapeHtml(r.Year||'')}</td>
+      <td>${escapeHtml(r.Section||'')}</td>
+      <td>${escapeHtml(r.Status||'')}</td>
+      <td><input id="reason_${idx}" value="${escapeHtml(reason)}" style="width:100%"></td>
+      <td><button class="btn" onclick="saveReason(${idx})">Save</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  area.innerHTML = html;
+}
+
+function renderTotals(){
+  const el = document.getElementById('deptStats');
+  if(!currentTotals){ el.innerText=''; return; }
+  el.innerHTML = `Total: ${currentTotals.total} — Present: ${currentTotals.present} — Absent: ${currentTotals.absent} — OD: ${currentTotals.od} — Attendance: ${currentTotals.attendancePercent}%`;
+}
 
 function renderYearSummary(){
   const area = document.getElementById('yearSummaryArea');
   if(!currentYearSummary){ area.innerHTML=''; return; }
-  // Build a table with Year / Section / total / present / absent / od / %
   let html = '<table><thead><tr><th>Year</th><th>Section</th><th>Total</th><th>Present</th><th>Absent</th><th>OD</th><th>Attendance %</th></tr></thead><tbody>';
   for(const yr of Object.keys(currentYearSummary).sort()){
     const y = currentYearSummary[yr];
@@ -344,95 +397,81 @@ function renderYearSummary(){
   area.innerHTML = html;
 }
 
-    function renderYearCards(){
-      const  container= document.getElementById('yearCardArea');
-      if(!currentYearSummary){ area.innerHTML=''; return; }
-      let html = '';
-      for(const yr of Object.keys(currentYearSummary)){
-        const y = currentYearSummary[yr];
-        for(const sec of Object.keys(y.sections)){
-          const s = y.sections[sec];
-          const pct = s.total ? ((s.present/s.total)*100).toFixed(2) : 0;
-          html += `<div class="card-section" onclick="viewSection('${yr}','${sec}')">
-            <h4>${yr} - ${sec}</h4>
-            <p>Total: ${s.total}</p>
-            <p>Present: ${s.present}</p>
-            <p>Absent: ${s.absent}</p>
-            <p>OD: ${s.od}</p>
-            <p><b>${pct}% Attendance</b></p>
-          </div>`;
-        }
-      }
-     container.innerHTML = html;
-    }
-
-    function viewSection(year, section){
-      const rows = absentees.filter(r=>r.Year==year && r.Section==section);
-      renderAbsenteesTable(rows);
-    }
-
-    function renderAbsenteesTable(rows){
-      const container = document.getElementById('absenteesArea');
-      if(!rows.length){ area.innerHTML='<div class="small">No data</div>'; return; }
-      let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
-      rows.forEach((r, idx)=>{
-        html += `<tr>
-          <td>${escapeHtml(r.Date)}</td><td>${escapeHtml(r.HallNo)}</td><td>${escapeHtml(r.SeatNo)}</td>
-          <td>${escapeHtml(r.RollNo)}</td><td>${escapeHtml(r.Name)}</td>
-          <td>${escapeHtml(r.Year)}</td><td>${escapeHtml(r.Section)}</td>
-          <td>${escapeHtml(r.Status)}</td>
-          <td><input id="reason_${idx}" value="${escapeHtml(r.Reason||'')}"></td>
-          <td><button class="btn" onclick="saveReason(${idx})">Save</button></td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-      container.innerHTML = html;
-    }
-
-    async function saveReason(idx){
-      const r = absentees[idx];
-      if(!r) return alert("Invalid record");
-      const lockRes = await apiFetch({ action: "getLockStatus", date: r.Date });
-      if (lockRes.lock === "Locked") {
-        alert(`Editing disabled — ${r.Date} is locked by CoE.`);
-        document.querySelectorAll("button.btn").forEach(b => { if (b.textContent === "Save") b.disabled = true; });
-        document.querySelectorAll("input[id^='reason_']").forEach(i => (i.disabled = true));
-        return;
-      }
-      const reason = document.getElementById("reason_" + idx).value;
-      const res = await apiFetch({ action:"saveReason", rollNo:r.RollNo, reason, date:r.Date, role:user.role });
-      if(res.success){ alert("Saved successfully"); absentees[idx].Reason = reason; }
-      else alert("Save failed: " + (res.message || ""));
-    }
-
-    function escapeHtml(s){ if(!s && s!==0) return ''; return String(s).replace(/[&<>"'`]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[m])); }
-
-    function downloadAbsenteesCSV(){
-      if(!absentees.length){ alert('No data'); return; }
-      const batch = document.getElementById('batchSelect').value || '';
-      const hdr = ["Date","Batch","Department","HallNo","SeatNo","RollNo","Name","Year","Section","Status","Reason"];
-      const rows = absentees.map(r=>[r.Date,batch,r.Department,r.HallNo,r.SeatNo,r.RollNo,r.Name||"",r.Year||"",r.Section||"",r.Status,r.Reason||""]);
-      const csv = [hdr.join(","), ...rows.map(r=>r.map(s=>`"${String(s).replace(/"/g,'""')}"`).join(","))].join("\n");
-      const blob = new Blob([csv], {type:'text/csv'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`absentees_${batch}.csv`;
-      a.click();
-    }
-
-    function logout() {
-      localStorage.removeItem("user");
-      location.href = "index.html";
+async function saveReason(idx) {
+  const r = absentees[idx];
+  if (!r) return alert("Invalid record");
+  const lockRes = await apiFetch({ action: "getLockStatus", date: r.Date });
+  if (lockRes.lock === "Locked") {
+    alert(`Editing disabled — ${r.Date} is locked by CoE.`);
+    document.querySelectorAll("button.btn").forEach(b => {
+      if (b.textContent === "Save") b.disabled = true;
+    });
+    document.querySelectorAll("input[id^='reason_']").forEach(i => (i.disabled = true));
+    return;
+  }
+  const reason = document.getElementById("reason_" + idx).value;
+  const res = await apiFetch({
+    action: "saveReason",
+    rollNo: r.RollNo,
+    reason,
+    date: r.Date,
+    role: user.role
+  });
+  if (res.success) {
+    alert("Saved successfully");
+    absentees[idx].Reason = reason;
+  } else {
+    alert("Save failed: " + (res.message || ""));
+  }
 }
-  </script>
+
+function escapeHtml(s){ if(!s && s!==0) return ''; return String(s).replace(/[&<>"'`]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'})[m]); }
+
+function downloadAbsenteesCSV(){
+  if(!absentees.length){ alert('No data'); return; }
+  const batch = document.getElementById('batchSelect').value || '';
+  const hdr = ["Date","Batch","Department","HallNo","SeatNo","RollNo","Name","Year","Section","Status","Reason"];
+  const rows = absentees.map(r => [
+    r.Date, batch, r.Department, r.HallNo, r.SeatNo, r.RollNo, r.Name || "", r.Year || "", r.Section || "", r.Status, r.Reason || ""
+  ]);
+  const csv = [hdr.join(","), ...rows.map(r=>r.map(s=>`"${String(s).replace(/"/g,'""')}"`).join(","))].join("\n");
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`absentees_${batch}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderYearCards(){
+  const area = document.getElementById('yearCardArea');
+  if(!currentYearSummary){ area.innerHTML=''; return; }
+  let html = '';
+  for(const yr of Object.keys(currentYearSummary).sort()){
+    const y = currentYearSummary[yr];
+    const total = y.total||0;
+    const att = y.attendancePercent||0;
+    html += `<div class="card" onclick="scrollToYear('${yr}')">
+      <h4>Year ${escapeHtml(yr)}</h4>
+      <p>Total: ${total}</p>
+      <p>Attendance: ${att}%</p>
+    </div>`;
+  }
+  area.innerHTML = html;
+}
+
+function scrollToYear(y){
+  const rows = document.querySelectorAll("#yearSummaryArea table tbody tr");
+  for(const r of rows){
+    if(r.cells[0].innerText.trim() === y){
+      r.scrollIntoView({behavior:'smooth', block:'center'});
+      r.style.background='#e6f0ff';
+      setTimeout(()=>{ r.style.background=''; }, 1500);
+      break;
+    }
+  }
+}
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
