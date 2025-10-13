@@ -303,7 +303,7 @@ th {
     }
 
     function renderAbsentees(){
-      const area = document.getElementById('absenteesArea');
+      const container = document.getElementById('absenteesArea');
       const filtered = (absentees || []).filter(r => (r.Status || "").toUpperCase()==="ABSENT" || (r.Status || "").toUpperCase()==="OD");
       if(!filtered.length){ area.innerHTML = '<div class="small">No absentees / OD entries</div>'; return; }
       let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
@@ -426,6 +426,7 @@ th {
   </script>
 </body>
 </html>
+
 
 
 
