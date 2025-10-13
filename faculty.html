@@ -371,7 +371,7 @@ th {
     }
 
     function renderAbsenteesTable(rows){
-      const area = document.getElementById('absenteesArea');
+      const container = document.getElementById('absenteesArea');
       if(!rows.length){ area.innerHTML='<div class="small">No data</div>'; return; }
       let html = '<table><thead><tr><th>Date</th><th>Hall</th><th>Seat</th><th>Roll</th><th>Name</th><th>Year</th><th>Section</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>';
       rows.forEach((r, idx)=>{
@@ -385,7 +385,7 @@ th {
         </tr>`;
       });
       html += '</tbody></table>';
-      area.innerHTML = html;
+      container.innerHTML = html;
     }
 
     async function saveReason(idx){
@@ -426,6 +426,7 @@ th {
   </script>
 </body>
 </html>
+
 
 
 
