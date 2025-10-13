@@ -344,7 +344,7 @@ th {
     }
 
     function renderYearSummary(){
-      const area = document.getElementById('yearSummaryArea');
+      const container = document.getElementById('yearSummaryArea');
       if(!currentYearSummary){ area.innerHTML=''; return; }
       let html = '<table><thead><tr><th>Year</th><th>Section</th><th>Total</th><th>Present</th><th>Absent</th><th>OD</th><th>%</th></tr></thead><tbody>';
       for(const yr of Object.keys(currentYearSummary)){
@@ -356,11 +356,11 @@ th {
         }
       }
       html += '</tbody></table>';
-      area.innerHTML = html;
+      container.innerHTML = html;
     }
 
     function renderYearCards(){
-      const area = document.getElementById('yearCardArea');
+      const  container= document.getElementById('yearCardArea');
       if(!currentYearSummary){ area.innerHTML=''; return; }
       let html = '';
       for(const yr of Object.keys(currentYearSummary)){
@@ -378,7 +378,7 @@ th {
           </div>`;
         }
       }
-      area.innerHTML = html;
+     container.innerHTML = html;
     }
 
     function viewSection(year, section){
