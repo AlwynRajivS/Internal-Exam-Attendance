@@ -327,21 +327,22 @@ th {
       el.innerHTML = `Total: ${currentTotals.total} | Present: ${currentTotals.present} | Absent: ${currentTotals.absent} | OD: ${currentTotals.od} | Attendance: ${currentTotals.attendancePercent}%`;
     }
 
-    function renderYearSummary(){
-      const container = document.getElementById('yearSummaryArea');
-      if(!currentYearSummary){ area.innerHTML=''; return; }
-      let html = '<table><thead><tr><th>Year</th><th>Section</th><th>Total</th><th>Present</th><th>Absent</th><th>OD</th><th>%</th></tr></thead><tbody>';
-      for(const yr of Object.keys(currentYearSummary)){
-        const y = currentYearSummary[yr];
-        for(const sec of Object.keys(y.sections)){
-          const s = y.sections[sec];
-          const pct = s.total ? ((s.present/s.total)*100).toFixed(2) : 0;
-          html += `<tr><td>${yr}</td><td>${sec}</td><td>${s.total}</td><td>${s.present}</td><td>${s.absent}</td><td>${s.od}</td><td>${pct}%</td></tr>`;
-        }
-      }
-      html += '</tbody></table>';
-      container.innerHTML = html;
+function renderYearSummary(){
+  const area = document.getElementById('yearSummaryArea');
+  if(!currentYearSummary){ area.innerHTML=''; return; }
+  // Build a table with Year / Section / total / present / absent / od / %
+  let html = '<table><thead><tr><th>Year</th><th>Section</th><th>Total</th><th>Present</th><th>Absent</th><th>OD</th><th>Attendance %</th></tr></thead><tbody>';
+  for(const yr of Object.keys(currentYearSummary).sort()){
+    const y = currentYearSummary[yr];
+    for(const sec of Object.keys(y.sections).sort()){
+      const s = y.sections[sec];
+      const pct = s.total===0?0:Math.round((s.present / s.total)*10000)/100;
+      html += `<tr><td>${escapeHtml(yr)}</td><td>${escapeHtml(sec)}</td><td>${s.total}</td><td>${s.present}</td><td>${s.absent}</td><td>${s.od}</td><td>${pct}%</td></tr>`;
     }
+  }
+  html += '</tbody></table>';
+  area.innerHTML = html;
+}
 
     function renderYearCards(){
       const  container= document.getElementById('yearCardArea');
