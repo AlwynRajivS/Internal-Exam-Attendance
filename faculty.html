@@ -43,21 +43,23 @@
     }
 
     /* === Buttons === */
-    .btn {
-      background: #2463eb;
+        .btn {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
       color: #fff;
-      padding: 8px 14px;
+      padding: 10px 14px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       font-size: 14px;
-      transition: all 0.3s ease;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+      transform: scale(1.03);
     }
 
-    .btn:hover {
-      background: #1a4fd0;
-      transform: translateY(-1px);
-    }
+    .small { font-size: 13px; color: #555; }
 
     /* === Layouts === */
     .u-row {
