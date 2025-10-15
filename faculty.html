@@ -351,7 +351,7 @@ async function uploadExcel(){
       "Year": r['Year'] || '',
       "Section": r['Section'] || ''
     }));
-    const res = await apiFetch({ action:'uploadUsers', rows: normalized });
+    const res = await apiFetch({ action: 'uploadSeating', users });
     if(res.success) msg.textContent = `Uploaded ${res.count} rows`;
     else msg.textContent = 'Upload failed: ' + (res.message||JSON.stringify(res));
   } catch(err){ console.error(err); msg.textContent = 'Error: '+err.message; }
