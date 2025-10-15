@@ -44,7 +44,6 @@
 
   #welcome {
     font-size: 14px;
-    color: #fff;
     opacity: 0.9;
   }
 
@@ -582,52 +581,46 @@ function logout() {
   
   // Replace existing downloadHallPlan() / generatePDF() with these
 
-  async function downloadHallPlan() {
-    const selectedDate = document.getElementById("planDate").value;
-    const selectedBatch = document.getElementById("planBatch").value;
+async function downloadHallPlan() {
+  const selectedDate = document.getElementById("planDate").value;
+  const selectedBatch = document.getElementById("planBatch").value;
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const dept = user.department || "";  // ✅ fixed lowercase property
 
-    if (!selectedDate || !selectedBatch) {
-      alert("Please select both Date and Batch (FN/AN)");
+  if (!selectedDate || !selectedBatch) {
+    alert("Please select both Date and Batch (FN/AN)");
+    return;
+  }
+  if (!dept) {
+    alert("Department not found in your login session.");
+    return;
+  }
+
+  try {
+    const res = await apiFetch({
+      action: "getStudentSeatingData",
+      date: selectedDate,
+      batch: selectedBatch,
+      department: dept
+    });
+
+    let data = null;
+    if (Array.isArray(res)) data = res;
+    else if (res.success && Array.isArray(res.data)) data = res.data;
+    else if (res.rows && Array.isArray(res.rows)) data = res.rows;
+    else if (res.result && Array.isArray(res.result)) data = res.result;
+
+    if (!data || !data.length) {
+      alert("No seating data found for your department on this date and batch.");
       return;
     }
 
-    try {
-      // Call your backend via apiFetch (same pattern used elsewhere in the app)
-      const res = await apiFetch({ action: 'getStudentSeatingData', date: selectedDate, batch: selectedBatch });
-
-      // The Apps Script handler returns a plain array (or different shapes depending on implementation).
-      // Be defensive and accept a few possible shapes:
-      let data = null;
-      if (!res) {
-        alert("No response from server");
-        return;
-      }
-      if (Array.isArray(res)) data = res;
-      else if (res.success && Array.isArray(res.data)) data = res.data;
-      else if (res.rows && Array.isArray(res.rows)) data = res.rows;
-      else if (res.hallData && Array.isArray(res.hallData)) data = res.hallData;
-      else if (res.result && Array.isArray(res.result)) data = res.result;
-      else {
-        // if backend returned the raw array wrapped in an object-less JSON, apiFetch may have returned it already above.
-        // If nothing matched, try to treat res as data if it's an object array-like
-        if (typeof res === 'object' && Object.keys(res).length && !res.success) {
-          // fallback: try to find arrays inside object
-          const arr = Object.values(res).find(v => Array.isArray(v));
-          if (arr) data = arr;
-        }
-      }
-
-      if (!data || !data.length) {
-        alert("No seating data found for the selected date and batch.");
-        return;
-      }
-
-      await generatePDF(data);
-    } catch (err) {
-      console.error("downloadHallPlan error:", err);
-      alert("Error fetching hall plan: " + (err.message || err));
-    }
+    await generatePDF(data);
+  } catch (err) {
+    console.error("downloadHallPlan error:", err);
+    alert("Error fetching hall plan: " + (err.message || err));
   }
+}
 
 async function generatePDF(data) {
   if (!Array.isArray(data) || data.length === 0) {
@@ -770,4 +763,3 @@ Object.keys(seatSeries).forEach(series => {
 </script>
 </body>
 </html>
-
