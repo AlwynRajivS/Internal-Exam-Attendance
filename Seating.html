@@ -9,51 +9,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 :root{--accent:#06b6d4;--accent2:#7c3aed;--muted:#94a3b8}
 *{box-sizing:border-box}
- body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #f7f9fc, #eef3f9);
-    color: #111;
-  }
+body{font-family: "Segoe UI", Arial, sans-serif;margin:0;padding:0;background:linear-gradient(135deg,#f7f9fc,#eef3f9);color:#111;}
 .wrap{max-width:1200px;margin:0 auto}
-header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
-h1{margin:0;font-size:20px}
-p.lead{margin:10px 0 0;color:#0b5564}
-.main{display:grid;grid-template-columns:380px 1fr;gap:30px}
-.card {
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    margin: 16px 0 16px 24px; /* top:16px, right:0, bottom:16px, left:24px */
-    padding: 35px;
-    max-width: 800px;
-    animation: fadeIn 0.5s ease;
-    left: 20px;
-  }
-
+header{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;background:linear-gradient(135deg,#2463eb,#4f83ff);color:#fff;padding:16px 20px;box-shadow:0 4px 10px rgba(0,0,0,0.15);}
+header h1{font-size:1.6rem;margin:0;}
+#sWelcome,#welcome{font-size:14px;color:#fff;opacity:0.9;}
+.logout-btn{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:8px 14px;font-size:14px;cursor:pointer;transition:all 0.3s ease;}
+.logout-btn:hover{background:rgba(255,255,255,0.3);transform:scale(1.05);}
+.main{display:grid;grid-template-columns:380px 1fr;gap:30px;}
+.card{background:#fff;border-radius:15px;box-shadow:0 6px 18px rgba(0,0,0,0.08);margin:16px 0 16px 24px;padding:35px;max-width:800px;}
 label{display:block;font-size:13px;color:#073741;margin-top:8px}
 select,input[type=text],input[type=date],input[type=number],button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);font-size:14px}
 .row{display:flex;gap:8px}
 .small{font-size:12px;color:var(--muted)}
-.btn {
-    background: #2463eb;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s;
-  }
-.btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741}
+.btn{background:#2463eb;color:#fff;padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-size:14px;transition:all 0.3s;}
+.btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741;}
 .hall-list{display:flex;flex-direction:column;gap:10px}
 .hall-item{display:grid;grid-template-columns:1fr 60px 60px 36px;gap:8px;align-items:center}
 .hall-item input{width:100%}
 .add-hall{display:flex;gap:8px;margin-top:10px}
 .preview-area{display:grid;grid-template-rows:auto auto;gap:12px}
-.seatmap{display:flex;flex-direction:column;gap:16px;padding:10px;border-radius:8px;background:linear-gradient(180deg, #f8fcff, #fbf7ff);}
+.seatmap{display:flex;flex-direction:column;gap:16px;padding:10px;border-radius:8px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);}
 .seat-row{display:flex;gap:8px;align-items:center}
 .row-label{width:30px;text-align:center;color:var(--muted);font-weight:600}
 .seat{min-width:56px;height:48px;border-radius:8px;background:#fff;border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px}
@@ -63,157 +39,109 @@ th,td{padding:8px;border:1px solid #e6eef3;text-align:left;font-size:13px}
 th{background:#edf7fb}
 .controls{display:flex;gap:8px;align-items:center;margin-top:10px}
 footer{margin-top:12px;color:#6a7d86;font-size:13px}
-#welcome {
-    font-size: 14px;
-    color: #fff;
-    opacity: 0.9;
-  }
- header {
-    background: linear-gradient(135deg, #2463eb, #4f83ff);
-    color: #fff;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    position: relative;
-  }
-
-  header h1 {
-    font-size: 1.6rem;
-    margin: 0;
-  }
-
-  #welcome {
-    font-size: 14px;
-    color: #fff;
-    opacity: 0.9;
-  }
-
- .logout-btn {
-  background: rgba(255,255,255,0.2);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 4px;
-  padding: 8px 14px;      /* minimal padding */
-  font-size: 14px;       /* small text */
-  width: auto;           /* fits text exactly */
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.logout-btn:hover {
-  background: rgba(255,255,255,0.3);
-  transform: scale(1.05);
-}
-
-  .small {
-    font-size: 13px;
-    color: #666;
-  }
-
-@media (max-width:980px){
-    header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    header h1 {
-      font-size: 1.3rem;
-    }
-
-    .logout-btn {
-      margin-top: 10px;
-    }
-
-    .main{grid-template-columns:1fr}
-}
+@media(max-width:980px){.main{grid-template-columns:1fr} header{flex-direction:column;text-align:center} header h1{font-size:1.3rem}.logout-btn{margin-top:10px}}
 </style>
 </head>
 <body onload="initFaculty()">
- <header>
-    <div>
-      <h1>Seating Arrangement</h1>
-      <div id="welcome" class="small"></div>
-    </div>
-    <button class="logout-btn" onclick="window.location.href='faculty.html'">Back to Dashboard</button>
-  </header>
+
+<header>
+  <div>
+    <h1>Seating Arrangement</h1>
+    <div id="welcome" class="small"></div>
+  </div>
+  <button class="logout-btn" onclick="window.location.href='faculty.html'">Back to Dashboard</button>
+</header>
 
 <div class="main">
-<div>
-<div class="card">
-<label>Date</label>
-<input type="date" id="inpDate">
+  <div>
+    <div class="card">
+      <label>Date</label>
+      <input type="date" id="inpDate">
+      <label>Department</label>
+      <select id="inpDept"><option value="">-- Select --</option><option value="CSE">CSE</option><option value="ECE">ECE</option></select>
+      <label>Batch</label>
+      <select id="inpBatch"><option value="">-- Select --</option><option value="FN">FN</option><option value="AN">AN</option></select>
+      <label>Upload Student File (.xlsx / .csv)</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <div class="small">Template columns (download below)</div>
+      <div class="controls">
+        <button class="btn" id="btnTemplate">Download Template</button>
+      </div>
 
-<label>Department</label>
-<select id="inpDept"><option value="">-- Select --</option><option value="CSE">CSE</option><option value="ECE">ECE</option></select>
+      <hr style="margin:12px 0">
+      <label>Halls (add 1..n)</label>
+      <div class="hall-list" id="hallList"></div>
+      <div class="add-hall"><button class="btn ghost" id="btnAddHall">+ Add Hall</button><button class="btn" id="btnRemoveLast">Remove Last</button></div>
 
-<label>Batch</label>
-<select id="inpBatch"><option value="">-- Select --</option><option value="FN">FN</option><option value="AN">AN</option></select>
+      <hr style="margin:12px 0">
+      <label>Seating Pattern</label>
+      <select id="pattern">
+        <option value="row">Row-wise (A1, B1, C1...)</option>
+        <option value="col">Column-wise (A1, A2, A3...)</option>
+        <option value="snake">Snake pattern</option>
+        <option value="alternate">Alternate row (skip every other)</option>
+        <option value="block">Block pattern (fills blocks)</option>
+      </select>
+      <label style="margin-top:8px"><input type="checkbox" id="randomize" checked/> Randomize students before seating</label>
 
-<label>Upload Student File (.xlsx / .csv)</label>
-<input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-<div class="small">Template columns (download below)</div>
-<div class="controls">
-<button class="btn" id="btnTemplate">Download Template</button>
-</div>
+      <div style="margin-top:12px" class="controls">
+        <button class="btn" id="btnPreviewSeating">Preview Seating</button>
+        <button class="btn" id="btnGenerate">Download Excel</button>
+        <button class="btn ghost" id="btnClear">Clear</button>
+      </div>
+      <div class="small" style="margin-top:8px">Note: same <strong>Subject Code</strong> will not be seated immediately left or right (back allowed).</div>
+    </div>
+  </div>
 
-<hr style="margin:12px 0">
-<label>Halls (add 1..n)</label>
-<div class="hall-list" id="hallList"></div>
-<div class="add-hall"><button class="btn ghost" id="btnAddHall">+ Add Hall</button><button class="btn" id="btnRemoveLast">Remove Last</button></div>
-
-<hr style="margin:12px 0">
-<label>Seating Pattern</label>
-<select id="pattern">
-<option value="row">Row-wise (A1, B1, C1...)</option>
-<option value="col">Column-wise (A1, A2, A3...)</option>
-<option value="snake">Snake pattern</option>
-<option value="alternate">Alternate row (skip every other)</option>
-<option value="block">Block pattern (fills blocks)</option>
-</select>
-
-<label style="margin-top:8px"><input type="checkbox" id="randomize" checked/> Randomize students before seating</label>
-
-<div style="margin-top:12px" class="controls">
-<button class="btn" id="btnPreviewSeating">Preview Seating</button>
-<button class="btn" id="btnGenerate">Download Excel</button>
-<button class="btn ghost" id="btnClear">Clear</button>
-</div>
-
-<div class="small" style="margin-top:8px">Note: same <strong>Subject Code</strong> will not be seated immediately left or right (back allowed).</div>
-</div>
-</div>
-
-<div>
-<div class="card preview-area">
-<div id="messages">No file loaded.</div>
-<div id="preview" style="min-height:220px"></div>
-<div id="seatmapAll"></div>
-</div>
-</div>
-</div>
-
-
+  <div>
+    <div class="card preview-area">
+      <div id="messages">No file loaded.</div>
+      <div id="preview" style="min-height:220px"></div>
+      <div id="seatmapAll"></div>
+    </div>
+  </div>
 </div>
 
 <script>
 (function(){
 let students=[],halls=[],hallCounter=0,finalRows=[];
 
+// Normalize headers robustly
 function normalizeRow(r){
-  const map={}; for(const k in r) if(Object.prototype.hasOwnProperty.call(r,k)) map[k.trim().toLowerCase()]=r[k];
+  const map={};
+  for(const k in r){
+    if(Object.prototype.hasOwnProperty.call(r,k)){
+      const cleanKey=k.trim().replace(/^\ufeff/,'').toLowerCase();
+      map[cleanKey]=r[k];
+    }
+  }
   return {
-    RollNo:map['roll no']||'',
-    Name:map['name of the student']||'',
-    Year:map['year']||'',
-    Section:map['section']||'',
-    SubjectCode:map['subject code']||'',
-    SubjectName:map['subject name']||''
+    RollNo: map['roll no']||'',
+    Name: map['name of the student']||'',
+    Year: map['year']||'',
+    Section: map['section']||'',
+    SubjectCode: map['subject code']||'',
+    SubjectName: map['subject name']||''
   };
 }
 
+// CSV parser
+function parseCSV(text){ 
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return {rows:[]};
+  const sep = lines[0].includes(',') ? ',' : '\t';
+  const headers = lines[0].split(sep).map(h=>h.trim());
+  const rows = lines.slice(1).map(l=>{
+    const cols=l.split(sep).map(c=>c.trim()); const obj={};
+    headers.forEach((h,i)=>obj[h]=cols[i]||''); return obj;
+  });
+  return {headers,rows};
+}
+
+function showMessage(msg){ document.getElementById('messages').innerHTML=`<strong>${msg}</strong>`; }
+function seatIdColRow(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
+
+// --- Hall rendering ---
 function renderHallList(){
   const container=document.getElementById('hallList'); container.innerHTML='';
   halls.forEach(h=>{
@@ -230,25 +158,10 @@ function renderHallList(){
     const id=Number(btn.getAttribute('data-remove')); halls=halls.filter(x=>x.id!==id); renderHallList();
   }));
 }
-
 function addHall(name=`Hall ${hallCounter+1}`,rows=6,cols=6){ hallCounter++; halls.push({id:hallCounter,name,rows,cols}); renderHallList();}
 function removeLastHall(){ if(halls.length){ halls.pop(); hallCounter--; renderHallList();} }
 
-function parseCSV(text){ 
-  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  if(!lines.length) return {rows:[]};
-  const sep = lines[0].includes(',') ? ',' : '\t';
-  const headers = lines[0].split(sep).map(h=>h.trim());
-  const rows = lines.slice(1).map(l=>{
-    const cols=l.split(sep).map(c=>c.trim()); const obj={};
-    headers.forEach((h,i)=>obj[h]=cols[i]||''); return obj;
-  });
-  return {headers,rows};
-}
-
-function showMessage(msg){ document.getElementById('messages').innerHTML=`<strong>${msg}</strong>`; }
-function seatIdColRow(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
-
+// --- Seating allocation ---
 function buildSeatOrder(rows,cols,pattern){
   const order=[];
   if(pattern==='row') for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) order.push({r,c});
@@ -260,7 +173,6 @@ function buildSeatOrder(rows,cols,pattern){
   }
   return order;
 }
-
 function allocateToHall(stuList,rows,cols,pattern,randomize=true){
   const seats=Array.from({length:rows},()=>Array.from({length:cols},()=>null));
   const order=buildSeatOrder(rows,cols,pattern);
@@ -277,6 +189,7 @@ function allocateToHall(stuList,rows,cols,pattern,randomize=true){
   return {assigned,remaining:pool,seatsMatrix:seats};
 }
 
+// --- Preview ---
 function renderPreviewAllocation(date,dept,batch,pattern,randomize=true){
   if(!students.length){ showMessage('No students loaded'); return;}
   const preview=document.getElementById('preview'); preview.innerHTML='';
@@ -291,7 +204,6 @@ function renderPreviewAllocation(date,dept,batch,pattern,randomize=true){
   });
 
   let remaining=students.slice();
-
   hallsConfig.forEach(hc=>{
     const cap=hc.rows*hc.cols;
     const feed=remaining.slice(0,cap); remaining=remaining.slice(cap);
@@ -302,7 +214,7 @@ function renderPreviewAllocation(date,dept,batch,pattern,randomize=true){
       }
     });
 
-    // Build visual seatmap
+    // Visual seatmap
     const hallDiv=document.createElement('div'); hallDiv.className='seatmap';
     hallDiv.innerHTML=`<h4>${hc.name} (${hc.rows}x${hc.cols})</h4>`;
     for(let r=0;r<hc.rows;r++){
@@ -332,7 +244,7 @@ function renderPreviewAllocation(date,dept,batch,pattern,randomize=true){
   showMessage(`Preview generated for ${finalRows.length} students.`);
 }
 
-// Event listeners
+// --- Event Listeners ---
 document.getElementById('btnAddHall').addEventListener('click', ()=>addHall());
 document.getElementById('btnRemoveLast').addEventListener('click', ()=>removeLastHall());
 document.getElementById('btnTemplate').addEventListener('click', ()=>{
@@ -340,6 +252,7 @@ document.getElementById('btnTemplate').addEventListener('click', ()=>{
   const ws=XLSX.utils.aoa_to_sheet([headers,['12345','Student One','3','A','CS301','Networks']]);
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template'); XLSX.writeFile(wb,'Seating_Upload_Template.xlsx');
 });
+
 document.getElementById('btnPreviewSeating').addEventListener('click', ()=>{
   const date=document.getElementById('inpDate').value;
   const dept=document.getElementById('inpDept').value;
@@ -349,6 +262,7 @@ document.getElementById('btnPreviewSeating').addEventListener('click', ()=>{
   if(!date||!dept||!batch){ alert('Fill Date, Department and Batch'); return;}
   renderPreviewAllocation(date,dept,batch,pattern,randomize);
 });
+
 document.getElementById('btnGenerate').addEventListener('click', ()=>{
   const date=document.getElementById('inpDate').value;
   const dept=document.getElementById('inpDept').value;
@@ -356,31 +270,37 @@ document.getElementById('btnGenerate').addEventListener('click', ()=>{
   if(!date||!dept||!batch){ alert('Fill Date, Department and Batch'); return;}
   if(!finalRows.length){ alert('Please preview seating first'); return;}
   const ws=XLSX.utils.json_to_sheet(finalRows);
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'SeatingAllotment');
-  XLSX.writeFile(wb,`${dept}_${batch}_Seating_Allotment.xlsx`);
-  showMessage('Excel downloaded.');
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Seating');
+  XLSX.writeFile(wb,`Seating_${dept}_${date}.xlsx`);
 });
-document.getElementById('btnClear').addEventListener('click', ()=>{ students=[]; finalRows=[]; document.getElementById('preview').innerHTML=''; document.getElementById('seatmapAll').innerHTML=''; showMessage('Cleared'); });
 
-document.getElementById('btnPreviewSample').addEventListener('click', ()=>{
-  if(!students.length){ alert('No students loaded'); return; }
-  const preview=document.getElementById('preview'); preview.innerHTML='';
-  const tbl=document.createElement('table'); tbl.innerHTML=`<thead><tr>${['RollNo','Name','Year','Section','SubjectCode','SubjectName'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
-  const tbody=document.createElement('tbody');
-  students.slice(0,12).forEach(s=>tbody.innerHTML+=`<tr>${['RollNo','Name','Year','Section','SubjectCode','SubjectName'].map(k=>`<td>${s[k]}</td>`).join('')}</tr>`);
-  tbl.appendChild(tbody); preview.appendChild(tbl);
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  students=[]; halls=[]; hallCounter=0; finalRows=[]; document.getElementById('preview').innerHTML=''; document.getElementById('seatmapAll').innerHTML=''; showMessage('Cleared.');
 });
 
 document.getElementById('fileInput').addEventListener('change', async (e)=>{
   const f=e.target.files[0]; if(!f) return;
   const name=f.name.toLowerCase();
-  if(name.endsWith('.csv')){ const text=await f.text(); students=parseCSV(text).rows.map(normalizeRow); showMessage(`Loaded ${students.length} records from CSV`); document.getElementById('btnPreviewSample').click(); return; }
-  try{ const data=await f.arrayBuffer(); const wb=XLSX.read(data,{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; students=XLSX.utils.sheet_to_json(ws,{defval:''}).map(normalizeRow); showMessage(`Loaded ${students.length} records from Excel`); document.getElementById('btnPreviewSample').click(); }catch(err){ showMessage('Failed to read file: '+err.message);}
+  try{
+    if(name.endsWith('.csv')){
+      const text=await f.text();
+      students=parseCSV(text).rows.map(normalizeRow);
+      showMessage(`Loaded ${students.length} records from CSV`);
+      return;
+    }
+    const data=await f.arrayBuffer();
+    const wb=XLSX.read(data,{type:'array'});
+    if(!wb.SheetNames.length) throw new Error('No sheets found in Excel file');
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    students=XLSX.utils.sheet_to_json(ws,{defval:''}).map(normalizeRow);
+    console.log('Loaded Excel keys:', Object.keys(students[0]||{}));
+    showMessage(`Loaded ${students.length} records from Excel`);
+  }catch(err){ showMessage('Failed to read file: '+err.message); }
 });
 
-addHall('Hall 1',6,6);
+// Init faculty name
+function initFaculty(){ const name='Faculty Name'; document.getElementById('welcome').textContent=`Welcome, ${name}`; }
 })();
-
 </script>
 </body>
 </html>
