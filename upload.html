@@ -111,7 +111,7 @@
   <div class="card-header">
     <div>
       <h1>Users Upload</h1>
-      <span id="welcome" class="small">Welcome, Admin</span>
+      <span id="welcome" class="small">Welcome</span>
     </div>
     <div class="btn-group">
       <button class="btn" onclick="window.location.href='coe.html'"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
@@ -136,6 +136,12 @@
 </div>
 
 <script>
+
+async function initReport(){
+  user=requireRole('CoE');
+  if(!user) return;
+  document.getElementById('welcome').innerText=`Signed in as: ${user.name}`;
+
 function downloadTemplate(){
   const headers = ["email","password","Name","Role","Department","Student Roll No"];
   const wb = XLSX.utils.book_new();
