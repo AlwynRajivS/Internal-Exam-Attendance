@@ -6,26 +6,89 @@
 <title>Exam Seating Allotment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-  body { font-family: Poppins, sans-serif; margin:0; padding:20px; background:linear-gradient(135deg,#e0f7fa,#f3e5f5); color:#052029; }
-  h1{ font-size:24px; margin-bottom:10px; text-align:center; }
-  .card { background:#fff; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.08);}
-  input, select, button { width:100%; padding:8px; margin:5px 0; border-radius:6px; border:1px solid #ccc; font-size:14px; }
-  button { cursor:pointer; font-weight:600; border:none; color:white; background:linear-gradient(90deg,#06b6d4,#7c3aed);}
-  button.ghost { background:transparent; color:#052029; border:1px solid #ccc; }
-  table{border-collapse:collapse;width:100%; margin-top:10px;}
-  th,td{border:1px solid #ccc; padding:5px; text-align:left; font-size:13px;}
-  th{background:#e0f2fe;}
-  .seatmap{display:flex; flex-direction:column; gap:5px; margin-top:10px;}
-  .seat-row{display:flex; gap:5px;}
-  .seat{width:50px; height:45px; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:12px; border:1px solid #ccc; background:#fff;}
-  .seat.empty{opacity:0.3; background:#f5f5f5;}
-  .hall-list{margin-top:10px;}
-  .hall-item{display:flex; gap:5px; align-items:center; margin-bottom:5px;}
-  .remove-btn{background:#ff6b6b;color:white;border:none;border-radius:5px;padding:4px; cursor:pointer;}
-  .legend{display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;}
-  .legend-item{display:flex;align-items:center;gap:3px;}
-  .legend-color{width:20px;height:20px;border-radius:4px;}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg,#e0f7fa,#f3e5f5);
+    color: #052029;
+}
+h1{ font-size: 24px; text-align:center; margin-bottom:10px;}
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+input, select, button {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+button {
+    cursor: pointer;
+    font-weight: 600;
+    border: none;
+    color: white;
+    background: linear-gradient(90deg,#06b6d4,#7c3aed);
+    transition: 0.3s;
+}
+button:hover { opacity:0.9; }
+button.ghost {
+    background: transparent;
+    color: #052029;
+    border: 1px solid #ccc;
+}
+table{border-collapse: collapse; width:100%; margin-top:10px;}
+th,td{border:1px solid #ccc; padding:5px; text-align:left; font-size:13px;}
+th{background:#e0f2fe;}
+.seatmap{display:flex; flex-direction:column; gap:5px; margin-top:10px;}
+.seat-row{display:flex; gap:5px;}
+.seat{
+    width:50px; height:50px;
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    border:1px solid #ccc;
+    background:#fff;
+    position: relative;
+    transition: transform 0.2s;
+}
+.seat:hover{ transform: scale(1.1); z-index:2;}
+.seat.empty{opacity:0.3; background:#f5f5f5;}
+.tooltip{
+    visibility: hidden;
+    background-color: rgba(0,0,0,0.8);
+    color: #fff;
+    text-align:center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 10;
+    top:-50px;
+    font-size: 11px;
+    width: max-content;
+    max-width:150px;
+}
+.seat:hover .tooltip{ visibility: visible;}
+.hall-list{margin-top:10px;}
+.hall-item{display:flex; gap:5px; flex-wrap: wrap; align-items:center; margin-bottom:5px;}
+.remove-btn{background:#ff6b6b;color:white;border:none;border-radius:5px;padding:4px; cursor:pointer;}
+.legend{display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;}
+.legend-item{display:flex;align-items:center;gap:3px;}
+.legend-color{width:20px;height:20px;border-radius:4px;}
+@media(max-width:768px){
+    .seat{width:40px;height:40px;font-size:10px;}
+}
 </style>
 </head>
 <body>
@@ -38,6 +101,7 @@
 <option value="">-- Select --</option>
 <option value="CSE">CSE</option>
 <option value="ECE">ECE</option>
+<option value="BT">BT</option>
 </select>
 <label>Batch</label>
 <select id="inpBatch">
@@ -95,9 +159,9 @@ function renderHallList(){
   const container=document.getElementById('hallList'); container.innerHTML='';
   halls.forEach(h=>{
     const div=document.createElement('div'); div.className='hall-item';
-    div.innerHTML=`<input type='text' id='hall_name_${h.id}' value='${h.name}'>
-    <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1'>
-    <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1'>
+    div.innerHTML=`<input type='text' id='hall_name_${h.id}' value='${h.name}' placeholder="Hall Name">
+    <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' placeholder="Rows">
+    <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' placeholder="Cols">
     <button class='remove-btn' data-remove='${h.id}'>×</button>`;
     container.appendChild(div);
   });
@@ -156,6 +220,7 @@ function buildSeatOrder(rows,cols,pattern){
   return order;
 }
 
+// Allocate while avoiding same subject left/right
 function allocateToHall(stuList,rows,cols,pattern,randomize=true){
   const seats=Array.from({length:rows},()=>Array.from({length:cols},()=>null));
   let pool=stuList.slice();
@@ -166,7 +231,15 @@ function allocateToHall(stuList,rows,cols,pattern,randomize=true){
     if(!pool.length) break;
     const left=pos.c>0?seats[pos.r][pos.c-1]:null;
     let idx=pool.findIndex(s=>!left || s.SubjectCode.trim()!==left.SubjectCode.trim());
-    if(idx===-1) idx=0;
+    if(idx===-1){ 
+        // Swap with some other seat if no candidate (strict left/right check)
+        for(let i=0;i<pool.length;i++){
+            let canPlace=true;
+            if(left && pool[i].SubjectCode.trim()===left.SubjectCode.trim()) canPlace=false;
+            if(canPlace){ idx=i; break;}
+        }
+        if(idx===-1) idx=0; // fallback
+    }
     seats[pos.r][pos.c]=pool.splice(idx,1)[0];
   }
   const assigned=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) assigned.push({row:r,col:c,student:seats[r][c]});
@@ -194,8 +267,14 @@ function renderVisual(finalRows,hallsConfig){
       for(let c=0;c<h.cols;c++){
         const seatDiv=document.createElement('div'); seatDiv.className='seat';
         const rec=finalRows.find(x=>x.HallNo===h.name && x.SeatingNo===seatId(c,r));
-        if(rec){ seatDiv.innerHTML=`<div>${seatId(c,r)}</div><div style='font-size:11px'>${rec.RollNo}</div>`; seatDiv.style.background=getColor(rec.SubjectCode); }
-        else seatDiv.classList.add('empty'); rowDiv.appendChild(seatDiv);
+        if(rec){
+          seatDiv.innerHTML=`<div>${seatId(c,r)}</div><div style='font-size:11px'>${rec.RollNo}</div>`;
+          seatDiv.style.background=getColor(rec.SubjectCode);
+          const tip=document.createElement('div'); tip.className='tooltip';
+          tip.innerHTML=`${rec.Name}<br>${rec.SubjectCode}<br>${rec.Subject}`;
+          seatDiv.appendChild(tip);
+        }else seatDiv.classList.add('empty');
+        rowDiv.appendChild(seatDiv);
       }
       map.appendChild(rowDiv);
     }
@@ -233,7 +312,6 @@ document.getElementById('btnClear').addEventListener('click',()=>{
 });
 
 addHall('Hall 1',6,6);
-
 })();
 </script>
 
