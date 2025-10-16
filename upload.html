@@ -137,10 +137,14 @@
 
 <script>
 
-async function initReport(){
+let user=null;
+
+function initLock() {
   user=requireRole('CoE');
   if(!user) return;
   document.getElementById('welcome').innerText=`Signed in as: ${user.name}`;
+}
+
 
 function downloadTemplate(){
   const headers = ["email","password","Name","Role","Department","Student Roll No"];
