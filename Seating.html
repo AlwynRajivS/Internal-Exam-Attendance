@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Exam Seating — Multi‑Hall Allotment</title>
+<title>Exam Seatin</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
@@ -54,8 +54,7 @@ select,input[type=text],input[type=date],input[type=number],button{width:100%;pa
 <header>
   <div class="logo">ES</div>
   <div>
-    <h1>Exam Seating — Multi‑Hall Allotment</h1>
-    <p class="lead">Upload student sheet, add halls, preview seat map and download Excel (all halls in one sheet).</p>
+    <h1>Exam Seating — Arrangement</h1>
   </div>
 </header>
 <div class="main">
@@ -67,6 +66,7 @@ select,input[type=text],input[type=date],input[type=number],button{width:100%;pa
       <option value="">-- Select --</option>
       <option value="CSE">CSE</option>
       <option value="ECE">ECE</option>
+<option value="BT">BT</option>
     </select>
     <label>Batch</label>
     <select id="inpBatch">
@@ -235,7 +235,10 @@ document.getElementById('btnPreview').addEventListener('click', ()=>{
 
 document.getElementById('btnGenerate').addEventListener('click', ()=>{
   if(!students.length){alert('Upload student file first'); return;}
-  const date=document.getElementById('inpDate').value;
+  // const date=document.getElementById('inpDate').value;
+const date = (() => { const d = new Date(document.getElementById('inpDate').value); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; })();
+console.log(formattedDate);
+
   const dept=document.getElementById('inpDept').value;
   const batch=document.getElementById('inpBatch').value;
   if(!date||!dept||!batch){alert('Fill Date, Department and Batch'); return;}
