@@ -243,8 +243,16 @@
 
   <div class="card">
     <div class="u-row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button class="btn" onclick="window.open('Seating.html', '_blank')">
+  🧾 Seating Arrangement
+</button>
       <button class="btn" onclick="downloadExcelTemplate()">📄 Download Excel Template</button>
-      <span class="small">Use this template to upload seating data</span>
+        <span class="small">Use this template to upload seating data</span>
+    </div>
+    <div class="card">
+    <div class="u-row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
+    
     </div>
 
     <hr>
@@ -875,6 +883,7 @@ async function generatePDF(data, examType, department) {
 
   doc.save(`HallPlan_${dateForName}_${batchTextForName}_Exam${examType}.pdf`);
 }
+
 
 </script>
 </body>
