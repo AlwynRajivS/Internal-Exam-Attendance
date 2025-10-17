@@ -476,7 +476,7 @@ function renderPreview(){
         const seatDiv = document.createElement('div');
         seatDiv.className = 'seat empty';
         const s = assigned.find(a => a.row === r && a.col === c);
-        if (s && s.student) {
+        /*if (s && s.student) {
           seatDiv.className = 'seat ' + s.student.Year;
           seatDiv.textContent = s.student.RollNo;
           seatDiv.setAttribute('data-name', s.student.Name);
@@ -485,7 +485,26 @@ function renderPreview(){
           seatDiv.setAttribute('data-section', s.student.Section);
           seatDiv.setAttribute('data-subject', s.student.SubjectCode);
           seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
-        }
+        }*/
+
+
+if (s && s.student) {
+  seatDiv.className = 'seat ' + (s.student.Year || '');
+  seatDiv.textContent = s.student.RollNo || '';
+  seatDiv.setAttribute('data-name', s.student.Name || '');
+  seatDiv.setAttribute('data-year', s.student.Year || '');
+  seatDiv.setAttribute('data-section', s.student.Section || '');
+  seatDiv.setAttribute('data-subject', s.student.SubjectCode || '');
+  seatDiv.setAttribute('data-regno', s.student.RollNo || ''); // ✅ added for tracking
+  seatDiv.title = `${s.student.Name || ''} | ${s.student.SubjectCode || ''}`;
+}
+
+
+
+
+
+
+
         rowDiv.appendChild(seatDiv);
       }
       hallDiv.appendChild(rowDiv);
@@ -500,62 +519,6 @@ function renderPreview(){
 
 
 
-// --- Global variables ---
-let draggedSeat = null;
-let clickSwapSeat = null;
-
-// --- Enable drag & click swap ---
-function enableSeatEditing() {
-  const seats = document.querySelectorAll('.seat');
-
-  seats.forEach(seat => {
-    if (!seat.textContent.trim()) return;
-    seat.draggable = true;
-
-    // --- Drag events ---
-    seat.addEventListener('dragstart', () => {
-      draggedSeat = seat;
-      seat.style.opacity = '0.5';
-    });
-
-    seat.addEventListener('dragend', () => {
-      seat.style.opacity = '1';
-      draggedSeat = null;
-    });
-
-    seat.addEventListener('dragover', e => {
-      e.preventDefault();
-      seat.style.outline = '2px dashed #007bff';
-    });
-
-    seat.addEventListener('dragleave', () => {
-      seat.style.outline = 'none';
-    });
-
-    seat.addEventListener('drop', e => {
-      e.preventDefault();
-      seat.style.outline = 'none';
-      if (draggedSeat && draggedSeat !== seat) {
-        swapSeatData(draggedSeat, seat);
-      }
-    });
-
-    // --- Click swap mode ---
-    seat.addEventListener('click', () => {
-      if (!clickSwapSeat) {
-        clickSwapSeat = seat;
-        seat.style.outline = '2px solid #007bff';
-      } else if (clickSwapSeat === seat) {
-        seat.style.outline = 'none';
-        clickSwapSeat = null;
-      } else {
-        swapSeatData(clickSwapSeat, seat);
-        clickSwapSeat.style.outline = 'none';
-        clickSwapSeat = null;
-      }
-    });
-  });
-}
 
 // --- Swap seat contents + metadata + data array ---
 function swapSeatData(seatA, seatB) {
@@ -602,6 +565,90 @@ window.renderPreview = function() {
   // Wait a tick for DOM to render
   setTimeout(enableSeatEditing, 100);
 };
+
+//editing
+
+enableSeatEditing();
+let draggedSeat = null;
+let clickSwapSeat = null;
+
+function enableSeatEditing() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.seat').forEach(seat => {
+      seat.draggable = !!seat.textContent.trim();
+
+      seat.addEventListener('dragstart', e => {
+        if (!seat.textContent.trim()) { e.preventDefault(); return; }
+        draggedSeat = seat;
+        seat.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      seat.addEventListener('dragend', () => {
+        if (draggedSeat) draggedSeat.style.opacity = '1';
+        draggedSeat = null;
+      });
+
+      seat.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        seat.style.outline = '2px dashed #007bff';
+      });
+
+      seat.addEventListener('dragleave', () => seat.style.outline = 'none');
+
+      seat.addEventListener('drop', e => {
+        e.preventDefault();
+        seat.style.outline = 'none';
+        if (draggedSeat && draggedSeat !== seat) swapSeatData(draggedSeat, seat);
+      });
+
+      // --- Click-swap fallback ---
+      seat.addEventListener('click', () => {
+        if (!clickSwapSeat) {
+          clickSwapSeat = seat;
+          seat.style.outline = '2px solid #007bff';
+        } else if (clickSwapSeat === seat) {
+          seat.style.outline = 'none';
+          clickSwapSeat = null;
+        } else {
+          swapSeatData(clickSwapSeat, seat);
+          clickSwapSeat.style.outline = 'none';
+          clickSwapSeat = null;
+        }
+      });
+    });
+  });
+}
+function swapSeatData(seatA, seatB) {
+  const a = { ...seatA.dataset, text: seatA.textContent || '' };
+  const b = { ...seatB.dataset, text: seatB.textContent || '' };
+
+  // --- swap seatA content ---
+  seatA.textContent = b.text;
+  Object.assign(seatA.dataset, b);
+  seatA.className = b.text ? ('seat ' + (b.year || '')) : 'seat';
+  seatA.title = `${seatA.dataset.name || ''} | ${seatA.dataset.subject || ''}`;
+
+  // --- swap seatB content ---
+  seatB.textContent = a.text;
+  Object.assign(seatB.dataset, a);
+  seatB.className = a.text ? ('seat ' + (a.year || '')) : 'seat';
+  seatB.title = `${seatB.dataset.name || ''} | ${seatB.dataset.subject || ''}`;
+
+  // --- update finalSeatData if available ---
+  if (window.finalSeatData && Array.isArray(window.finalSeatData)) {
+    const findIndex = (regno, roll) =>
+      finalSeatData.findIndex(s => s.RollNo === regno || s.RollNo === roll);
+    const ia = findIndex(a.regno, a.text);
+    const ib = findIndex(b.regno, b.text);
+    if (ia > -1 && ib > -1) {
+      const tmp = finalSeatData[ia];
+      finalSeatData[ia] = finalSeatData[ib];
+      finalSeatData[ib] = tmp;
+    }
+  }
+}
 
 
 
