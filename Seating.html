@@ -3,271 +3,251 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Exam Seating — Multi-Hall Allotment</title>
+<title>Exam Seating — Constraint-aware Multi-Hall</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg-1: #f2fbff;
-  --card-bg: #ffffff;
-  --accent: linear-gradient(90deg,#06b6d4,#7c3aed);
-  --muted: #6b7a86;
-  --seat-bg: #f0f9ff;
-  --seat-border: #e6eef3;
-  --year1: #ffd8d8;
-  --year2: #fff3bf;
-  --year3: #d8f5ff;
-  --unassigned: #f8fafc;
+  --bg1:#e6f9ff; --bg2:#f7f5ff;
+  --card:#fff;
+  --muted:#6b7a86;
+  --i-color:#007bff;   /* I */
+  --ii-color:#28a745;  /* II */
+  --iii-color:#fd7e14; /* III */
+  --iv-color:#dc3545;  /* IV */
+  --empty:#f1f5f9;
+  --shadow: 0 10px 30px rgba(10,30,40,0.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{
-  background:linear-gradient(180deg,var(--bg-1),#fbf7ff 100%);
-  font-family: Poppins, system-ui, Arial; color:#052029; padding:18px;
-}
+body{font-family:Inter, Poppins, system-ui, Arial; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#052029; padding:16px;}
 .wrap{max-width:1200px;margin:0 auto;}
-header{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#7c3aed);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:20px;box-shadow:0 8px 30px rgba(124,58,237,0.12)}
-h1{font-size:20px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+h1{font-size:20px;margin:0}
 .lead{font-size:13px;color:#0b5564}
-.main{display:grid;grid-template-columns:380px 1fr;gap:16px}
-.card{background:var(--card-bg);border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(13,38,52,0.06)}
-label{display:block;font-size:13px;color:#073741;margin-top:10px}
-input[type=text],input[type=number],select,input[type=date],button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);font-size:14px}
+.main{display:grid;grid-template-columns:420px 1fr;gap:16px}
+.card{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+label{display:block;font-size:13px;color:#073741;margin-top:8px}
+input[type=text],input[type=number],input[type=date],select,button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);font-size:14px}
 .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.btn{background:var(--accent);color:#021;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;min-width:110px}
+.btn{background:linear-gradient(90deg,#06b6d4,#7c3aed);color:#021;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer}
 .btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741}
-.small{font-size:12px;color:var(--muted);margin-top:6px}
+.small{font-size:12px;color:var(--muted)}
 .hall-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-.hall-item{display:grid;grid-template-columns:1fr 56px 56px 44px;gap:8px;align-items:center}
-.hall-item input[type=text]{padding:8px}
-.hall-item input[type=number]{padding:8px}
-.add-hall{display:flex;gap:8px;margin-top:8px}
-.preview-area{display:grid;gap:12px}
-.preview-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.preview{min-height:220px;padding:12px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff)}
-.preview-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.seatmap{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:12px;background:transparent}
-.seat-row{display:flex;gap:8px;align-items:center}
-.row-label{width:30px;text-align:center;color:var(--muted);font-weight:600}
-.seat{min-width:56px;height:52px;border-radius:8px;background:var(--seat-bg);border:1px solid var(--seat-border);display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;position:relative;transition:0.18s;cursor:pointer}
-.seat.empty{opacity:0.34;background:var(--unassigned)}
-.seat .roll{font-weight:700;font-size:12px}
-.seat .meta{font-size:11px;color:#164048}
-.tooltip{position:absolute;background:#021;color:white;font-size:11px;padding:5px 8px;border-radius:6px;top:-36px;left:50%;transform:translateX(-50%);opacity:0;pointer-events:none;transition:0.12s}
-.seat:hover{transform:translateY(-3px)}
-.seat:hover .tooltip{opacity:1}
+.hall-item{display:grid;grid-template-columns:1fr 56px 56px 44px 44px 44px 44px 36px;gap:6px;align-items:center}
+.hall-item input{padding:8px}
+.preview{min-height:280px;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbf7ff)}
 .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:13px}
-.legend-swatch{width:18px;height:18px;border-radius:6px;border:1px solid rgba(3,37,45,0.06)}
-.right-panel{display:flex;flex-direction:column;gap:12px}
-.student-list{max-height:260px;overflow:auto;border-radius:8px;border:1px solid #eef4f7;padding:8px;background:white}
+.legend-item{display:flex;gap:6px;align-items:center}
+.legend-swatch{width:18px;height:18px;border-radius:6px;border:1px solid rgba(0,0,0,0.06)}
+.preview-halls{display:flex;flex-direction:column;gap:12px}
+.hall-preview{border-radius:10px;padding:10px;border:1px solid rgba(3,37,45,0.03);background:linear-gradient(180deg,#fff,#fcfdff)}
+.hall-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.seat-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row-label{width:28px;text-align:center;color:var(--muted);font-weight:600}
+.seat{min-width:54px;height:46px;border-radius:8px;background:var(--empty);border:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;position:relative;cursor:pointer;transition:0.12s}
+.seat.empty{opacity:0.36}
+.seat:hover{transform:translateY(-4px)}
+.tooltip{position:absolute;background:#021;color:#fff;font-size:11px;padding:6px 8px;border-radius:6px;top:-44px;left:50%;transform:translateX(-50%);opacity:0;pointer-events:none;transition:0.12s}
+.seat:hover .tooltip{opacity:1}
+.counter{margin-top:8px;font-size:13px;color:#052029}
+.student-list{max-height:260px;overflow:auto;border-radius:8px;border:1px solid #eef4f7;padding:8px;background:#fff;margin-top:10px}
 .student-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:6px;border:1px dashed transparent}
 .student-row:hover{background:#fbfeff;border-color:#e6f4fb}
 .student-row.selected{outline:3px solid rgba(6,182,212,0.12)}
-.badge{background:#eef6ff;padding:6px 8px;border-radius:999px;font-weight:700;font-size:12px}
-.summary{display:flex;gap:8px;flex-wrap:wrap}
-.kv{font-size:13px;color:#124};
-.footer{margin-top:12px;color:#6a7d86;font-size:13px}
-.hall-quota{display:flex;gap:6px;align-items:center}
-.hq-input{width:60px;padding:6px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);text-align:center}
-@media (max-width:980px){
-  .main{grid-template-columns:1fr}
-  .logo{width:48px;height:48px}
-}
+@media (max-width:980px){.main{grid-template-columns:1fr}.hall-item{grid-template-columns:1fr 44px 44px 34px 34px 34px 34px 30px}.seat{min-width:44px;height:36px;font-size:11px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
-  <div class="logo">ES</div>
-  <div>
-    <h1>Exam Seating — Multi-Hall Allotment</h1>
-    <div class="lead">Upload student sheet, set halls & quotas, preview coloured seatmap and download per-hall Excel sheets.</div>
-  </div>
-</header>
-
-<div class="main">
-  <!-- LEFT CONTROLS -->
-  <div>
-    <div class="card">
-      <label>Date</label>
-      <input type="date" id="inpDate">
-
-      <label>Department</label>
-      <select id="inpDept">
-        <option value="">-- Select --</option>
-        <option value="CSE">CSE</option>
-        <option value="ECE">ECE</option>
-        <option value="BT">BT</option>
-      </select>
-
-      <label>Batch</label>
-      <select id="inpBatch">
-        <option value="">-- Select --</option>
-        <option value="FN">FN</option>
-        <option value="AN">AN</option>
-      </select>
-
-      <label style="margin-top:10px">Upload Student File (.xlsx / .csv)</label>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-      <div class="small">Template: <code>Roll No,Name of the Student,Year,Section,Subject Code,Subject Name</code></div>
-
-      <div class="controls">
-        <button class="btn" id="btnTemplate">Download Template</button>
-        <button class="btn ghost" id="btnPreviewSample">Show Sample</button>
-      </div>
-
-      <hr style="margin:10px 0">
-
-      <label>Halls (add 1..n)</label>
-      <div class="hall-list" id="hallList"></div>
-      <div class="add-hall">
-        <button class="btn ghost" id="btnAddHall">+ Add Hall</button>
-        <button class="btn" id="btnRemoveLast">Remove Last</button>
-      </div>
-
-      <label style="margin-top:10px">Seating Pattern</label>
-      <select id="pattern">
-        <option value="row">Row-wise (A1, B1...)</option>
-        <option value="col">Column-wise (A1, A2...)</option>
-        <option value="snake">Snake pattern</option>
-        <option value="alternate">Alternate row</option>
-        <option value="block">Block pattern</option>
-      </select>
-
-      <label style="margin-top:8px"><input type="checkbox" id="randomize" checked/> Randomize students before seating</label>
-      <label style="margin-top:6px"><input type="checkbox" id="respectQuota" /> Respect per-hall year quotas (set per hall)</label>
-
-      <div style="margin-top:12px" class="controls">
-        <button class="btn" id="btnGenerate">Generate & Download Excel</button>
-        <button class="btn ghost" id="btnClear">Clear</button>
-      </div>
-
-      <div class="small" style="margin-top:8px">Constraint applied: same <strong>Subject Code</strong> will not sit immediately left or right when possible.</div>
+  <header>
+    <div class="logo">ES</div>
+    <div>
+      <h1>Exam Seating — Constraint-aware</h1>
+      <div class="lead">Avoid same-year or same-subject adjacent (left/right). Preview, manual adjust and export Excel.</div>
     </div>
-  </div>
+  </header>
 
-  <!-- RIGHT PREVIEW & MANUAL ASSIGN -->
-  <div class="right-panel">
-    <div class="card preview-area">
-      <div class="preview-top">
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <div id="messages"><strong>No file loaded.</strong></div>
-          <div class="preview-meta">
+  <div class="main">
+    <!-- LEFT: Controls -->
+    <div>
+      <div class="card">
+        <label>Date</label>
+        <input type="date" id="inpDate">
+
+        <label>Department</label>
+        <input type="text" id="inpDept" placeholder="CSE / ECE ...">
+
+        <label>Batch</label>
+        <input type="text" id="inpBatch" placeholder="FN / AN">
+
+        <label style="margin-top:8px">Upload students (.xlsx/.csv)</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <div class="small">Required columns: Roll No, Name, Year, Section, Subject Code, Subject Name</div>
+        <div class="counter" id="counterInfo">Total: 0 | Assigned: 0 | Unassigned: 0</div>
+
+        <div class="controls" style="margin-top:8px">
+          <button class="btn" id="btnTemplate">Download Template</button>
+          <button class="btn ghost" id="btnLoadSample">Load Sample</button>
+        </div>
+
+        <hr style="margin:10px 0">
+
+        <label>Halls (add/remove and set rows/cols)</label>
+        <div class="hall-list" id="hallList"></div>
+        <div class="controls" style="margin-top:8px">
+          <button class="btn ghost" id="btnAddHall">+ Add Hall</button>
+          <button class="btn" id="btnRemoveLast">Remove Last</button>
+        </div>
+
+        <label style="margin-top:10px">Seating pattern</label>
+        <select id="pattern">
+          <option value="row">Row-wise</option>
+          <option value="col">Column-wise</option>
+          <option value="snake">Snake</option>
+          <option value="alternate">Alternate rows</option>
+        </select>
+
+        <label style="margin-top:8px"><input type="checkbox" id="randomize" checked> Randomize pool per attempt</label>
+
+        <div class="controls" style="margin-top:10px">
+          <button class="btn" id="btnPreview">Preview Layout</button>
+          <button class="btn ghost" id="btnFinalize">Generate & Export Excel</button>
+        </div>
+
+        <div class="small" style="margin-top:8px">Algorithm will attempt many randomized arrangements to avoid left/right conflicts (same year or same subject code). If perfect seating impossible it selects arrangement with minimal conflicts.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Preview + Student list -->
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div id="messages"><strong>No file loaded.</strong></div>
             <div class="legend">
-              <div class="legend-item"><div class="legend-swatch" style="background:var(--year1)"></div>1st Year</div>
-              <div class="legend-item"><div class="legend-swatch" style="background:var(--year2)"></div>2nd Year</div>
-              <div class="legend-item"><div class="legend-swatch" style="background:var(--year3)"></div>3rd Year</div>
-              <div class="legend-item"><div class="legend-swatch" style="background:var(--unassigned)"></div>Empty</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--i-color)"></div>I</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--ii-color)"></div>II</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--iii-color)"></div>III</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--iv-color)"></div>IV</div>
             </div>
           </div>
+          <div class="small">Click student → click seat to assign manually</div>
         </div>
 
-        <div>
-          <div class="summary" id="summaryArea"></div>
+        <div id="preview" class="preview">
+          <div class="small">Preview will appear here after clicking <strong>Preview Layout</strong>.</div>
+        </div>
+
+        <div style="margin-top:10px">
+          <strong>Unassigned Students (preview)</strong>
+          <input id="searchStudent" placeholder="Search roll/name/subject" style="margin-top:8px;padding:8px;border-radius:8px;border:1px solid rgba(3,37,45,0.06)">
+          <div class="student-list" id="studentList"></div>
         </div>
       </div>
-
-      <div id="preview" class="preview"></div>
     </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Unassigned Students</strong>
-        <div class="small">Click a student, then click a seat to manually place</div>
-      </div>
-
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <input type="text" id="searchStudent" placeholder="Search roll/name/subject" style="flex:1;padding:8px;border-radius:8px">
-        <button class="btn ghost" id="btnRefreshList">Refresh</button>
-      </div>
-
-      <div class="student-list" id="studentList"></div>
-
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button class="btn" id="btnAutoFill" title="Automatically fill remaining seats (simple fill)">Auto-Fill Remaining</button>
-        <button class="btn ghost" id="btnExportUnassigned">Export Unassigned</button>
-      </div>
-    </div>
-
-    <div class="footer">Designed for offline use. Make sure xlsx.full.min.js is present. Mobile responsive and touch friendly.</div>
   </div>
-</div>
+
+  <footer style="text-align:center;margin-top:14px;color:#6a7d86">Export header uses: Date, Department, Batch, Hall No, Student Roll No, Name, Seating No, Subject Code, Subject, Year, Section</footer>
 </div>
 
 <script>
-(function(){
-/* ===== state ===== */
-let students = [];            // all student objects {RollNo,Name,Year,Section,SubjectCode,SubjectName}
-let unassigned = [];          // remaining
-let halls = [];               // {id,name,rows,cols,quota:{y1,y2,y3}}
+/* ====== state ====== */
+let students = [];            // parsed original student list
+let previewPool = [];         // pool used for preview
+let previewUnassigned = [];   // unassigned after preview allocation
+let previewAssigns = [];      // per-hall preview assignments
+let finalAssigns = [];        // final after finalize
+let halls = [];               // {id,name,rows,cols,y1,y2,y3,y4}
 let hallCounter = 0;
-let selectedStudentId = null; // index in unassigned for manual assign
-const YEAR_COLORS = { '1': 'var(--year1)', 'I': 'var(--year1)', '01':'var(--year1)', '2':'var(--year2)', 'II':'var(--year2)', '3':'var(--year3)', 'III':'var(--year3)' };
+let selectedStudentIdx = null; // index into previewUnassigned for manual assign
 
-/* ===== helpers ===== */
-function normalizeRow(r){
-  const map = {};
-  for(const k in r) if(Object.prototype.hasOwnProperty.call(r,k)) map[k.trim().toLowerCase()] = r[k];
-  const roll = map['roll no']||map['rollno']||map['roll']||'';
-  const name = map['name of the student']||map['name']||'';
-  const year = (map['year']||'').toString().trim();
-  const section = map['section']||'';
-  const subj = map['subject code']||map['subjectcode']||'';
-  const subjname = map['subject name']||map['subjectname']||'';
-  return {RollNo:roll,Name:name,Year:year,Section:section,SubjectCode:subj,SubjectName:subjname};
-}
-
-function showMessage(msg){ document.getElementById('messages').innerHTML = `<strong>${msg}</strong>`; }
+/* ====== helpers ====== */
 function uid(){ return Math.floor(Math.random()*1e9).toString(36); }
-
-/* ===== halls UI ===== */
-function renderHallList(){
-  const container=document.getElementById('hallList'); container.innerHTML='';
-  halls.forEach(h=>{
-    const div=document.createElement('div'); div.className='hall-item';
-    div.innerHTML=`
-      <input type='text' id='hall_name_${h.id}' value='${escapeHtml(h.name)}' placeholder='Hall name'>
-      <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' title='Rows'>
-      <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' title='Cols'>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <button type='button' data-remove='${h.id}' class='remove-btn' style='background:#ff6b6b;color:white;border:none;border-radius:6px;padding:6px'>×</button>
-        <div class="hall-quota small" style="margin-top:6px">
-          <input class="hq-input" id="hq1_${h.id}" type="number" min="0" placeholder="Y1" value="${h.quota.y1||''}" title="1st year seats">
-          <input class="hq-input" id="hq2_${h.id}" type="number" min="0" placeholder="Y2" value="${h.quota.y2||''}" title="2nd year seats">
-          <input class="hq-input" id="hq3_${h.id}" type="number" min="0" placeholder="Y3" value="${h.quota.y3||''}" title="3rd year seats">
-        </div>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-
-  container.querySelectorAll('.remove-btn').forEach(btn=> btn.addEventListener('click', ()=>{
-    const id=btn.getAttribute('data-remove');
-    halls = halls.filter(x=>x.id!==id);
-    renderHallList();
-  }));
+function escapeHtml(s=''){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function normalizeRow(r){
+  const map={};
+  for(const k in r) if(Object.prototype.hasOwnProperty.call(r,k)) map[k.trim().toLowerCase()] = r[k];
+  return {
+    RollNo: map['roll no']||map['rollno']||map['roll']||'',
+    Name: map['name of the student']||map['name']||'',
+    Year: (map['year']||'').toString().trim(),
+    Section: map['section']||'',
+    SubjectCode: map['subject code']||map['subjectcode']||map['subject']||'',
+    SubjectName: map['subject name']||map['subjectname']||''
+  };
 }
+function normalizeYearVal(y){
+  if(!y) return '';
+  const v = String(y).trim().toLowerCase();
+  if(v.startsWith('1') || v.startsWith('i')) return '1';
+  if(v.startsWith('2') || v.startsWith('ii')) return '2';
+  if(v.startsWith('3') || v.startsWith('iii')) return '3';
+  if(v.startsWith('4') || v.startsWith('iv')) return '4';
+  const m = v.match(/[1-4]/); return m?m[0]:'';
+}
+function colorForYear(y){
+  if(y=='1') return 'var(--i-color)';
+  if(y=='2') return 'var(--ii-color)';
+  if(y=='3') return 'var(--iii-color)';
+  if(y=='4') return 'var(--iv-color)';
+  return 'var(--empty)';
+}
+function seatId(col,row){ return `${String.fromCharCode(65+col)}${row+1}`; }
 
-/* ===== sample + template ===== */
-document.getElementById('btnTemplate').addEventListener('click', ()=>{
-  const headers=['Roll No','Name of the Student','Year','Section','Subject Code','Subject Name'];
-  const ws=XLSX.utils.aoa_to_sheet([headers,['12345','Student One','1','A','CS301','Networks']]);
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template');
-  XLSX.writeFile(wb,'Seating_Upload_Template.xlsx');
-});
-document.getElementById('btnAddHall').addEventListener('click', ()=> addHall());
-document.getElementById('btnRemoveLast').addEventListener('click', ()=> removeLastHall());
-document.getElementById('btnPreviewSample').addEventListener('click', ()=> renderSampleTable(8));
-document.getElementById('btnClear').addEventListener('click', ()=>{
-  students=[]; unassigned=[]; halls=[]; hallCounter=0; document.getElementById('preview').innerHTML=''; document.getElementById('messages').innerHTML='No file loaded.'; renderHallList(); renderStudentList();
+/* ====== UI: halls management ====== */
+function renderHallList(){
+  const el=document.getElementById('hallList'); el.innerHTML='';
+  halls.forEach(h=>{
+    const d=document.createElement('div'); d.className='hall-item';
+    d.innerHTML = `
+      <input type="text" id="hall_name_${h.id}" value="${escapeHtml(h.name)}" placeholder="Hall name">
+      <input type="number" id="hall_rows_${h.id}" value="${h.rows}" min="1" title="rows">
+      <input type="number" id="hall_cols_${h.id}" value="${h.cols}" min="1" title="cols">
+      <input type="number" id="year1_${h.id}" value="${h.y1||0}" min="0" placeholder="I" title="I year">
+      <input type="number" id="year2_${h.id}" value="${h.y2||0}" min="0" placeholder="II" title="II year">
+      <input type="number" id="year3_${h.id}" value="${h.y3||0}" min="0" placeholder="III" title="III year">
+      <input type="number" id="year4_${h.id}" value="${h.y4||0}" min="0" placeholder="IV" title="IV year">
+      <button class="btn ghost" data-remove="${h.id}">×</button>
+    `;
+    el.appendChild(d);
+  });
+  el.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{
+    const id=b.getAttribute('data-remove'); halls = halls.filter(x=>x.id!==id); renderHallList();
+  });
+}
+function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6){
+  halls.push({ id: String(++hallCounter), name, rows, cols, y1:0,y2:0,y3:0,y4:0 });
+  renderHallList();
+}
+function removeLastHall(){ if(halls.length){ halls.pop(); renderHallList(); } }
+
+/* ====== file load / parse ====== */
+document.getElementById('fileInput').addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const name = (f.name||'').toLowerCase();
+  try{
+    if(name.endsWith('.csv')){
+      const text = await f.text();
+      const parsed = parseCSV(text);
+      students = parsed.rows.map(normalizeRow);
+    } else {
+      const data = await f.arrayBuffer();
+      const wb = XLSX.read(data,{type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const arr = XLSX.utils.sheet_to_json(ws, {defval:''});
+      students = arr.map(normalizeRow);
+    }
+    previewPool = students.slice();
+    showMsg(`Loaded ${students.length} students`);
+    renderStudentList();
+    renderSummaryCounts();
+  }catch(err){ showMsg('Failed to read file: '+err.message); }
 });
 
-/* ===== file parsing ===== */
+/* CSV parse helper */
 function parseCSV(text){
-  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   if(!lines.length) return {rows:[]};
   const sep = lines[0].includes(',') ? ',' : '\t';
   const headers = lines[0].split(sep).map(h=>h.trim());
@@ -278,411 +258,164 @@ function parseCSV(text){
   return {headers,rows};
 }
 
-document.getElementById('fileInput').addEventListener('change', async(e)=>{
-  const f=e.target.files[0]; if(!f) return;
-  const name=f.name.toLowerCase();
-  try{
-    if(name.endsWith('.csv')){
-      const text=await f.text();
-      const parsed=parseCSV(text);
-      students = parsed.rows.map(normalizeRow);
-    } else {
-      const data = await f.arrayBuffer();
-      const wb = XLSX.read(data, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const arr = XLSX.utils.sheet_to_json(ws,{defval:''});
-      students = arr.map(normalizeRow);
-    }
-    unassigned = students.slice();
-    showMessage(`Loaded ${students.length} records`);
-    renderSampleTable(8);
-    renderStudentList();
-    renderSummary();
-  }catch(err){ showMessage('Failed to read file: '+err.message); }
+/* sample loader */
+document.getElementById('btnLoadSample').addEventListener('click', ()=>{
+  students = [];
+  const names = ['Alice','Bob','Cathy','Dinesh','Eve','Frank','Gita','Hari','Isha','John','Kumar','Lina','Mohan','Nila','Omar','Priya'];
+  for(let i=0;i<80;i++){
+    const y = ((i%4)+1).toString();
+    students.push({
+      RollNo: (1000+i),
+      Name: names[i%names.length]+' '+(i+1),
+      Year: y,
+      Section: ['A','B','C'][i%3],
+      SubjectCode: 'S' + (101 + (i%10)),
+      SubjectName: 'Sub' + (i%10)
+    });
+  }
+  previewPool = students.slice();
+  showMsg(`Loaded sample ${students.length} students`);
+  renderStudentList(); renderSummaryCounts();
 });
 
-/* ===== sample table ===== */
-function renderSampleTable(n=6){
-  const preview=document.getElementById('preview'); preview.innerHTML='';
-  if(!students.length){ preview.innerHTML='<div class="small">No data</div>'; return; }
-  const tbl=document.createElement('table'); tbl.style.width='100%';
-  const ths=['Roll No','Name','Year','Section','Subject Code','Subject Name'];
-  const thead=document.createElement('thead'); thead.innerHTML='<tr>'+ths.map(t=>`<th style="padding:8px;text-align:left">${t}</th>`).join('')+'</tr>';
-  tbl.appendChild(thead);
-  const tbody=document.createElement('tbody');
-  students.slice(0,n).forEach(s=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="padding:8px">${escapeHtml(s.RollNo)}</td><td style="padding:8px">${escapeHtml(s.Name)}</td><td style="padding:8px">${escapeHtml(s.Year)}</td><td style="padding:8px">${escapeHtml(s.Section)}</td><td style="padding:8px">${escapeHtml(s.SubjectCode)}</td><td style="padding:8px">${escapeHtml(s.SubjectName)}</td>`;
-    tbody.appendChild(tr);
+/* template download */
+document.getElementById('btnTemplate').addEventListener('click', ()=>{
+  const ws = XLSX.utils.aoa_to_sheet([['Roll No','Name of the Student','Year','Section','Subject Code','Subject Name'], ['1001','Student One','1','A','CS101','Networks']]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  XLSX.writeFile(wb, 'Seating_Template.xlsx');
+});
+
+/* ====== preview allocation with constraints ====== */
+
+/*
+Approach:
+- For each hall, try many attempts (randomized sampling) to select candidate students respecting per-hall year quotas (if set).
+- For a candidate ordering, map to seats according to pattern and compute adjacent (left-right) conflicts:
+    conflict if left seat exists and (same normalized year OR same subject code)
+- Keep arrangement with zero conflicts or minimal conflicts after attempts (attempts up to MAX_ATTEMPTS).
+- After allocating each hall in order, remove those students from pool and proceed to next hall.
+*/
+
+function readHallInputs(){
+  // update halls array with latest inputs
+  halls = halls.map(h=>{
+    const name = document.getElementById(`hall_name_${h.id}`).value || h.name;
+    const rows = Math.max(1, Number(document.getElementById(`hall_rows_${h.id}`).value) || h.rows);
+    const cols = Math.max(1, Number(document.getElementById(`hall_cols_${h.id}`).value) || h.cols);
+    const y1 = Math.max(0, Number(document.getElementById(`year1_${h.id}`).value) || 0);
+    const y2 = Math.max(0, Number(document.getElementById(`year2_${h.id}`).value) || 0);
+    const y3 = Math.max(0, Number(document.getElementById(`year3_${h.id}`).value) || 0);
+    const y4 = Math.max(0, Number(document.getElementById(`year4_${h.id}`).value) || 0);
+    return {...h, name, rows, cols, y1,y2,y3,y4};
   });
-  tbl.appendChild(tbody);
-  preview.appendChild(tbl);
 }
 
-/* ===== seat id helpers ===== */
-function seatIdColRow(col,row){ return `${String.fromCharCode(65+col)}${row+1}`; }
+/* build seat order for pattern */
 function buildSeatOrder(rows,cols,pattern){
   const order=[];
   if(pattern==='row'){ for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) order.push({r,c}); }
   else if(pattern==='col'){ for(let c=0;c<cols;c++) for(let r=0;r<rows;r++) order.push({r,c}); }
   else if(pattern==='snake'){ for(let r=0;r<rows;r++){ if(r%2===0) for(let c=0;c<cols;c++) order.push({r,c}); else for(let c=cols-1;c>=0;c--) order.push({r,c}); } }
   else if(pattern==='alternate'){ for(let r=0;r<rows;r++) for(let c=0;c<cols;c+=2) order.push({r,c}); for(let r=0;r<rows;r++) for(let c=1;c<cols;c+=2) order.push({r,c}); }
-  else if(pattern==='block'){ const blockR=Math.max(1,Math.floor(rows/2)); const blockC=Math.max(1,Math.floor(cols/2));
-    for(let br=0;br<rows;br+=blockR) for(let bc=0;bc<cols;bc+=blockC) for(let r=br;r<Math.min(rows,br+blockR);r++) for(let c=bc;c<Math.min(cols,bc+blockC);c++) order.push({r,c});
-  }
+  else { for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) order.push({r,c}); }
   return order;
 }
 
-/* ===== allocation with quota + subject adjacency rule ===== */
-function allocateToHall(stuList, rows, cols, pattern, respectQuota=false, quota={}) {
-  // seats matrix
-  const seats = Array.from({length:rows}, ()=> Array.from({length:cols}, ()=> null));
-  const order = buildSeatOrder(rows,cols,pattern);
-  let pool = stuList.slice();
-
-  // randomize if requested at top-level before calling this
-  for(const pos of order){
-    if(!pool.length) break;
-    // try to pick a student respecting quota
-    let idx=-1;
-    if(respectQuota){
-      // determine seat index counts used so far for this hall by year
-      // We use the provided quota object: quota.y1,y2,y3 as numbers or empty.
-      // If quota for a year remains (i.e. seats assigned of that year < quota), prefer that year.
-      const counts = { '1':0, '2':0, '3':0 };
-      // count already assigned
-      for(let rr=0; rr<rows; rr++) for(let cc=0; cc<cols; cc++){
-        const s = seats[rr] && seats[rr][cc];
-        if(s && s.Year) {
-          const y = normalizeYear(s.Year);
-          if(y) counts[y] = (counts[y]||0)+1;
-        }
-      }
-      // find a student matching any year with remaining quota
-      const candidateYears = [];
-      if(quota.y1 && counts['1'] < quota.y1) candidateYears.push('1');
-      if(quota.y2 && counts['2'] < quota.y2) candidateYears.push('2');
-      if(quota.y3 && counts['3'] < quota.y3) candidateYears.push('3');
-
-      if(candidateYears.length){
-        idx = pool.findIndex(s => candidateYears.includes(normalizeYear(s.Year)));
+/* compute conflict count given assigned array (sequence mapped to seat order) */
+function countConflicts(assigns, cols){
+  // assigns is array of student objects or null in row-major order
+  let conflicts = 0;
+  for(let i=0;i<assigns.length;i++){
+    const s = assigns[i];
+    if(!s) continue;
+    // left neighbor exists if not first column
+    if(i % cols !== 0){
+      const left = assigns[i-1];
+      if(left){
+        const y1 = normalizeYearVal(s.Year), y2 = normalizeYearVal(left.Year);
+        if(y1 && y1 === y2) conflicts++;
+        else if((s.SubjectCode||'').toString().trim() && (left.SubjectCode||'').toString().trim() && (s.SubjectCode||'').toString().trim() === (left.SubjectCode||'').toString().trim()) conflicts++;
       }
     }
-
-    // else try avoid left neighbor subject code
-    const left = pos.c>0 ? seats[pos.r][pos.c-1] : null;
-    if(idx===-1){
-      idx = pool.findIndex(s => !left || ( (s.SubjectCode||'').toString().trim() !== (left.SubjectCode||'').toString().trim() ));
-    }
-    if(idx===-1) idx = 0;
-    seats[pos.r][pos.c] = pool.splice(idx,1)[0];
   }
-
-  const assigned=[];
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-    assigned.push({row:r,col:c,student:seats[r][c]});
-  }
-  return {assigned,remaining:pool};
+  return conflicts;
 }
 
-/* ===== main generate handler ===== */
-document.getElementById('btnGenerate').addEventListener('click', ()=>{
-  if(!students.length){ alert('Please upload student Excel first'); return; }
-  const date=document.getElementById('inpDate').value;
-  const dept=document.getElementById('inpDept').value||'DEPT';
-  const batch=document.getElementById('inpBatch').value||'BATCH';
-  const pattern=document.getElementById('pattern').value;
-  const randomize=document.getElementById('randomize').checked;
-  const respectQuota=document.getElementById('respectQuota').checked;
-  if(!date){ if(!confirm('No date selected. Continue?')) return; }
-
-  // read halls config from inputs
-  const hallConfig = halls.map(h=>{
-    const name = document.getElementById(`hall_name_${h.id}`).value || h.name;
-    const rows = Number(document.getElementById(`hall_rows_${h.id}`).value) || h.rows;
-    const cols = Number(document.getElementById(`hall_cols_${h.id}`).value) || h.cols;
-    const y1 = Number(document.getElementById(`hq1_${h.id}`).value) || 0;
-    const y2 = Number(document.getElementById(`hq2_${h.id}`).value) || 0;
-    const y3 = Number(document.getElementById(`hq3_${h.id}`).value) || 0;
-    return {HallNo: name, rows, cols, quota:{ y1,y2,y3 }};
+/* pick students for a hall according to quotas (best effort), then try arrange to minimize conflicts */
+function allocateHallWithConstraints(pool, hall, pattern, randomize, maxAttempts=400){
+  const seats = hall.rows * hall.cols;
+  // group pool by year
+  const byYear = {'1':[], '2':[], '3':[], '4':[], '':[]};
+  pool.forEach(s => {
+    const y = normalizeYearVal(s.Year) || '';
+    (byYear[y] = byYear[y]||[]).push(s);
   });
 
-  // copy unassigned pool
-  let pool = unassigned.slice();
-  if(randomize) pool.sort(()=>Math.random()-0.5);
-
-  const finalResult = [];
-  hallConfig.forEach(hc=>{
-    const {assigned,remaining} = allocateToHall(pool, hc.rows, hc.cols, pattern, respectQuota, hc.quota);
-    const seatsWithNo = assigned.map(a=>({...a,SeatingNo:seatIdColRow(a.col,a.row)}));
-    finalResult.push({...hc,assigned:seatsWithNo});
-    pool = remaining;
-  });
-
-  // update UI preview
-  renderFinalPreview(finalResult);
-
-  // Prepare Excel for download
-  const wb = XLSX.utils.book_new();
-  finalResult.forEach(hc=>{
-    const wsData = [['Seat No','Roll No','Name','Year','Section','Subject Code','Subject Name']];
-    hc.assigned.forEach(s=>{
-      if(s.student) wsData.push([s.SeatingNo, s.student.RollNo, s.student.Name, s.student.Year, s.student.Section, s.student.SubjectCode, s.student.SubjectName]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    // sanitize sheet name
-    const sheetName = sanitizeSheetName(hc.HallNo || 'Hall');
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  });
-
-  // also include unassigned sheet
-  if(pool.length){
-    const wsData = [['Roll No','Name','Year','Section','Subject Code','Subject Name']];
-    pool.forEach(s => wsData.push([s.RollNo,s.Name,s.Year,s.Section,s.SubjectCode,s.SubjectName]));
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, 'Unassigned');
+  // prepare desired quotas but cap them to available counts
+  const desired = { '1': Math.max(0,hall.y1||0), '2': Math.max(0,hall.y2||0), '3': Math.max(0,hall.y3||0), '4': Math.max(0,hall.y4||0) };
+  // reduce quotas if sum > seats
+  let desiredSum = Object.values(desired).reduce((a,b)=>a+b,0);
+  if(desiredSum > seats){
+    // simple truncation from 4->1
+    let over = desiredSum - seats;
+    const order = ['4','3','2','1'];
+    for(const k of order){
+      if(over<=0) break;
+      const take = Math.min(desired[k], over);
+      desired[k] -= take; over -= take;
+    }
   }
 
-  const safeDate = date ? date.replaceAll('-','') : (new Date()).toISOString().slice(0,10).replaceAll('-','');
-  const filename = `${dept}_${batch}_${safeDate}_Seating.xlsx`;
-  XLSX.writeFile(wb, filename);
-});
+  // attempt sequences
+  let best = {conflicts: Infinity, assigns: null, selectedStudents: null};
+  const indices = pool.map((_,i)=>i);
 
-/* ===== render preview ===== */
-function renderFinalPreview(finalResult){
-  const preview=document.getElementById('preview'); preview.innerHTML='';
-  finalResult.forEach(hc=>{
-    const visual=document.createElement('div'); visual.className='seatmap';
-    visual.style.border = '1px solid rgba(3,37,45,0.03)';
-    visual.style.padding = '10px';
-    visual.style.borderRadius = '10px';
-    visual.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong>${escapeHtml(hc.HallNo)}</strong>
-      <div class="small">Rows: ${hc.rows} × Cols: ${hc.cols} &nbsp; | &nbsp; Seats: ${hc.rows*hc.cols}</div>
-    </div>`;
-    for(let r=0;r<hc.rows;r++){
-      const rowDiv=document.createElement('div'); rowDiv.className='seat-row';
-      const rowLabel=document.createElement('div'); rowLabel.className='row-label'; rowLabel.textContent = r+1;
-      rowDiv.appendChild(rowLabel);
-      for(let c=0;c<hc.cols;c++){
-        const seatNo = seatIdColRow(c,r);
-        const rec = hc.assigned.find(x=>x.SeatingNo===seatNo);
-        const seatDiv=document.createElement('div'); seatDiv.className='seat';
-        seatDiv.dataset.hall = hc.HallNo;
-        seatDiv.dataset.seat = seatNo;
-        if(rec && rec.student){
-          const s = rec.student;
-          seatDiv.innerHTML = `<div class="roll">${escapeHtml(seatNo)}</div><div class="meta">${escapeHtml(s.RollNo)}</div>`;
-          const tooltip=document.createElement('div'); tooltip.className='tooltip';
-          tooltip.innerHTML = `${escapeHtml(s.Name)}<br>${escapeHtml(s.SubjectCode)} • ${escapeHtml(s.Year)}`;
-          seatDiv.appendChild(tooltip);
-          // color by year
-          const yy = normalizeYear(s.Year);
-          const color = YEAR_COLORS[yy] || 'transparent';
-          if(color) seatDiv.style.background = `linear-gradient(180deg, ${color}, rgba(255,255,255,0.6))`;
-        } else {
-          seatDiv.classList.add('empty');
-          seatDiv.innerHTML = `<div class="roll">${seatNo}</div>`;
-        }
-        // click handler for manual assignment: if a student selected, assign
-        seatDiv.addEventListener('click', ()=> {
-          if(selectedStudentId !== null){
-            const stud = unassigned[selectedStudentId];
-            if(!stud) return;
-            // if seat already has student, push existing to unassigned
-            if(rec && rec.student){
-              unassigned.push(rec.student);
-            }
-            // modify finalResult in place: find hc & insertion
-            rec.student = stud;
-            // remove from unassigned list
-            unassigned.splice(selectedStudentId,1);
-            selectedStudentId = null;
-            renderFinalPreview(finalResult);
-            renderStudentList();
-            renderSummary();
-            return;
-          }
-          // if no selected student, show quick info
-          // no-op or maybe highlight
-        });
-        rowDiv.appendChild(seatDiv);
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    // build candidate selection for hall
+    // copy buckets
+    const b = { '1': byYear['1'].slice(), '2': byYear['2'].slice(), '3': byYear['3'].slice(), '4': byYear['4'].slice(), '': byYear[''].slice() };
+
+    // optionally shuffle buckets
+    if(randomize){
+      for(const k in b) shuffleArray(b[k]);
+    }
+
+    // pick per-year desired
+    let selected = [];
+    for(const k of ['1','2','3','4']){
+      const need = desired[k];
+      while(need>0 && selected.length < seats && b[k].length){
+        selected.push(b[k].shift());
+        // reduce need (we don't update variable need here; simpler to do a loop)
+        desired[k]--; // temporarily reduce; revert after attempt
       }
-      visual.appendChild(rowDiv);
     }
-    preview.appendChild(visual);
-  });
 
-  renderStudentList();
-  renderSummary();
-}
-
-/* ===== student list UI (unassigned) ===== */
-function renderStudentList(){
-  const container=document.getElementById('studentList'); container.innerHTML='';
-  const search = document.getElementById('searchStudent').value.trim().toLowerCase();
-  unassigned.forEach((s, idx)=>{
-    const visible = !search || [s.RollNo,s.Name,s.SubjectCode,s.Year].join(' ').toLowerCase().includes(search);
-    if(!visible) return;
-    const div=document.createElement('div'); div.className='student-row'; div.dataset.idx = idx;
-    div.innerHTML = `<div style="display:flex;gap:10px;align-items:center"><div class="badge">${escapeHtml(s.RollNo)}</div>
-      <div style="min-width:180px"><strong>${escapeHtml(s.Name)}</strong><div class="small">${escapeHtml(s.SubjectCode)} • ${escapeHtml(s.Year)}</div></div></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn ghost" data-assign="${idx}">Assign</button>
-        <button class="btn" data-export="${idx}">Export</button>
-      </div>`;
-    // clicking row selects
-    div.addEventListener('click', (ev)=> {
-      // avoid toggling when clicking the small buttons
-      if(ev.target && (ev.target.getAttribute('data-assign') || ev.target.getAttribute('data-export'))) return;
-      // select
-      document.querySelectorAll('.student-row').forEach(x=>x.classList.remove('selected'));
-      div.classList.add('selected');
-      selectedStudentId = Number(div.dataset.idx);
-    });
-    container.appendChild(div);
-  });
-
-  // assign buttons
-  container.querySelectorAll('[data-assign]').forEach(btn=>{
-    btn.addEventListener('click',(ev)=>{
-      const idx = Number(btn.getAttribute('data-assign'));
-      selectedStudentId = idx;
-      // highlight selected
-      document.querySelectorAll('.student-row').forEach(x=>x.classList.remove('selected'));
-      const row = document.querySelector(`.student-row[data-idx="${idx}"]`);
-      if(row) row.classList.add('selected');
-      alert('Now click a seat in preview to assign this student.');
-    });
-  });
-  container.querySelectorAll('[data-export]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const idx = Number(btn.getAttribute('data-export'));
-      const s = unassigned[idx];
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([['Roll No','Name','Year','Section','Subject Code','Subject Name'], [s.RollNo,s.Name,s.Year,s.Section,s.SubjectCode,s.SubjectName]]);
-      XLSX.utils.book_append_sheet(wb,ws,'Student');
-      XLSX.writeFile(wb,`${s.RollNo || 'student'}_export.xlsx`);
-    });
-  });
-}
-
-/* ===== auto-fill remaining seats (simple fill) ===== */
-document.getElementById('btnAutoFill').addEventListener('click', ()=>{
-  // attempt fill empty seats in preview by sequentially placing unassigned students
-  const preview = document.getElementById('preview');
-  const seatDivs = preview.querySelectorAll('.seat');
-  if(!seatDivs.length){ alert('Generate a seating plan first'); return; }
-  if(!unassigned.length){ alert('No unassigned students'); return; }
-  for(const sd of seatDivs){
-    const seatText = sd.dataset.seat;
-    // locate if empty
-    if(sd.classList.contains('empty')){
-      const stud = unassigned.shift();
-      if(!stud) break;
-      sd.classList.remove('empty');
-      sd.innerHTML = `<div class="roll">${seatText}</div><div class="meta">${escapeHtml(stud.RollNo)}</div>`;
-      const tooltip=document.createElement('div'); tooltip.className='tooltip';
-      tooltip.innerHTML = `${escapeHtml(stud.Name)}<br>${escapeHtml(stud.SubjectCode)} • ${escapeHtml(stud.Year)}`;
-      sd.appendChild(tooltip);
-      const yy = normalizeYear(stud.Year);
-      const color = YEAR_COLORS[yy] || 'transparent';
-      if(color) sd.style.background = `linear-gradient(180deg, ${color}, rgba(255,255,255,0.6))`;
+    // revert desired to original for next attempt: recompute from hall inputs (we will fetch again each attempt)
+    // fill remaining from all buckets combined
+    const remainingPool = [].concat(b['1'],b['2'],b['3'],b['4'],b['']);
+    if(randomize) shuffleArray(remainingPool);
+    while(selected.length < Math.min(seats, pool.length) && remainingPool.length){
+      selected.push(remainingPool.shift());
     }
-  }
-  renderStudentList();
-  renderSummary();
-});
 
-/* ===== export unassigned ===== */
-document.getElementById('btnExportUnassigned').addEventListener('click', ()=>{
-  if(!unassigned.length){ alert('No unassigned students'); return; }
-  const wsData = [['Roll No','Name','Year','Section','Subject Code','Subject Name']];
-  unassigned.forEach(s=> wsData.push([s.RollNo,s.Name,s.Year,s.Section,s.SubjectCode,s.SubjectName]));
-  const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb,ws,'Unassigned');
-  XLSX.writeFile(wb,`Unassigned_${(new Date()).toISOString().slice(0,10)}.xlsx`);
-});
+    // now selected length may be < seats if not enough students — pad with nulls
+    while(selected.length < seats) selected.push(null);
 
-/* ===== refresh list & search ===== */
-document.getElementById('btnRefreshList').addEventListener('click', ()=> renderStudentList());
-document.getElementById('searchStudent').addEventListener('input', ()=> renderStudentList());
-
-/* ===== remove escape helper ===== */
-function escapeHtml(s=''){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-
-/* ===== misc helpers ===== */
-function normalizeYear(y){
-  if(!y) return '';
-  const v = y.toString().trim();
-  if(!v) return '';
-  const first = v[0];
-  if(['1','2','3'].includes(first)) return first;
-  if(/I+/i.test(v)) {
-    if(v.startsWith('III')||v.startsWith('3')) return '3';
-    if(v.startsWith('II')||v.startsWith('2')) return '2';
-    return '1';
-  }
-  return first;
-}
-
-function sanitizeSheetName(name){
-  return (name||'Sheet').substr(0,31).replace(/[\\/*?:[\]]/g,'_');
-}
-
-/* ===== add / remove hall helpers ===== */
-function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6){
-  hallCounter++;
-  halls.push({ id: String(uid()), name, rows, cols, quota:{ y1:0,y2:0,y3:0 } });
-  renderHallList();
-}
-function removeLastHall(){
-  if(halls.length){ halls.pop(); renderHallList(); }
-}
-
-/* ===== summary ===== */
-function renderSummary(){
-  const summary = document.getElementById('summaryArea'); summary.innerHTML='';
-  const total = students.length;
-  const un = unassigned.length;
-  const assignedCount = total - un;
-  const years = students.reduce((acc,s)=>{
-    const y = normalizeYear(s.Year)||'other';
-    acc[y] = (acc[y]||0)+1; return acc;
-  },{});
-  summary.innerHTML = `<div class="small">Total: <strong>${total}</strong></div><div class="small">Assigned: <strong>${assignedCount}</strong></div><div class="small">Unassigned: <strong>${un}</strong></div>
-    <div class="small">Y1:${years['1']||0} Y2:${years['2']||0} Y3:${years['3']||0}</div>`;
-}
-
-/* ===== utility: initial setup ===== */
-(function init(){
-  addHall('Hall A',6,6);
-  addHall('Hall B',6,6);
-  renderHallList();
-  renderStudentList();
-  renderSummary();
-})();
-
-/* ===== small: sample data for quick demo (not loaded by default) ===== */
-/* Uncomment to auto-load some demo students for testing
-students = [
-  {RollNo:'1001',Name:'Alice',Year:'1',Section:'A',SubjectCode:'CS101',SubjectName:'Intro'},
-  {RollNo:'1002',Name:'Bob',Year:'2',Section:'B',SubjectCode:'CS102',SubjectName:'DS'},
-  {RollNo:'1003',Name:'Cathy',Year:'3',Section:'A',SubjectCode:'CS103',SubjectName:'Algo'},
-  // ...repeat or add more
-];
-unassigned = students.slice(); renderSampleTable(6); renderStudentList(); renderSummary();
-*/
-
-/* ===== small helpers for CSV parsing that may be used ===== */
-function csvToArray(str){
-  const lines = str.split(/\r?\n/).filter(Boolean);
-  const headers = lines.shift().split(',');
-  return lines.map(l=> {
-    const data = l.split(','); const obj={};
-    headers.forEach((h,i)=> obj[h]=data[i]||''); return obj;
-  });
-}
-})();
-</script>
-</body>
-</html>
+    // Now we will attempt permutations to place students into seats trying to minimize left/right conflicts.
+    // Instead of expensive permutations, try random shuffles of selected order and compute conflicts.
+    const cols = hall.cols;
+    let bestLocal = {conflicts: Infinity, order: selected.slice()};
+    // try subattempts for reordering selected
+    for(let r=0;r<6;r++){ // a few internal reshuffles
+      const candidate = selected.slice();
+      if(randomize) shuffleArray(candidate);
+      const c = countConflicts(candidate, cols);
+      if(c < bestLocal.conflicts){
+        bestLocal = {conflicts: c, order: candidate.slice()};
+        if(c === 0) break;
+      }
+    }
+    // evaluate
+    if(bestLocal.conflicts < best.conflicts){
+     
