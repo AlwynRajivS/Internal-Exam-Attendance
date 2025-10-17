@@ -436,6 +436,54 @@ function renderPreview(){
   document.getElementById('assignCounter').textContent=`Assigned: ${totalAssigned} / ${students.length}`;
 }
 
+
+//Report Generate 
+function generateSeatingExcel() {
+  if (!seatingData || seatingData.length === 0) {
+    alert("❌ No seating data to generate.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const halls = document.querySelectorAll('.hall');
+
+  halls.forEach(hallDiv => {
+    const hallName = hallDiv.querySelector('h3').textContent;
+    const wsData = [
+      ["Date","Department","Batch","HallNo","StudentRollNo","Name","SeatingNo","SubjectCode","Subject","Year","Section"]
+    ];
+
+    const seats = hallDiv.querySelectorAll('.seat');
+    seats.forEach((seat, idx) => {
+      const rollNo = seat.querySelector('b')?.textContent || '';
+      const name = seat.childNodes[2]?.textContent || '';
+      const subj = seat.querySelector('small')?.textContent || '';
+      const seatingNo = `S${idx+1}`; // simple seat numbering
+      const row = seatingData.find(r => r.StudentRollNo === rollNo) || {};
+
+      wsData.push([
+        row.Date || '',
+        row.Department || '',
+        row.Batch || '',
+        hallName,
+        rollNo,
+        name,
+        seatingNo,
+        subj,
+        row.Subject || '',
+        row.Year || '',
+        row.Section || ''
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, hallName);
+  });
+
+  XLSX.writeFile(wb, `Seating_${new Date().toISOString().slice(0,10)}.xlsx`);
+  alert("✅ Excel generated successfully!");
+}
+
 // Event listeners
 document.getElementById('btnAddHall').addEventListener('click',()=>addHall());
 document.getElementById('btnRemoveLast').addEventListener('click',()=>removeLastHall());
