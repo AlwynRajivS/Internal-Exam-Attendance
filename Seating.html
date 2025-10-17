@@ -195,29 +195,53 @@ document.getElementById('btnTemplate').addEventListener('click',()=>{
 function seatId(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
 function buildSeatOrder(rows,cols){ const order=[]; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)order.push({r,c}); return order; }
 
-// Allocate students with constraints
-function allocateToHall(stuList,hall){
-  const rows=Number(hall.rows), cols=Number(hall.cols);
-  const seats=Array.from({length:rows},()=>Array.from({length:cols},()=>null));
-  const order=buildSeatOrder(rows,cols); let pool=stuList.slice();
-  const yearCounts={I:Number(hall.I),II:Number(hall.II),III:Number(hall.III),IV:Number(hall.IV)};
-  const yearPools={I:[],II:[],III:[],IV:[]}; pool.forEach(s=>{ if(yearPools[s.Year])yearPools[s.Year].push(s); });
+
+
+
+// Allocate students with left/right constraints
+function allocateToHall(stuList, hall){
+  const rows = Number(hall.rows), cols = Number(hall.cols);
+  const seats = Array.from({length: rows}, () => Array.from({length: cols}, () => null));
+  const order = buildSeatOrder(rows, cols);
+  let pool = stuList.slice();
+
+  // Split pool by year
+  const yearCounts = {I: Number(hall.I), II: Number(hall.II), III: Number(hall.III), IV: Number(hall.IV)};
+  const yearPools = {I: [], II: [], III: [], IV: []};
+  pool.forEach(s => { if(yearPools[s.Year]) yearPools[s.Year].push(s); });
+
   for(const pos of order){
-    let assigned=false;
+    let assigned = false;
+
     for(const yr of ['I','II','III','IV']){
-      if(yearCounts[yr]>0 && yearPools[yr].length){
-        // check left seat same subject
-        const left=pos.c>0?seats[pos.r][pos.c-1]:null;
-        let idx=yearPools[yr].findIndex(s=>!left||s.SubjectCode!==left.SubjectCode);
-        if(idx===-1) idx=0;
-        seats[pos.r][pos.c]=yearPools[yr].splice(idx,1)[0]; yearCounts[yr]--; assigned=true; break;
+      if(yearCounts[yr] > 0 && yearPools[yr].length){
+        const left = pos.c > 0 ? seats[pos.r][pos.c - 1] : null;
+
+        // Pick a student whose subject != left seat and year != left seat
+        let idx = yearPools[yr].findIndex(s => !left || (s.SubjectCode !== left.SubjectCode && s.Year !== left.Year));
+        if(idx === -1) idx = 0; // fallback if no such student
+        seats[pos.r][pos.c] = yearPools[yr].splice(idx, 1)[0];
+        yearCounts[yr]--; assigned = true; break;
       }
     }
-    if(!assigned && pool.length) seats[pos.r][pos.c]=pool.shift();
+
+    if(!assigned && pool.length){
+      // fallback for unassigned students
+      const left = pos.c > 0 ? seats[pos.r][pos.c - 1] : null;
+      let idx = pool.findIndex(s => !left || (s.SubjectCode !== left.SubjectCode && s.Year !== left.Year));
+      if(idx === -1) idx = 0;
+      seats[pos.r][pos.c] = pool.splice(idx, 1)[0];
+    }
   }
-  const assigned=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) assigned.push({row:r,col:c,student:seats[r][c],SeatingNo:seatId(c,r)});
-  return {assigned,remaining:pool};
+
+  const assigned = [];
+  for(let r = 0; r < rows; r++)
+    for(let c = 0; c < cols; c++)
+      assigned.push({row: r, col: c, student: seats[r][c], SeatingNo: seatId(c, r)});
+  
+  return {assigned, remaining: pool};
 }
+
 
 // Render preview
 function renderPreview(){
