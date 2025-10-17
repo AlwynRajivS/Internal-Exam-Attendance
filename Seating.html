@@ -565,7 +565,95 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
 
 
 })();
+
+
+// --- Enable manual drag & click swap after preview ---
+let draggedSeat = null;
+let clickSwapSeat = null;
+
+function enableSeatEditing() {
+  document.querySelectorAll('.seat').forEach(seat => {
+    if (!seat.textContent.trim()) return; // skip empty seats
+    seat.draggable = true;
+
+    // --- Drag events ---
+    seat.addEventListener('dragstart', e => {
+      draggedSeat = seat;
+      seat.style.opacity = '0.5';
+    });
+
+    seat.addEventListener('dragend', e => {
+      seat.style.opacity = '1';
+      draggedSeat = null;
+    });
+
+    seat.addEventListener('dragover', e => {
+      e.preventDefault();
+      seat.style.outline = '2px dashed var(--accent2)';
+    });
+
+    seat.addEventListener('dragleave', e => {
+      seat.style.outline = 'none';
+    });
+
+    seat.addEventListener('drop', e => {
+      e.preventDefault();
+      seat.style.outline = 'none';
+      if (!draggedSeat || draggedSeat === seat) return;
+      swapSeatData(draggedSeat, seat);
+    });
+
+    // --- Click swap mode ---
+    seat.addEventListener('click', e => {
+      if (!clickSwapSeat) {
+        clickSwapSeat = seat;
+        seat.style.outline = '2px solid var(--accent2)';
+      } else if (clickSwapSeat === seat) {
+        seat.style.outline = 'none';
+        clickSwapSeat = null;
+      } else {
+        swapSeatData(clickSwapSeat, seat);
+        clickSwapSeat.style.outline = 'none';
+        clickSwapSeat = null;
+      }
+    });
+  });
+}
+
+// --- Swap seat contents ---
+function swapSeatData(seatA, seatB) {
+  const temp = {
+    text: seatA.textContent,
+    name: seatA.getAttribute('data-name'),
+    year: seatA.getAttribute('data-year'),
+    section: seatA.getAttribute('data-section'),
+    subject: seatA.getAttribute('data-subject'),
+    className: seatA.className
+  };
+
+  seatA.textContent = seatB.textContent;
+  seatA.setAttribute('data-name', seatB.getAttribute('data-name'));
+  seatA.setAttribute('data-year', seatB.getAttribute('data-year'));
+  seatA.setAttribute('data-section', seatB.getAttribute('data-section'));
+  seatA.setAttribute('data-subject', seatB.getAttribute('data-subject'));
+  seatA.className = seatB.className;
+
+  seatB.textContent = temp.text;
+  seatB.setAttribute('data-name', temp.name);
+  seatB.setAttribute('data-year', temp.year);
+  seatB.setAttribute('data-section', temp.section);
+  seatB.setAttribute('data-subject', temp.subject);
+  seatB.className = temp.className;
+}
+
+// Hook into renderPreview completion
+const oldRenderPreview = renderPreview;
+renderPreview = function() {
+  oldRenderPreview();
+  enableSeatEditing(); // enable drag & click after preview is rendered
+};
 </script>
+
 
 </body>
 
