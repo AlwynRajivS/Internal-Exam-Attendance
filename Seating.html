@@ -41,9 +41,9 @@ p.lead{color:#0b5564;font-size:14px;}
 
 .main{display:grid;grid-template-columns:380px 1fr;gap:18px;}
 
-.card{background:white;border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(13,38,52,0.06);}
+.card{background:white;border-radius:25px;padding:16px;box-shadow:0 6px 24px rgba(13,38,52,0.06);width: 100%}
 
-label{display:block;font-size:13px;color:#073741;margin-top:8px;}
+label{display:block;font-size:13px;color:#073741;margin-top:10px;}
 
 select,input[type=text],input[type=date],input[type=number],button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);font-size:14px;}
 
@@ -57,21 +57,20 @@ select,input[type=text],input[type=date],input[type=number],button{width:100%;pa
 
 .btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741;}
 
-.hall-list{display:flex;flex-direction:column;gap:10px;}
-
-.hall-item{display:grid;grid-template-columns:1fr repeat(7,60px);gap:6px;align-items:center;}
+.hall-item { grid-template-columns: 1fr; gap: 6px; }
+  .hall-item input, .hall-item select, .hall-item button { width: 100%; }
 
 .add-hall{display:flex;gap:8px;margin-top:10px;}
 
-.preview-area{display:grid;gap:3px;}
+.preview-area{align-items:left;display:grid;gap:10px;}
 
-.seatmap{display:flex;flex-direction:column;gap:10px;padding:6px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);}
+.seatmap{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);}
 
-.seat-row{display:flex;gap:3px;align-items:center;flex-wrap:wrap;}
+.seat-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 
-.row-label{width:20px;text-align:center;color:var(--muted);font-weight:400;}
+.row-label{width:30px;text-align:center;color:var(--muted);font-weight:600;}
 
-.seat{min-width:50px;height:40px;border-radius:8px;background:var(--seat-bg);border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:10px;position:relative;transition:0.3s;}
+.seat{min-width:80px;height:48px;border-radius:8px;background:var(--seat-bg);border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;position:relative;transition:0.3s;}
 
 .seat.I{background:var(--yearI);}
 
@@ -113,12 +112,9 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
   .row-label { width: 18px; font-size: 10px; }
   .controls button { font-size: 12px; padding: 8px; }
   .hall-item { grid-template-columns: 1fr; gap: 4px; }
-
-.seat-row{display:flex;gap:1px;align-items:center;flex-wrap:wrap;}
-
-.row-label{width:10px;text-align:center;color:var(--muted);font-weight:500;}
-
-.seat{min-width:40px;height:20px;border-radius:6px;background:var(--seat-bg);border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:6px;position:relative;transition:0.3s;}
+  .seat-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .row-label{width:20px;text-align:center;color:var(--muted);font-weight:600;}
+  .seat{min-width:50px;height:48px;border-radius:8px;background:var(--seat-bg);border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;position:relative;transition:0.3s;}
 }
 
 
@@ -138,7 +134,7 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
     <h1>Exam Seating — Multi‑Hall Allotment</h1>
 
-  
+    
 
   </div>
 
@@ -168,6 +164,14 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
       <option value="CSE">CSE</option>
 
       <option value="ECE">ECE</option>
+      <option value="EEE">EEE</option>
+      <option value="IT">IT</option>
+      <option value="BT">BT</option>
+      <option value="MECH">MECH</option>
+      <option value="MTR">MTR</option>
+      <option value="CIVIL">CIVIL</option>
+      <option value="ADS">ADS</option>
+      
 
     </select>
 
@@ -246,16 +250,13 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
     <div id="messages">No file loaded.</div>
 
-    <div id="preview" style="min-height:100px"></div>
+    <div id="preview" style="min-height:220px"></div>
 
   </div>
 
 </div>
 
 </div>
-
-
-
 
 </div>
 
@@ -481,11 +482,10 @@ function renderPreview(){
           seatDiv.textContent = s.student.RollNo;
           seatDiv.setAttribute('data-name', s.student.Name);
           seatDiv.setAttribute('data-year', s.student.Year);
-
           seatDiv.setAttribute('data-section', s.student.Section);
           seatDiv.setAttribute('data-subject', s.student.SubjectCode);
           seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
-        
+        }
         rowDiv.appendChild(seatDiv);
       }
       hallDiv.appendChild(rowDiv);
@@ -500,14 +500,7 @@ function renderPreview(){
 
 
 
-
-
-
-//editing
-
-
-
-
+//Report Generate 
 
 
 
@@ -517,8 +510,6 @@ document.getElementById('btnAddHall').addEventListener('click',()=>addHall());
 document.getElementById('btnRemoveLast').addEventListener('click',()=>removeLastHall());
 document.getElementById('btnPreview').addEventListener('click',()=>renderPreview());
 document.getElementById('btnClear').addEventListener('click',()=>{students=[];halls=[];renderHallList();document.getElementById('preview').innerHTML='';showMessage('Cleared');});
-
-
 
 //report generated 
 // Preview & Download
@@ -557,8 +548,7 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
             seatDiv.getAttribute('data-subject') || '',
             seatDiv.getAttribute('data-subject') || '',
             seatDiv.getAttribute('data-year') || '',
-            seatDiv.getAttribute('data-section') || ''
- // Section, can be filled if needed
+            seatDiv.getAttribute('data-section') || '',// Section, can be filled if needed
           ]);
         }
       });
@@ -574,13 +564,10 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
 
 
 })();
-
-
-
 </script>
-
 
 </body>
 
 </html>
+
 
