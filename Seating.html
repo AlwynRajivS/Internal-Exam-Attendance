@@ -440,6 +440,7 @@ function renderPreview(){
 
 
 //Report Generate 
+
 function generateSeatingExcel() {
   if (!students || students.length === 0) {
     alert("❌ No seating data to generate.");
@@ -451,15 +452,20 @@ function generateSeatingExcel() {
   const batch = document.getElementById('inpBatch').value || '';
 
   const wb = XLSX.utils.book_new();
+  const wsData = [
+    ["Date","Department","Batch","HallNo","StudentRollNo","Name","SeatingNo","SubjectCode","Subject","Year","Section"]
+  ];
+
   const previewHalls = document.querySelectorAll('.seatmap');
+  if (previewHalls.length === 0) {
+    alert("❌ No halls previewed. Please click Preview Seating first.");
+    return;
+  }
 
   previewHalls.forEach(hallDiv => {
     const hallName = hallDiv.querySelector('strong')?.textContent || 'Hall';
-    const wsData = [
-      ["Date","Department","Batch","HallNo","StudentRollNo","Name","SeatingNo","SubjectCode","Subject","Year","Section"]
-    ];
-
     const seatRows = hallDiv.querySelectorAll('.seat-row');
+
     seatRows.forEach((rowDiv, rIdx) => {
       const seats = rowDiv.querySelectorAll('.seat');
       seats.forEach((seatDiv, cIdx) => {
@@ -486,11 +492,10 @@ function generateSeatingExcel() {
         ]);
       });
     });
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, hallName);
   });
 
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Seating_All_Halls");
   XLSX.writeFile(wb, `Seating_${dept}_${batch}_${date || new Date().toISOString().slice(0,10)}.xlsx`);
   alert("✅ Excel generated successfully!");
 }
