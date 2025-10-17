@@ -481,6 +481,8 @@ function renderPreview(){
           seatDiv.textContent = s.student.RollNo;
           seatDiv.setAttribute('data-name', s.student.Name);
           seatDiv.setAttribute('data-year', s.student.Year);
+
+          seatDiv.setAttribute('data-section', s.student.Section);
           seatDiv.setAttribute('data-subject', s.student.SubjectCode);
           seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
         }
