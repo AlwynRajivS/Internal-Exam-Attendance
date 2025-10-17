@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Exam Seating — Hall-wise Preview & Allocation</title>
+<title>Exam Seating — Preview & Allocation</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   body {
@@ -22,21 +22,24 @@
     background:#0078d7; color:white; border:none; cursor:pointer;
   }
   button:hover {background:#005fa3;}
-  #hallContainer {margin-top:20px;}
+  #hallContainer {margin-top:10px;}
   .hall {
     background:white; padding:10px; margin-bottom:15px; border-radius:10px;
     box-shadow:0 2px 4px rgba(0,0,0,0.1);
   }
   .hall-header {
     display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap;
   }
   .grid {
-    display:grid; gap:3px; justify-content:center;
+    display:grid; gap:4px; justify-content:center;
     margin-top:10px;
   }
   .seat {
-    width:28px; height:28px; border-radius:4px; font-size:12px;
-    display:flex; justify-content:center; align-items:center; cursor:grab;
+    width:90px; height:70px; border-radius:6px; font-size:11px;
+    display:flex; justify-content:center; align-items:center;
+    flex-direction:column; cursor:grab; text-align:center;
+    color:#fff; font-weight:500;
   }
   .year1 {background:#6fa8dc;}
   .year2 {background:#93c47d;}
@@ -47,9 +50,8 @@
     display:inline-block; width:15px; height:15px; margin-right:4px; border-radius:3px;
   }
   .preview-area {margin-top:20px;}
-  .hidden {display:none;}
   @media(max-width:600px){
-    .grid{transform:scale(0.9);}
+    .seat {width:70px; height:60px; font-size:10px;}
   }
 </style>
 </head>
@@ -78,7 +80,7 @@
   <button onclick="downloadExcel()">📥 Download Excel</button>
 </div>
 
-<div class="legend" style="text-align:center;">
+<div class="legend" style="text-align:center; margin-bottom:8px;">
   <span style="background:#6fa8dc"></span> I Year
   <span style="background:#93c47d"></span> II Year
   <span style="background:#f6b26b"></span> III Year
@@ -92,18 +94,19 @@
 let students = [];
 let halls = [];
 
+// ===== TEMPLATE DOWNLOAD =====
 function downloadTemplate(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([
-    ["Roll No","Name","Subject Code","Subject","Year","Section"],
-    ["","","","","",""]
+    ["Roll_No","Name","Subject_Code","Subject","Year","Section"],
+    ["21CSE001","John","CS101","DS","1","A"]
   ]);
   XLSX.utils.book_append_sheet(wb, ws, "Template");
   XLSX.writeFile(wb, "Exam_Template.xlsx");
 }
 
+// ===== FILE UPLOAD =====
 document.getElementById('fileInput').addEventListener('change', handleFile);
-
 function handleFile(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -118,14 +121,14 @@ function handleFile(e){
   reader.readAsArrayBuffer(file);
 }
 
+// ===== HALL ADD / REMOVE =====
 function addHall(){
-  const hall = {
+  halls.push({
     name: "Hall_" + (halls.length+1),
-    rows: 6,
+    rows: 4,
     cols: 6,
     yearCount: {y1:0, y2:0, y3:0, y4:0}
-  };
-  halls.push(hall);
+  });
   renderHalls();
 }
 
@@ -136,7 +139,7 @@ function renderHalls(){
     container.innerHTML += `
       <div class="hall">
         <div class="hall-header">
-          <input value="${h.name}" onchange="halls[${i}].name=this.value">
+          <input value="${h.name}" onchange="halls[${i}].name=this.value" style="font-weight:600;">
           <div>
             Rows: <input type="number" value="${h.rows}" min="1" max="20" onchange="halls[${i}].rows=this.value">
             Cols: <input type="number" value="${h.cols}" min="1" max="20" onchange="halls[${i}].cols=this.value">
@@ -144,128 +147,124 @@ function renderHalls(){
           <button onclick="removeHall(${i})">❌</button>
         </div>
         <div>
-          <small>I:<input type="number" style="width:50px" value="${h.yearCount.y1}" onchange="halls[${i}].yearCount.y1=this.value"> 
-          II:<input type="number" style="width:50px" value="${h.yearCount.y2}" onchange="halls[${i}].yearCount.y2=this.value"> 
-          III:<input type="number" style="width:50px" value="${h.yearCount.y3}" onchange="halls[${i}].yearCount.y3=this.value"> 
-          IV:<input type="number" style="width:50px" value="${h.yearCount.y4}" onchange="halls[${i}].yearCount.y4=this.value"></small>
+          <small>
+            I:<input type="number" style="width:40px" value="${h.yearCount.y1}" onchange="halls[${i}].yearCount.y1=this.value">
+            II:<input type="number" style="width:40px" value="${h.yearCount.y2}" onchange="halls[${i}].yearCount.y2=this.value">
+            III:<input type="number" style="width:40px" value="${h.yearCount.y3}" onchange="halls[${i}].yearCount.y3=this.value">
+            IV:<input type="number" style="width:40px" value="${h.yearCount.y4}" onchange="halls[${i}].yearCount.y4=this.value">
+          </small>
         </div>
-      </div>
-    `;
+      </div>`;
   });
 }
+function removeHall(i){halls.splice(i,1); renderHalls();}
 
-function removeHall(i){ halls.splice(i,1); renderHalls(); }
-
+// ===== PREVIEW GENERATION =====
 function generatePreview(){
   if(students.length==0){alert("Please upload student data first."); return;}
   const previewDiv = document.getElementById('preview');
   previewDiv.innerHTML = '';
-  let studentIndex = 0;
+
+  let sIndex = 0;
 
   halls.forEach(h=>{
-    const totalSeats = h.rows * h.cols;
-    const grid = Array(h.rows).fill(0).map(()=>Array(h.cols).fill(null));
+    const grid = Array.from({length:h.rows},()=>Array(h.cols).fill(null));
 
     for(let r=0;r<h.rows;r++){
       for(let c=0;c<h.cols;c++){
-        let placed=false, tryCount=0;
-        while(!placed && tryCount<students.length){
-          const st = students[studentIndex % students.length];
+        let placed=false, tries=0;
+        while(!placed && tries<students.length){
+          const st = students[sIndex % students.length];
           if(!conflict(grid, r, c, st)){
             grid[r][c]=st;
-            studentIndex++;
             placed=true;
-          } else {
-            studentIndex++;
-            tryCount++;
-          }
+            sIndex++;
+          } else {sIndex++; tries++;}
         }
       }
     }
 
     const gridDiv = document.createElement('div');
     gridDiv.className='grid';
-    gridDiv.style.gridTemplateColumns = `repeat(${h.cols}, 30px)`;
+    gridDiv.style.gridTemplateColumns = `repeat(${h.cols}, 95px)`;
+
     grid.forEach(row=>{
       row.forEach(st=>{
-        const seat = document.createElement('div');
+        const seat=document.createElement('div');
         if(st){
-          seat.className = 'seat year'+st.Year;
-          seat.title = `${st.Roll_No}\n${st.Subject_Code}`;
-          seat.draggable = true;
-          seat.ondragstart = drag;
-          seat.ondrop = drop;
-          seat.ondragover = allowDrop;
-          seat.innerText = st.Year;
-        } else {
+          seat.className='seat year'+st.Year;
+          seat.draggable=true;
+          seat.innerHTML=`<b>${st.Roll_No}</b><br>Y${st.Year} | ${st.Subject_Code}`;
+          seat.dataset.roll=st.Roll_No;
+          seat.addEventListener('dragstart',drag);
+          seat.addEventListener('drop',drop);
+          seat.addEventListener('dragover',allowDrop);
+        }else{
           seat.className='seat empty';
+          seat.innerHTML='--';
         }
         gridDiv.appendChild(seat);
       });
     });
 
-    const hallBox = document.createElement('div');
+    const hallBox=document.createElement('div');
     hallBox.className='hall';
-    hallBox.innerHTML = `<div class='hall-header'><strong>${h.name}</strong></div>`;
+    hallBox.innerHTML=`<div class='hall-header'><strong>${h.name}</strong></div>`;
     hallBox.appendChild(gridDiv);
     previewDiv.appendChild(hallBox);
   });
 }
 
 function conflict(grid, r, c, st){
-  const dirs = [[0,-1],[0,1]];
+  const dirs=[[0,-1],[0,1]];
   for(const [dr,dc] of dirs){
     const nr=r+dr, nc=c+dc;
-    if(nr>=0 && nr<grid.length && nc>=0 && nc<grid[0].length){
+    if(nr>=0&&nr<grid.length&&nc>=0&&nc<grid[0].length){
       const n=grid[nr][nc];
-      if(n && (n.Subject_Code===st.Subject_Code || n.Year===st.Year))
-        return true;
+      if(n && (n.Subject_Code===st.Subject_Code || n.Year===st.Year)) return true;
     }
   }
   return false;
 }
 
-function allowDrop(ev){ev.preventDefault();}
-function drag(ev){ev.dataTransfer.setData("text", ev.target.title);}
-function drop(ev){
-  ev.preventDefault();
-  const data = ev.dataTransfer.getData("text");
-  const srcStudent = students.find(s => s.Roll_No === data.split('\n')[0]);
-  if(!srcStudent) return;
-  const target = ev.target;
-  if(!target.classList.contains('seat')) return;
-  const oldTitle = target.title;
-  const tgtStudent = students.find(s => s.Roll_No === oldTitle.split('\n')[0]);
-  if(tgtStudent){
-    // swap
-    const tmp = {...srcStudent};
-    Object.assign(srcStudent, tgtStudent);
-    Object.assign(tgtStudent, tmp);
+// ===== DRAG / DROP =====
+function allowDrop(e){e.preventDefault();}
+function drag(e){e.dataTransfer.setData("text", e.target.dataset.roll);}
+function drop(e){
+  e.preventDefault();
+  const rollFrom=e.dataTransfer.getData("text");
+  const rollTo=e.target.dataset.roll;
+  const s1=students.find(s=>s.Roll_No===rollFrom);
+  const s2=students.find(s=>s.Roll_No===rollTo);
+  if(s1 && s2){
+    const tmp={...s1};
+    Object.assign(s1,s2);
+    Object.assign(s2,tmp);
+    generatePreview();
   }
-  generatePreview();
 }
 
+// ===== EXCEL DOWNLOAD =====
 function downloadExcel(){
-  const date = document.getElementById('examDate').value;
-  const dept = document.getElementById('department').value;
-  const batch = document.getElementById('batch').value;
-  if(!date||!dept||!batch){alert("Please fill date, dept, batch.");return;}
+  const date=document.getElementById('examDate').value;
+  const dept=document.getElementById('department').value;
+  const batch=document.getElementById('batch').value;
+  if(!date||!dept||!batch){alert("Please fill date, dept, and batch");return;}
 
-  let out = [["Date","Department","Batch","Hall No","Student Roll No","Name","Seating No","Subject Code","Subject","Year","Section"]];
+  let out=[["Date","Department","Batch","Hall No","Student Roll No","Name","Seating No","Subject Code","Subject","Year","Section"]];
   let seatNo=1;
   halls.forEach(h=>{
     for(let r=0;r<h.rows;r++){
       for(let c=0;c<h.cols;c++){
-        const idx = (r*h.cols)+c;
-        const st = students[idx % students.length];
+        const st=students[(r*h.cols)+c % students.length];
         out.push([date,dept,batch,h.name,st.Roll_No,st.Name,seatNo++,st.Subject_Code,st.Subject,st.Year,st.Section]);
       }
     }
   });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(out);
-  XLSX.utils.book_append_sheet(wb, ws, "Seating");
-  XLSX.writeFile(wb, "Exam_Seating.xlsx");
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(out);
+  XLSX.utils.book_append_sheet(wb,ws,"Seating");
+  XLSX.writeFile(wb,"Exam_Seating.xlsx");
 }
 </script>
 </body>
