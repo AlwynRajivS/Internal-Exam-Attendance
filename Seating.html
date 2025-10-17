@@ -500,14 +500,16 @@ function renderPreview(){
 
 
 
-// --- Manual drag & click seat swap support ---
+// --- Global variables ---
 let draggedSeat = null;
 let clickSwapSeat = null;
 
+// --- Enable drag & click swap ---
 function enableSeatEditing() {
   const seats = document.querySelectorAll('.seat');
+
   seats.forEach(seat => {
-    if (!seat.textContent.trim()) return; // skip empty seats
+    if (!seat.textContent.trim()) return;
     seat.draggable = true;
 
     // --- Drag events ---
@@ -555,36 +557,52 @@ function enableSeatEditing() {
   });
 }
 
-// --- Swap seat contents and metadata ---
+// --- Swap seat contents + metadata + data array ---
 function swapSeatData(seatA, seatB) {
-  const tempHTML = seatA.innerHTML;
-  const tempData = {
+  // Swap HTML & dataset
+  const temp = {
+    innerHTML: seatA.innerHTML,
     name: seatA.dataset.name,
+    regno: seatA.dataset.regno,
     year: seatA.dataset.year,
-    section: seatA.dataset.section,
     subject: seatA.dataset.subject,
+    dept: seatA.dataset.dept,
   };
 
   seatA.innerHTML = seatB.innerHTML;
   seatA.dataset.name = seatB.dataset.name;
+  seatA.dataset.regno = seatB.dataset.regno;
   seatA.dataset.year = seatB.dataset.year;
-  seatA.dataset.section = seatB.dataset.section;
   seatA.dataset.subject = seatB.dataset.subject;
+  seatA.dataset.dept = seatB.dataset.dept;
 
-  seatB.innerHTML = tempHTML;
-  seatB.dataset.name = tempData.name;
-  seatB.dataset.year = tempData.year;
-  seatB.dataset.section = tempData.section;
-  seatB.dataset.subject = tempData.subject;
+  seatB.innerHTML = temp.innerHTML;
+  seatB.dataset.name = temp.name;
+  seatB.dataset.regno = temp.regno;
+  seatB.dataset.year = temp.year;
+  seatB.dataset.subject = temp.subject;
+  seatB.dataset.dept = temp.dept;
+
+  // --- Update finalSeatData (the array used for Excel export) ---
+  if (window.finalSeatData) {
+    const aIndex = finalSeatData.findIndex(s => s.regno === seatA.dataset.regno);
+    const bIndex = finalSeatData.findIndex(s => s.regno === seatB.dataset.regno);
+    if (aIndex > -1 && bIndex > -1) {
+      const tempData = { ...finalSeatData[aIndex] };
+      finalSeatData[aIndex] = { ...finalSeatData[bIndex] };
+      finalSeatData[bIndex] = tempData;
+    }
+  }
 }
 
-// --- Attach to renderPreview safely ---
+// --- Hook into renderPreview safely ---
 const oldRenderPreview = window.renderPreview;
 window.renderPreview = function() {
-  oldRenderPreview(); // call your existing render
-  // Wait for DOM update before enabling seat editing
+  oldRenderPreview(); // run your existing preview
+  // Wait a tick for DOM to render
   setTimeout(enableSeatEditing, 100);
 };
+
 
 
 
