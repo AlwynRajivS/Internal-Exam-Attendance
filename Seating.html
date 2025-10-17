@@ -159,73 +159,48 @@ function renderHalls(){
 }
 function removeHall(i){halls.splice(i,1); renderHalls();}
 
-// ===== PREVIEW GENERATION =====
-function generatePreview(){
-  if(students.length==0){alert("Please upload student data first."); return;}
-  const previewDiv = document.getElementById('preview');
-  previewDiv.innerHTML = '';
 
-  let sIndex = 0;
+
+// Render preview
+function renderPreview(){
+  if(!students.length){ document.getElementById('preview').innerHTML='No data'; return; }
+  const preview=document.getElementById('preview'); preview.innerHTML='';
+  let remainingStudents=students.slice(); let totalAssigned=0;
 
   halls.forEach(h=>{
-    const grid = Array.from({length:h.rows},()=>Array(h.cols).fill(null));
+    const hallConf={
+      name: document.getElementById(`hall_name_${h.id}`).value || h.name,
+      rows:Number(document.getElementById(`hall_rows_${h.id}`).value)||h.rows,
+      cols:Number(document.getElementById(`hall_cols_${h.id}`).value)||h.cols,
+      I:Number(document.getElementById(`hall_I_${h.id}`).value)||0,
+      II:Number(document.getElementById(`hall_II_${h.id}`).value)||0,
+      III:Number(document.getElementById(`hall_III_${h.id}`).value)||0,
+      IV:Number(document.getElementById(`hall_IV_${h.id}`).value)||0
+    };
+    const {assigned,remaining}=allocateToHall(remainingStudents,hallConf); remainingStudents=remaining;
+    totalAssigned+=assigned.filter(a=>a.student).length;
 
-    for(let r=0;r<h.rows;r++){
-      for(let c=0;c<h.cols;c++){
-        let placed=false, tries=0;
-        while(!placed && tries<students.length){
-          const st = students[sIndex % students.length];
-          if(!conflict(grid, r, c, st)){
-            grid[r][c]=st;
-            placed=true;
-            sIndex++;
-          } else {sIndex++; tries++;}
-        }
+    const hallDiv=document.createElement('div'); hallDiv.className='seatmap';
+    hallDiv.innerHTML=`<strong>${hallConf.name}</strong>`;
+    for(let r=0;r<hallConf.rows;r++){
+      const rowDiv=document.createElement('div'); rowDiv.className='seat-row';
+      const label=document.createElement('div'); label.className='row-label'; label.textContent=r+1; rowDiv.appendChild(label);
+      for(let c=0;c<hallConf.cols;c++){
+        const seatDiv=document.createElement('div'); seatDiv.className='seat empty'; 
+        const s=assigned.find(a=>a.row===r && a.col===c); if(s && s.student){ seatDiv.className='seat '+s.student.Year; seatDiv.textContent=s.student.RollNo; seatDiv.setAttribute('data-name',s.student.Name); seatDiv.setAttribute('data-year',s.student.Year); seatDiv.setAttribute('data-subject',s.student.SubjectCode); seatDiv.setAttribute('draggable','true');}
+        rowDiv.appendChild(seatDiv);
       }
+      hallDiv.appendChild(rowDiv);
     }
-
-    const gridDiv = document.createElement('div');
-    gridDiv.className='grid';
-    gridDiv.style.gridTemplateColumns = `repeat(${h.cols}, 95px)`;
-
-    grid.forEach(row=>{
-      row.forEach(st=>{
-        const seat=document.createElement('div');
-        if(st){
-          seat.className='seat year'+st.Year;
-          seat.draggable=true;
-          seat.innerHTML=`<b>${st.Roll_No}</b><br>Y${st.Year} | ${st.Subject_Code}`;
-          seat.dataset.roll=st.Roll_No;
-          seat.addEventListener('dragstart',drag);
-          seat.addEventListener('drop',drop);
-          seat.addEventListener('dragover',allowDrop);
-        }else{
-          seat.className='seat empty';
-          seat.innerHTML='--';
-        }
-        gridDiv.appendChild(seat);
-      });
-    });
-
-    const hallBox=document.createElement('div');
-    hallBox.className='hall';
-    hallBox.innerHTML=`<div class='hall-header'><strong>${h.name}</strong></div>`;
-    hallBox.appendChild(gridDiv);
-    previewDiv.appendChild(hallBox);
+    preview.appendChild(hallDiv);
   });
+  document.getElementById('assignCounter').textContent=`Assigned: ${totalAssigned} | Unassigned: ${students.length-totalAssigned}`;
 }
 
-function conflict(grid, r, c, st){
-  const dirs=[[0,-1],[0,1]];
-  for(const [dr,dc] of dirs){
-    const nr=r+dr, nc=c+dc;
-    if(nr>=0&&nr<grid.length&&nc>=0&&nc<grid[0].length){
-      const n=grid[nr][nc];
-      if(n && (n.Subject_Code===st.Subject_Code || n.Year===st.Year)) return true;
-    }
-  }
-  return false;
-}
+
+
+
+
 
 // ===== DRAG / DROP =====
 function allowDrop(e){e.preventDefault();}
