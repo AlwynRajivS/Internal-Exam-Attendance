@@ -442,25 +442,19 @@ function renderPreview(){
 //Report Generate 
 
 function generateSeatingExcel() {
-  if (!students || students.length === 0) {
-    alert("❌ No seating data to generate.");
-    return;
-  }
-
   const date = document.getElementById('inpDate').value || '';
   const dept = document.getElementById('inpDept').value || '';
   const batch = document.getElementById('inpBatch').value || '';
 
-  const wb = XLSX.utils.book_new();
+  const previewHalls = document.querySelectorAll('.seatmap');
+  if (previewHalls.length === 0) {
+    alert("❌ No halls previewed. Please click 'Preview Seating' first.");
+    return;
+  }
+
   const wsData = [
     ["Date","Department","Batch","HallNo","StudentRollNo","Name","SeatingNo","SubjectCode","Subject","Year","Section"]
   ];
-
-  const previewHalls = document.querySelectorAll('.seatmap');
-  if (previewHalls.length === 0) {
-    alert("❌ No halls previewed. Please click Preview Seating first.");
-    return;
-  }
 
   previewHalls.forEach(hallDiv => {
     const hallName = hallDiv.querySelector('strong')?.textContent || 'Hall';
@@ -471,10 +465,13 @@ function generateSeatingExcel() {
       seats.forEach((seatDiv, cIdx) => {
         const rollNo = seatDiv.textContent || '';
         if (!rollNo) return; // skip empty seats
+
         const name = seatDiv.getAttribute('data-name') || '';
         const year = seatDiv.getAttribute('data-year') || '';
         const subjCode = seatDiv.getAttribute('data-subject') || '';
-        const seatingNo = `${String.fromCharCode(65+cIdx)}${rIdx+1}`; // A1, B2, etc
+        const seatingNo = `${String.fromCharCode(65 + cIdx)}${rIdx + 1}`;
+
+        // Try to find subject name and section from uploaded students
         const stu = students.find(s => s.RollNo === rollNo) || {};
 
         wsData.push([
@@ -494,6 +491,7 @@ function generateSeatingExcel() {
     });
   });
 
+  const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   XLSX.utils.book_append_sheet(wb, ws, "Seating_All_Halls");
   XLSX.writeFile(wb, `Seating_${dept}_${batch}_${date || new Date().toISOString().slice(0,10)}.xlsx`);
