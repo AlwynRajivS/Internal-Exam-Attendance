@@ -486,15 +486,6 @@ function renderPreview(){
           seatDiv.setAttribute('data-subject', s.student.SubjectCode);
           seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
         
-
-
-
-
-
-
-
-
-
         rowDiv.appendChild(seatDiv);
       }
       hallDiv.appendChild(rowDiv);
@@ -510,51 +501,7 @@ function renderPreview(){
 
 
 
-// --- Swap seat contents + metadata + data array ---
-function swapSeatData(seatA, seatB) {
-  // Swap HTML & dataset
-  const temp = {
-    innerHTML: seatA.innerHTML,
-    name: seatA.dataset.name,
-    regno: seatA.dataset.regno,
-    year: seatA.dataset.year,
-    subject: seatA.dataset.subject,
-    dept: seatA.dataset.dept,
-  };
 
-  seatA.innerHTML = seatB.innerHTML;
-  seatA.dataset.name = seatB.dataset.name;
-  seatA.dataset.regno = seatB.dataset.regno;
-  seatA.dataset.year = seatB.dataset.year;
-  seatA.dataset.subject = seatB.dataset.subject;
-  seatA.dataset.dept = seatB.dataset.dept;
-
-  seatB.innerHTML = temp.innerHTML;
-  seatB.dataset.name = temp.name;
-  seatB.dataset.regno = temp.regno;
-  seatB.dataset.year = temp.year;
-  seatB.dataset.subject = temp.subject;
-  seatB.dataset.dept = temp.dept;
-
-  // --- Update finalSeatData (the array used for Excel export) ---
-  if (window.finalSeatData) {
-    const aIndex = finalSeatData.findIndex(s => s.regno === seatA.dataset.regno);
-    const bIndex = finalSeatData.findIndex(s => s.regno === seatB.dataset.regno);
-    if (aIndex > -1 && bIndex > -1) {
-      const tempData = { ...finalSeatData[aIndex] };
-      finalSeatData[aIndex] = { ...finalSeatData[bIndex] };
-      finalSeatData[bIndex] = tempData;
-    }
-  }
-}
-
-// --- Hook into renderPreview safely ---
-const oldRenderPreview = window.renderPreview;
-window.renderPreview = function() {
-  oldRenderPreview(); // run your existing preview
-  // Wait a tick for DOM to render
-  setTimeout(enableSeatEditing, 100);
-};
 
 //editing
 
@@ -570,6 +517,8 @@ document.getElementById('btnAddHall').addEventListener('click',()=>addHall());
 document.getElementById('btnRemoveLast').addEventListener('click',()=>removeLastHall());
 document.getElementById('btnPreview').addEventListener('click',()=>renderPreview());
 document.getElementById('btnClear').addEventListener('click',()=>{students=[];halls=[];renderHallList();document.getElementById('preview').innerHTML='';showMessage('Cleared');});
+
+
 
 //report generated 
 // Preview & Download
