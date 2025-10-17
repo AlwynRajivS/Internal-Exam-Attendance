@@ -416,48 +416,81 @@ function allocateToHall(stuList, hall){
 
 // Render preview
 function renderPreview(){
-  if(!students.length){ document.getElementById('preview').innerHTML='No data'; return; }
-  const preview=document.getElementById('preview'); preview.innerHTML='';
-  let remainingStudents=students.slice(); let totalAssigned=0;
+  if (!students.length) {
+    document.getElementById('preview').innerHTML = 'No data';
+    return;
+  }
 
-  halls.forEach(h=>{
-    const hallConf={
+  const preview = document.getElementById('preview');
+  preview.innerHTML = '';
+  let unassigned = [...students];
+  let totalAssigned = 0;
+  const usedRolls = new Set(); // prevent duplicates
+
+  halls.forEach(h => {
+    const hallConf = {
       name: document.getElementById(`hall_name_${h.id}`).value || h.name,
-      rows:Number(document.getElementById(`hall_rows_${h.id}`).value)||h.rows,
-      cols:Number(document.getElementById(`hall_cols_${h.id}`).value)||h.cols,
-      I:Number(document.getElementById(`hall_I_${h.id}`).value)||0,
-      II:Number(document.getElementById(`hall_II_${h.id}`).value)||0,
-      III:Number(document.getElementById(`hall_III_${h.id}`).value)||0,
-      IV:Number(document.getElementById(`hall_IV_${h.id}`).value)||0,
+      rows: Number(document.getElementById(`hall_rows_${h.id}`).value) || h.rows,
+      cols: Number(document.getElementById(`hall_cols_${h.id}`).value) || h.cols,
+      I: Number(document.getElementById(`hall_I_${h.id}`).value) || 0,
+      II: Number(document.getElementById(`hall_II_${h.id}`).value) || 0,
+      III: Number(document.getElementById(`hall_III_${h.id}`).value) || 0,
+      IV: Number(document.getElementById(`hall_IV_${h.id}`).value) || 0,
       pattern: document.getElementById(`hall_pattern_${h.id}`).value || h.pattern
     };
-    const {assigned,remaining}=allocateToHall(remainingStudents,hallConf); remainingStudents=remaining;
-    totalAssigned+=assigned.filter(a=>a.student).length;
 
-    const hallDiv=document.createElement('div'); hallDiv.className='seatmap';
-    hallDiv.innerHTML=`<strong>${hallConf.name}</strong>`;
-    for(let r=0;r<hallConf.rows;r++){
-      const rowDiv=document.createElement('div'); rowDiv.className='seat-row';
-      const label=document.createElement('div'); label.className='row-label'; label.textContent=r+1; rowDiv.appendChild(label);
-      for(let c=0;c<hallConf.cols;c++){
-        const seatDiv=document.createElement('div'); seatDiv.className='seat empty'; 
-        const s=assigned.find(a=>a.row===r && a.col===c); 
-        if(s && s.student){ 
-          seatDiv.className='seat '+s.student.Year; 
-          seatDiv.textContent=s.student.RollNo; 
-          seatDiv.setAttribute('data-name',s.student.Name); 
-          seatDiv.setAttribute('data-year',s.student.Year); 
-          seatDiv.setAttribute('data-subject',s.student.SubjectCode); 
-          seatDiv.title=`${s.student.Name} | ${s.student.SubjectCode}`;
-        } 
+    // Filter unassigned students only
+    const available = unassigned.filter(s => !usedRolls.has(s.RollNo));
+
+    const { assigned } = allocateToHall(available, hallConf);
+
+    // Mark assigned students and remove them from pool
+    assigned.forEach(a => {
+      if (a.student && !usedRolls.has(a.student.RollNo)) {
+        usedRolls.add(a.student.RollNo);
+      }
+    });
+
+    unassigned = unassigned.filter(s => !usedRolls.has(s.RollNo));
+    totalAssigned += assigned.filter(a => a.student).length;
+
+    // Render Hall
+    const hallDiv = document.createElement('div');
+    hallDiv.className = 'seatmap';
+    hallDiv.innerHTML = `<strong>${hallConf.name}</strong>`;
+
+    for (let r = 0; r < hallConf.rows; r++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'seat-row';
+      const label = document.createElement('div');
+      label.className = 'row-label';
+      label.textContent = r + 1;
+      rowDiv.appendChild(label);
+
+      for (let c = 0; c < hallConf.cols; c++) {
+        const seatDiv = document.createElement('div');
+        seatDiv.className = 'seat empty';
+        const s = assigned.find(a => a.row === r && a.col === c);
+        if (s && s.student) {
+          seatDiv.className = 'seat ' + s.student.Year;
+          seatDiv.textContent = s.student.RollNo;
+          seatDiv.setAttribute('data-name', s.student.Name);
+          seatDiv.setAttribute('data-year', s.student.Year);
+          seatDiv.setAttribute('data-subject', s.student.SubjectCode);
+          seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
+        }
         rowDiv.appendChild(seatDiv);
       }
       hallDiv.appendChild(rowDiv);
     }
+
     preview.appendChild(hallDiv);
   });
-  document.getElementById('assignCounter').textContent=`Assigned: ${totalAssigned} / ${students.length}`;
+
+  document.getElementById('assignCounter').textContent =
+    `Assigned: ${totalAssigned} / ${students.length}`;
 }
+
 
 
 //Report Generate 
@@ -529,3 +562,4 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
 </body>
 
 </html>
+
