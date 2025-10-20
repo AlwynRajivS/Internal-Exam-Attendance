@@ -208,8 +208,8 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
 
     <hr>
-
-    <label>Halls (add/remove)</label>
+   <center>
+    <label>Halls (add/remove)</label></center>
 
     <div class="hall-list" id="hallList"></div>
 
@@ -285,13 +285,21 @@ function renderHallList(){
   halls.forEach(h=>{
     const div=document.createElement('div'); div.className='hall-item';
     div.innerHTML=`
+      <label>Hall Name</label>
       <input type='text' id='hall_name_${h.id}' value='${h.name}' placeholder='Hall Name'>
+      <label>No of Rows</label>
       <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' placeholder='Rows'>
+      <label>No of Columns</label>
       <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' placeholder='Cols'>
+      <label>I Yr</label>
       <input type='number' id='hall_I_${h.id}' value='0' placeholder='I Yr'>
+      <label>II Yr</label>
       <input type='number' id='hall_II_${h.id}' value='0' placeholder='II Yr'>
+      <label>III Yr</label>
       <input type='number' id='hall_III_${h.id}' value='0' placeholder='III Yr'>
+      <label>IV Yr</label>
       <input type='number' id='hall_IV_${h.id}' value='0' placeholder='IV Yr'>
+      <label>Seating Pattern</label>
       <select id='hall_pattern_${h.id}' style='padding:6px;border-radius:6px;'>
         <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
         <option value='column' ${h.pattern==='column'?'selected':''}>Column</option>
@@ -344,8 +352,6 @@ document.getElementById('btnTemplate').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template');
   XLSX.writeFile(wb,'Seating_Template.xlsx');
 });
-
-// Seat id =============================================================
 
 // Seat id
 function seatId(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
@@ -409,7 +415,7 @@ function allocateToHall(stuList, hall){
 
     if(!assigned && pool.length){
       let idx = pool.findIndex(s=>canSitHere(s,left,right));
-      if(idx===-1)idx=0;
+      if(idx===-1) idx=0;
       seats[pos.r][pos.c]=pool.splice(idx,1)[0];
     }
   }
@@ -496,15 +502,59 @@ function renderPreview(){
     preview.appendChild(hallDiv);
   });
 
+  enableSeatSwapping();
   document.getElementById('assignCounter').textContent =
     `Assigned: ${totalAssigned} / ${students.length}`;
 }
 
 
+// === Enable Seat Swapping in Preview ===
+let selectedSeat = null;
 
-//Report Generate 
+function enableSeatSwapping() {
+  document.querySelectorAll('.seat').forEach(seat => {
+    seat.addEventListener('click', () => {
+      if (!seat.textContent) return; // ignore empty seats
+      if (!selectedSeat) {
+        // select first
+        selectedSeat = seat;
+        seat.style.outline = '3px solid #2563eb';
+      } else if (selectedSeat === seat) {
+        // deselect same
+        seat.style.outline = '';
+        selectedSeat = null;
+      } else {
+        // swap seat contents
+        const tempData = {
+          text: selectedSeat.textContent,
+          name: selectedSeat.getAttribute('data-name'),
+          year: selectedSeat.getAttribute('data-year'),
+          section: selectedSeat.getAttribute('data-section'),
+          subject: selectedSeat.getAttribute('data-subject'),
+          className: selectedSeat.className
+        };
 
+        selectedSeat.textContent = seat.textContent;
+        selectedSeat.setAttribute('data-name', seat.getAttribute('data-name'));
+        selectedSeat.setAttribute('data-year', seat.getAttribute('data-year'));
+        selectedSeat.setAttribute('data-section', seat.getAttribute('data-section'));
+        selectedSeat.setAttribute('data-subject', seat.getAttribute('data-subject'));
+        selectedSeat.className = seat.className;
 
+        seat.textContent = tempData.text;
+        seat.setAttribute('data-name', tempData.name);
+        seat.setAttribute('data-year', tempData.year);
+        seat.setAttribute('data-section', tempData.section);
+        seat.setAttribute('data-subject', tempData.subject);
+        seat.className = tempData.className;
+
+        // remove selection outline
+        selectedSeat.style.outline = '';
+        selectedSeat = null;
+      }
+    });
+  });
+}
 
 
 // Event listeners
@@ -571,5 +621,3 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
 </body>
 
 </html>
-
-
