@@ -345,80 +345,178 @@ document.getElementById('btnTemplate').addEventListener('click',()=>{
   XLSX.writeFile(wb,'Seating_Template.xlsx');
 });
 
-// Seat id
-function seatId(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
-
-// Build seat order with patterns
+// Seat id =============================================================
+// 🔹 Build seat order pattern (always top to bottom visually)
+// =============================================================
 function buildSeatOrder(rows, cols, pattern = "row") {
   const order = [];
-  if (pattern === "row") {
-    for (let r = 0; r < rows; r++)
-      for (let c = 0; c < cols; c++) order.push({ r, c });
-  } else if (pattern === "column") {
-    for (let c = 0; c < cols; c++)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
-  } else if (pattern === "zigzag") {
-    for (let r = 0; r < rows; r++) {
-      if (r % 2 === 0)
-        for (let c = 0; c < cols; c++) order.push({ r, c });
-      else
-        for (let c = cols - 1; c >= 0; c--) order.push({ r, c });
-    }
-  } else if (pattern === "alternate") {
-    for (let c = 0; c < cols; c += 2)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
-    for (let c = 1; c < cols; c += 2)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
+
+  switch (pattern.toLowerCase()) {
+
+    // Row-wise (Left → Right, Top → Bottom)
+    case "row":
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          order.push({ r, c });
+      break;
+
+    // Column-wise (Top → Bottom, Left → Right)
+    case "column":
+      for (let c = 0; c < cols; c++)
+        for (let r = 0; r < rows; r++)
+          order.push({ r, c });
+      break;
+
+    // Snake/Zigzag pattern (Row 0 → L→R, Row 1 → R→L, etc.)
+    case "snake":
+    case "zigzag":
+      for (let r = 0; r < rows; r++) {
+        if (r % 2 === 0)
+          for (let c = 0; c < cols; c++) order.push({ r, c });
+        else
+          for (let c = cols - 1; c >= 0; c--) order.push({ r, c });
+      }
+      break;
+
+    // Row reverse (Right → Left, Top → Bottom)
+    case "row-reverse":
+      for (let r = 0; r < rows; r++)
+        for (let c = cols - 1; c >= 0; c--)
+          order.push({ r, c });
+      break;
+
+    // Column reverse (Bottom → Top, Left → Right)
+    case "column-reverse":
+      for (let c = 0; c < cols; c++)
+        for (let r = rows - 1; r >= 0; r--)
+          order.push({ r, c });
+      break;
+
+    // Default: simple row order
+    default:
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          order.push({ r, c });
   }
+
   return order;
 }
 
-// Allocate students with left/right subject restriction
-function allocateToHall(stuList, hall){
+// =============================================================
+// 🔹 Seat ID Generator (e.g., A1, A2, B1, etc.)
+// =============================================================
+function seatId(c, r) {
+  return String.fromCharCode(65 + r) + (c + 1);
+}
+
+// =============================================================
+// 🔹 Allocate students with left/right subject restriction
+// =============================================================
+function allocateToHall(stuList, hall) {
   const rows = Number(hall.rows), cols = Number(hall.cols);
-  const seats = Array.from({length: rows}, () => Array.from({length: cols}, () => null));
+  const seats = Array.from({ length: rows }, () => Array.from({ length: cols }, () => null));
   const pattern = hall.pattern || "row";
   const order = buildSeatOrder(rows, cols, pattern);
-  let pool = stuList.slice();
+  let pool = stuList.slice(); // clone list
 
-  const yearCounts = {I: Number(hall.I), II: Number(hall.II), III: Number(hall.III), IV: Number(hall.IV)};
-  const yearPools = {I: [], II: [], III: [], IV: []};
-  pool.forEach(s => { if(yearPools[s.Year]) yearPools[s.Year].push(s); });
+  // --- Year limits and year-wise pools ---
+  const yearCounts = { I: Number(hall.I), II: Number(hall.II), III: Number(hall.III), IV: Number(hall.IV) };
+  const yearPools = { I: [], II: [], III: [], IV: [] };
+  pool.forEach(s => { if (yearPools[s.Year]) yearPools[s.Year].push(s); });
 
-  function canSitHere(stu,left,right){
-    if(!stu) return false;
-    if((left && stu.SubjectCode===left.SubjectCode)||(right && stu.SubjectCode===right.SubjectCode)) return false;
+  // --- Check if a student can sit in this position ---
+  function canSitHere(stu, left, right) {
+    if (!stu) return false;
+    if ((left && stu.SubjectCode === left.SubjectCode) ||
+        (right && stu.SubjectCode === right.SubjectCode))
+      return false;
     return true;
   }
 
-  for(const pos of order){
-    let assigned=false;
-    const left = pos.c>0?seats[pos.r][pos.c-1]:null;
-    const right = pos.c<cols-1?seats[pos.r][pos.c+1]:null;
+  // --- Allocate seats ---
+  for (const pos of order) {
+    let assigned = false;
+    const left = pos.c > 0 ? seats[pos.r][pos.c - 1] : null;
+    const right = pos.c < cols - 1 ? seats[pos.r][pos.c + 1] : null;
 
-    for(const yr of ['I','II','III','IV']){
-      if(yearCounts[yr]>0 && yearPools[yr].length){
-        let idx = yearPools[yr].findIndex(s=>canSitHere(s,left,right));
-        if(idx===-1) continue;
-        seats[pos.r][pos.c]=yearPools[yr].splice(idx,1)[0];
-        yearCounts[yr]--; assigned=true; break;
+    // Try assigning by year pool first
+    for (const yr of ['I', 'II', 'III', 'IV']) {
+      if (yearCounts[yr] > 0 && yearPools[yr].length) {
+        let idx = yearPools[yr].findIndex(s => canSitHere(s, left, right));
+        if (idx === -1) continue;
+
+        const stu = yearPools[yr].splice(idx, 1)[0];
+        seats[pos.r][pos.c] = stu;
+        pool = pool.filter(s => s !== stu); // remove from global pool too
+        yearCounts[yr]--;
+        assigned = true;
+        break;
       }
     }
 
-    if(!assigned && pool.length){
-      let idx = pool.findIndex(s=>canSitHere(s,left,right));
-      if(idx===-1) idx=0;
-      seats[pos.r][pos.c]=pool.splice(idx,1)[0];
+    // Fallback: if no valid student from year pool
+    if (!assigned && pool.length) {
+      let idx = pool.findIndex(s => canSitHere(s, left, right));
+      if (idx !== -1) {
+        const stu = pool.splice(idx, 1)[0];
+        seats[pos.r][pos.c] = stu;
+      }
+      // else leave seat empty temporarily
     }
   }
 
-  const assigned=[];
-  for(let r=0;r<rows;r++)
-    for(let c=0;c<cols;c++)
-      assigned.push({row:r,col:c,student:seats[r][c],SeatingNo:seatId(c,r)});
+  // --- Second pass: fill empty seats with leftovers ---
+  for (const pos of order) {
+    if (!seats[pos.r][pos.c] && pool.length) {
+      seats[pos.r][pos.c] = pool.shift();
+    }
+  }
 
-  return {assigned,remaining:pool};
+  // --- Build final assigned list ---
+  const assigned = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      assigned.push({
+        row: r,
+        col: c,
+        student: seats[r][c],
+        SeatingNo: seatId(c, r)
+      });
+    }
+  }
+
+  return { assigned, remaining: pool };
 }
+
+// =============================================================
+// 🔹 Example Usage (for testing)
+// =============================================================
+const students = [
+  { Name: "Asha", Year: "I", SubjectCode: "CS101" },
+  { Name: "Bala", Year: "I", SubjectCode: "CS102" },
+  { Name: "Chitra", Year: "II", SubjectCode: "CS101" },
+  { Name: "Deepak", Year: "II", SubjectCode: "CS103" },
+  { Name: "Elan", Year: "III", SubjectCode: "CS102" },
+  { Name: "Farah", Year: "III", SubjectCode: "CS104" },
+  { Name: "Gopi", Year: "IV", SubjectCode: "CS105" },
+  { Name: "Hari", Year: "IV", SubjectCode: "CS106" }
+];
+
+const hall = {
+  name: "Hall A",
+  rows: 3,
+  cols: 3,
+  pattern: "row", // try: "row", "column", "snake", "row-reverse"
+  I: 2,
+  II: 2,
+  III: 2,
+  IV: 2
+};
+
+const result = allocateToHall(students, hall);
+console.log("Assigned Seats:", result.assigned);
+console.log("Remaining Students:", result.remaining);
+
 
 // Render preview
 function renderPreview(){
