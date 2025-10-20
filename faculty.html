@@ -726,7 +726,7 @@ async function generatePDF(data, examType, department) {
     doc.setFont("times", "bold");
     doc.setFontSize(16);
     const centerText = (txt, yPos) => doc.text(txt, pageWidth/2, yPos, { align: "center" });
-    centerText("UNJHA V.DHANASAMY – D.PARIMALA DEVI EXAMINATION CELL", y); y += 20;
+    //centerText("UNJHA V.DHANASAMY – D.PARIMALA DEVI EXAMINATION CELL", y); y += 20;
     doc.setFontSize(12);
     centerText("Office of the Controller of Examinations", y); y += 18;
     centerText("ODD Semester of 2025 – 2026", y); y += 18;
