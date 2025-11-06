@@ -301,8 +301,8 @@ function renderHallList(){
       <input type='number' id='hall_IV_${h.id}' value='0' placeholder='IV Yr'>
       <label>Seating Pattern</label>
       <select id='hall_pattern_${h.id}' style='padding:6px;border-radius:6px;'>
-        <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
         <option value='column' ${h.pattern==='column'?'selected':''}>Column</option>
+        <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
         <option value='zigzag' ${h.pattern==='zigzag'?'selected':''}>Zigzag</option>
         <option value='alternate' ${h.pattern==='alternate'?'selected':''}>Alternate</option>
       </select>
