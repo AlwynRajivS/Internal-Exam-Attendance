@@ -357,14 +357,15 @@ document.getElementById('btnTemplate').addEventListener('click',()=>{
 function seatId(c,r){ return `${String.fromCharCode(65+c)}${r+1}`; }
 
 // Build seat order with patterns
-function buildSeatOrder(rows, cols, pattern = "row") {
+function buildSeatOrder(rows, cols, pattern = "column") {
   const order = [];
-  if (pattern === "row") {
-    for (let r = 0; r < rows; r++)
-      for (let c = 0; c < cols; c++) order.push({ r, c });
-  } else if (pattern === "column") {
+  if (pattern === "column") {
     for (let c = 0; c < cols; c++)
       for (let r = 0; r < rows; r++) order.push({ r, c });
+  }
+  else if (pattern === "row") {
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++) order.push({ r, c });
   } else if (pattern === "zigzag") {
     for (let r = 0; r < rows; r++) {
       if (r % 2 === 0)
