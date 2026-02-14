@@ -613,16 +613,16 @@
         
         <!-- Email Field -->
         <div class="form-group">
-          <label for="email" class="form-label">Email Address</label>
+          <label for="email" class="form-label">Username / Email</label>
           <div class="input-wrapper">
-            <span class="input-icon">📧</span>
+            <span class="input-icon">👤</span>
             <input 
-              type="email" 
+              type="text" 
               id="email" 
               name="email"
-              placeholder="Enter your email"
+              placeholder="Enter your username or email"
               required
-              autocomplete="email"
+              autocomplete="username"
             >
           </div>
         </div>
@@ -652,7 +652,7 @@
             <input type="checkbox" id="remember" name="remember">
             <label for="remember">Remember me</label>
           </div>
-  
+          <a href="#" class="forgot-password" onclick="alert('Please contact your administrator'); return false;">Forgot Password?</a>
         </div>
 
         <!-- Submit Button -->
@@ -736,13 +736,6 @@
       // Validation
       if (!email || !password) {
         showError("Please fill in all fields");
-        return;
-      }
-
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showError("Please enter a valid email address");
         return;
       }
 
