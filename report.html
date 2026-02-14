@@ -825,51 +825,49 @@ async function downloadPDF(){
   const scaleFactor = contentWidth / totalWidth;
   const scaledWidths = colWidths.map(w => w * scaleFactor);
 
-  // Draw table headers
-  pdf.setFillColor(37, 99, 235); // Primary blue
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(8);
-  pdf.setFont(undefined, 'bold');
+  const tableHeaderHeight = 22;
+  const rowHeight = 18;
   
-  let xPosition = margin;
-  const headerHeight = 20;
+  // Function to draw table headers
+  function drawTableHeaders(startY) {
+    pdf.setFillColor(37, 99, 235); // Primary blue
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'bold');
+    
+    let xPos = margin;
+    
+    headers.forEach((header, i) => {
+      // Draw header cell background
+      pdf.rect(xPos, startY, scaledWidths[i], tableHeaderHeight, 'FD');
+      
+      // Draw header text
+      pdf.text(header, xPos + scaledWidths[i] / 2, startY + 14, { align: 'center' });
+      xPos += scaledWidths[i];
+    });
+    
+    return startY + tableHeaderHeight;
+  }
   
-  headers.forEach((header, i) => {
-    pdf.rect(xPosition, yPosition, scaledWidths[i], headerHeight, 'F');
-    pdf.text(header, xPosition + scaledWidths[i] / 2, yPosition + 13, { align: 'center' });
-    xPosition += scaledWidths[i];
-  });
-  
-  yPosition += headerHeight;
+  // Draw first set of table headers
+  yPosition = drawTableHeaders(yPosition);
 
   // Draw table rows
   pdf.setFont(undefined, 'normal');
-  pdf.setFontSize(7);
-  const rowHeight = 18;
+  pdf.setFontSize(8);
   let rowIndex = 0;
 
   data.forEach((row, index) => {
     // Check if we need a new page
-    if(yPosition + rowHeight > pageHeight - margin) {
+    if(yPosition + rowHeight > pageHeight - margin - 30) {
       pdf.addPage();
-      yPosition = margin;
+      yPosition = margin + 20; // Start below top margin on new pages
       
-      // Redraw headers on new page
-      pdf.setFillColor(37, 99, 235);
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(8);
-      pdf.setFont(undefined, 'bold');
-      xPosition = margin;
+      // Redraw table headers on new page
+      yPosition = drawTableHeaders(yPosition);
       
-      headers.forEach((header, i) => {
-        pdf.rect(xPosition, yPosition, scaledWidths[i], headerHeight, 'F');
-        pdf.text(header, xPosition + scaledWidths[i] / 2, yPosition + 13, { align: 'center' });
-        xPosition += scaledWidths[i];
-      });
-      
-      yPosition += headerHeight;
       pdf.setFont(undefined, 'normal');
-      pdf.setFontSize(7);
+      pdf.setFontSize(8);
       rowIndex = 0;
     }
 
@@ -892,18 +890,18 @@ async function downloadPDF(){
     
     // Draw cell borders
     pdf.setDrawColor(229, 231, 235);
-    xPosition = margin;
+    let xPos = margin;
     row.forEach((cell, i) => {
-      pdf.rect(xPosition, yPosition, scaledWidths[i], rowHeight);
-      xPosition += scaledWidths[i];
+      pdf.rect(xPos, yPosition, scaledWidths[i], rowHeight);
+      xPos += scaledWidths[i];
     });
 
     // Draw cell text
     pdf.setTextColor(30, 41, 59);
-    xPosition = margin;
+    xPos = margin;
     row.forEach((cell, i) => {
       const cellText = String(cell || '');
-      const maxWidth = scaledWidths[i] - 4;
+      const maxWidth = scaledWidths[i] - 6;
       
       // Truncate text if too long
       let displayText = cellText;
@@ -915,13 +913,13 @@ async function downloadPDF(){
       }
       
       // Center align for smaller cells, left align for text cells
-      if(i < 2 || i >= 5 && i <= 8) {
-        pdf.text(displayText, xPosition + scaledWidths[i] / 2, yPosition + 12, { align: 'center' });
+      if(i < 2 || (i >= 5 && i <= 8) || i === 11) {
+        pdf.text(displayText, xPos + scaledWidths[i] / 2, yPosition + 12, { align: 'center' });
       } else {
-        pdf.text(displayText, xPosition + 3, yPosition + 12);
+        pdf.text(displayText, xPos + 4, yPosition + 12);
       }
       
-      xPosition += scaledWidths[i];
+      xPos += scaledWidths[i];
     });
 
     yPosition += rowHeight;
