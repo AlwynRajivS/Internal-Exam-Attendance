@@ -57,14 +57,16 @@ select,input[type=text],input[type=date],input[type=number],button{width:100%;pa
 
 .btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741;}
 
-.hall-item { display:grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 15px; padding: 10px; border: 1px solid #e6eef3; border-radius: 8px; }
-  .hall-item input, .hall-item select, .hall-item button { width: 100%; }
+.hall-item { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; padding: 12px; border: 2px solid #e6eef3; border-radius: 10px; background: #f8fcff; }
+.hall-item input, .hall-item select, .hall-item button { width: 100%; }
+.hall-item label { margin-top: 5px; font-weight: 600; }
+.hall-item .remove-btn { grid-column: 1 / -1; margin-top: 5px; }
 
 .add-hall{display:flex;gap:8px;margin-top:10px;}
 
 .preview-area{align-items:center;display:grid;gap:6px;}
 
-.seatmap{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);margin-bottom:20px;}
+.seatmap{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);margin-bottom:20px;border: 2px solid #e0e7ff;}
 
 .seat-row{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
 
@@ -80,11 +82,13 @@ select,input[type=text],input[type=date],input[type=number],button{width:100%;pa
 
 .seat.IV{background:var(--yearIV);color:#fff;}
 
-.seat:hover{transform:scale(1.05);}
+.seat:hover{transform:scale(1.05);box-shadow: 0 2px 8px rgba(0,0,0,0.15);}
 
-.seat.empty{cursor:default;}
+.seat.empty{cursor:default;background:#f1f5f9;}
 
-.seat.selected{outline:3px solid #2563eb;outline-offset:2px;}
+.seat.selected{outline:3px solid #2563eb;outline-offset:2px;box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.2);}
+
+.swap-info{background:#fef3c7;padding:10px;border-radius:8px;margin-bottom:10px;font-size:13px;border-left:4px solid #fbbf24;}
 
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 
@@ -183,7 +187,7 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
 
-    <div class="small">Template columns: <code>Roll No,Name,Year,Section,Subject Code,Subject Name</code></div>
+    <div class="small">Template columns: <code>Roll No, Name, Year, Section, Subject Code, Subject</code></div>
 
     <div class="controls">
 
@@ -231,6 +235,8 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
   <div class="card preview-area">
 
+    <div id="swapInfo"></div>
+
     <div id="messages">No file loaded.</div>
 
     <div id="preview" style="min-height:220px"></div>
@@ -258,40 +264,56 @@ function normalizeRow(r){
   const year=map['year']||''; 
   const section=map['section']||'';
   const subj=map['subject code']||map['subjectcode']||''; 
-  const subjname=map['subject name']||map['subjectname']||'';
-  return {RollNo:roll,Name:name,Year:year,Section:section,SubjectCode:subj,SubjectName:subjname};
+  const subjname=map['subject name']||map['subjectname']||map['subject']||'';
+  return {RollNo:roll,Name:name,Year:year,Section:section,SubjectCode:subj,Subject:subjname};
 }
 
 // Render hall list
 function renderHallList(){
   const container=document.getElementById('hallList'); 
   container.innerHTML='';
-  halls.forEach(h=>{
+  halls.forEach((h, idx) =>{
     const div=document.createElement('div'); 
     div.className='hall-item';
     div.innerHTML=`
-      <label>Hall Name</label>
-      <input type='text' id='hall_name_${h.id}' value='${h.name}' placeholder='Hall Name'>
-      <label>No of Rows</label>
-      <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' placeholder='Rows'>
-      <label>No of Columns</label>
-      <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' placeholder='Cols'>
-      <label>I Yr</label>
-      <input type='number' id='hall_I_${h.id}' value='0' placeholder='I Yr'>
-      <label>II Yr</label>
-      <input type='number' id='hall_II_${h.id}' value='0' placeholder='II Yr'>
-      <label>III Yr</label>
-      <input type='number' id='hall_III_${h.id}' value='0' placeholder='III Yr'>
-      <label>IV Yr</label>
-      <input type='number' id='hall_IV_${h.id}' value='0' placeholder='IV Yr'>
-      <label>Seating Pattern</label>
-      <select id='hall_pattern_${h.id}' style='padding:6px;border-radius:6px;'>
-        <option value='column' ${h.pattern==='column'?'selected':''}>Column</option>
-        <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
-        <option value='zigzag' ${h.pattern==='zigzag'?'selected':''}>Zigzag</option>
-        <option value='alternate' ${h.pattern==='alternate'?'selected':''}>Alternate</option>
-      </select>
-      <button type='button' data-remove='${h.id}' class='remove-btn' style='background:#ff6b6b;color:white;border:none;border-radius:6px;padding:6px;cursor:pointer;'>× Remove</button>
+      <div style="grid-column: 1 / -1;">
+        <label>Hall Name</label>
+        <input type='text' id='hall_name_${h.id}' value='${h.name}' placeholder='Hall ${idx + 1}'>
+      </div>
+      <div>
+        <label>No of Rows</label>
+        <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' placeholder='Rows'>
+      </div>
+      <div>
+        <label>No of Columns</label>
+        <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' placeholder='Columns'>
+      </div>
+      <div>
+        <label>I Year</label>
+        <input type='number' id='hall_I_${h.id}' value='${h.I || 0}' min='0' placeholder='I Yr'>
+      </div>
+      <div>
+        <label>II Year</label>
+        <input type='number' id='hall_II_${h.id}' value='${h.II || 0}' min='0' placeholder='II Yr'>
+      </div>
+      <div>
+        <label>III Year</label>
+        <input type='number' id='hall_III_${h.id}' value='${h.III || 0}' min='0' placeholder='III Yr'>
+      </div>
+      <div>
+        <label>IV Year</label>
+        <input type='number' id='hall_IV_${h.id}' value='${h.IV || 0}' min='0' placeholder='IV Yr'>
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <label>Seating Pattern</label>
+        <select id='hall_pattern_${h.id}'>
+          <option value='column' ${h.pattern==='column'?'selected':''}>Column</option>
+          <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
+          <option value='zigzag' ${h.pattern==='zigzag'?'selected':''}>Zigzag</option>
+          <option value='alternate' ${h.pattern==='alternate'?'selected':''}>Alternate</option>
+        </select>
+      </div>
+      <button type='button' data-remove='${h.id}' class='remove-btn' style='background:#ff6b6b;color:white;border:none;border-radius:6px;padding:8px;cursor:pointer;font-weight:600;'>× Remove Hall</button>
     `;
     container.appendChild(div);
   });
@@ -304,14 +326,13 @@ function renderHallList(){
 
 function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6, pattern='row'){ 
   hallCounter++; 
-  halls.push({id:hallCounter,name,rows,cols,pattern}); 
+  halls.push({id:hallCounter,name,rows,cols,pattern,I:0,II:0,III:0,IV:0}); 
   renderHallList(); 
 }
 
 function removeLastHall(){ 
   if(halls.length){ 
     halls.pop(); 
-    hallCounter--; 
     renderHallList(); 
   } 
 }
@@ -356,8 +377,12 @@ document.getElementById('fileInput').addEventListener('change',async(e)=>{
 
 // Download template
 document.getElementById('btnTemplate').addEventListener('click',()=>{
-  const headers=['Roll No','Name of the Student','Year','Section','Subject Code','Subject Name'];
-  const ws=XLSX.utils.aoa_to_sheet([headers,['12345','Student One','I','A','CS101','Math']]);
+  const headers=['Roll No','Name','Year','Section','Subject Code','Subject'];
+  const ws=XLSX.utils.aoa_to_sheet([
+    headers,
+    ['21CS001','John Doe','I','A','CS101','Programming'],
+    ['21CS002','Jane Smith','I','A','CS102','Data Structures']
+  ]);
   const wb=XLSX.utils.book_new(); 
   XLSX.utils.book_append_sheet(wb,ws,'Template');
   XLSX.writeFile(wb,'Seating_Template.xlsx');
@@ -494,7 +519,7 @@ function renderPreview(){
     const hallDiv = document.createElement('div');
     hallDiv.className = 'seatmap';
     hallDiv.setAttribute('data-hall-index', hallIndex);
-    hallDiv.innerHTML = `<strong>${hallConf.name}</strong>`;
+    hallDiv.innerHTML = `<strong style="font-size:16px;color:#0369a1;">${hallConf.name}</strong>`;
 
     for (let r = 0; r < hallConf.rows; r++) {
       const rowDiv = document.createElement('div');
@@ -519,9 +544,9 @@ function renderPreview(){
           seatDiv.setAttribute('data-name', s.student.Name);
           seatDiv.setAttribute('data-year', s.student.Year);
           seatDiv.setAttribute('data-section', s.student.Section);
-          seatDiv.setAttribute('data-subject', s.student.SubjectCode);
-          seatDiv.setAttribute('data-subjectname', s.student.SubjectName);
-          seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode}`;
+          seatDiv.setAttribute('data-subject-code', s.student.SubjectCode);
+          seatDiv.setAttribute('data-subject', s.student.Subject);
+          seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode} - ${s.student.Subject}`;
         }
         rowDiv.appendChild(seatDiv);
       }
@@ -536,7 +561,7 @@ function renderPreview(){
     `Assigned: ${totalAssigned} / ${students.length}`;
 }
 
-// === Enable Seat Swapping in Preview ===
+// === Enable Seat Swapping Across All Halls ===
 let selectedSeat = null;
 
 function enableSeatSwapping() {
@@ -548,12 +573,14 @@ function enableSeatSwapping() {
         // Select first seat
         selectedSeat = seat;
         seat.classList.add('selected');
+        updateSwapInfo(seat, null);
       } else if (selectedSeat === seat) {
         // Deselect same seat
         seat.classList.remove('selected');
         selectedSeat = null;
+        document.getElementById('swapInfo').innerHTML = '';
       } else {
-        // Swap seat contents
+        // Swap seat contents (can be across different halls)
         const hallIndex1 = Number(selectedSeat.getAttribute('data-hall-index'));
         const row1 = Number(selectedSeat.getAttribute('data-row'));
         const col1 = Number(selectedSeat.getAttribute('data-col'));
@@ -568,8 +595,8 @@ function enableSeatSwapping() {
           Name: selectedSeat.getAttribute('data-name'),
           Year: selectedSeat.getAttribute('data-year'),
           Section: selectedSeat.getAttribute('data-section'),
-          SubjectCode: selectedSeat.getAttribute('data-subject'),
-          SubjectName: selectedSeat.getAttribute('data-subjectname')
+          SubjectCode: selectedSeat.getAttribute('data-subject-code'),
+          Subject: selectedSeat.getAttribute('data-subject')
         };
 
         const student2 = {
@@ -577,41 +604,56 @@ function enableSeatSwapping() {
           Name: seat.getAttribute('data-name'),
           Year: seat.getAttribute('data-year'),
           Section: seat.getAttribute('data-section'),
-          SubjectCode: seat.getAttribute('data-subject'),
-          SubjectName: seat.getAttribute('data-subjectname')
+          SubjectCode: seat.getAttribute('data-subject-code'),
+          Subject: seat.getAttribute('data-subject')
         };
 
-        // Update allocation data
+        // Update allocation data for hall 1
         if (allocationData[hallIndex1] && allocationData[hallIndex1].seats) {
           const seat1Data = allocationData[hallIndex1].seats.find(s => s.row === row1 && s.col === col1);
           if (seat1Data) seat1Data.student = student2;
         }
 
+        // Update allocation data for hall 2
         if (allocationData[hallIndex2] && allocationData[hallIndex2].seats) {
           const seat2Data = allocationData[hallIndex2].seats.find(s => s.row === row2 && s.col === col2);
           if (seat2Data) seat2Data.student = student1;
         }
 
-        // Swap visual representation
+        // Swap visual representation of seat 1
         selectedSeat.textContent = student2.RollNo;
         selectedSeat.setAttribute('data-roll', student2.RollNo);
         selectedSeat.setAttribute('data-name', student2.Name);
         selectedSeat.setAttribute('data-year', student2.Year);
         selectedSeat.setAttribute('data-section', student2.Section);
-        selectedSeat.setAttribute('data-subject', student2.SubjectCode);
-        selectedSeat.setAttribute('data-subjectname', student2.SubjectName);
+        selectedSeat.setAttribute('data-subject-code', student2.SubjectCode);
+        selectedSeat.setAttribute('data-subject', student2.Subject);
         selectedSeat.className = 'seat ' + student2.Year;
-        selectedSeat.title = `${student2.Name} | ${student2.SubjectCode}`;
+        selectedSeat.title = `${student2.Name} | ${student2.SubjectCode} - ${student2.Subject}`;
 
+        // Swap visual representation of seat 2
         seat.textContent = student1.RollNo;
         seat.setAttribute('data-roll', student1.RollNo);
         seat.setAttribute('data-name', student1.Name);
         seat.setAttribute('data-year', student1.Year);
         seat.setAttribute('data-section', student1.Section);
-        seat.setAttribute('data-subject', student1.SubjectCode);
-        seat.setAttribute('data-subjectname', student1.SubjectName);
+        seat.setAttribute('data-subject-code', student1.SubjectCode);
+        seat.setAttribute('data-subject', student1.Subject);
         seat.className = 'seat ' + student1.Year;
-        seat.title = `${student1.Name} | ${student1.SubjectCode}`;
+        seat.title = `${student1.Name} | ${student1.SubjectCode} - ${student1.Subject}`;
+
+        // Show swap confirmation
+        const hall1Name = allocationData[hallIndex1].hallName;
+        const hall2Name = allocationData[hallIndex2].hallName;
+        const swapMsg = hallIndex1 === hallIndex2 
+          ? `✓ Swapped within ${hall1Name}`
+          : `✓ Swapped between ${hall1Name} ↔ ${hall2Name}`;
+        
+        document.getElementById('swapInfo').innerHTML = `<div class="swap-info">${swapMsg}: ${student1.RollNo} ↔ ${student2.RollNo}</div>`;
+        
+        setTimeout(() => {
+          document.getElementById('swapInfo').innerHTML = '';
+        }, 3000);
 
         // Remove selection
         selectedSeat.classList.remove('selected');
@@ -619,6 +661,14 @@ function enableSeatSwapping() {
       }
     });
   });
+}
+
+function updateSwapInfo(seat1, seat2) {
+  const info = document.getElementById('swapInfo');
+  if (!seat2) {
+    const hallName = allocationData[Number(seat1.getAttribute('data-hall-index'))].hallName;
+    info.innerHTML = `<div class="swap-info">Selected: ${seat1.getAttribute('data-roll')} in ${hallName}. Click another seat to swap.</div>`;
+  }
 }
 
 // Event listeners
@@ -632,6 +682,7 @@ document.getElementById('btnClear').addEventListener('click',()=>{
   hallCounter=0;
   renderHallList();
   document.getElementById('preview').innerHTML='';
+  document.getElementById('swapInfo').innerHTML='';
   showMessage('Cleared');
 });
 
@@ -652,7 +703,7 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
   }
 
   const wb = XLSX.utils.book_new();
-  const wsData = [['Date','Department','Batch','Hall No','Student Roll No','Name','Seating No','Subject Code','Subject Name','Year','Section']];
+  const wsData = [['Date','Department','Batch','Hall No','Student Roll No','Name','Seating No','Subject Code','Subject','Year','Section']];
 
   // Use allocation data instead of reading from DOM
   allocationData.forEach(hall => {
@@ -667,7 +718,7 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
           seatData.student.Name,
           seatData.SeatingNo,
           seatData.student.SubjectCode,
-          seatData.student.SubjectName,
+          seatData.student.Subject,
           seatData.student.Year,
           seatData.student.Section
         ]);
@@ -678,20 +729,22 @@ document.getElementById('btnGenerate').addEventListener('click', () => {
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   XLSX.utils.book_append_sheet(wb, ws, 'Seating_All_Halls');
   XLSX.writeFile(wb, `${dept}_${batch}_${date}_Seating.xlsx`);
-  alert("✅ Excel generated successfully!");
+  alert("✅ Excel generated successfully with all hall swaps!");
 });
 
 // Show sample data
 document.getElementById('btnPreviewSample').addEventListener('click', () => {
   students = [
-    {RollNo: '21CS001', Name: 'John Doe', Year: 'I', Section: 'A', SubjectCode: 'CS101', SubjectName: 'Programming'},
-    {RollNo: '21CS002', Name: 'Jane Smith', Year: 'I', Section: 'A', SubjectCode: 'CS102', SubjectName: 'Data Structures'},
-    {RollNo: '21CS003', Name: 'Bob Johnson', Year: 'II', Section: 'B', SubjectCode: 'CS201', SubjectName: 'Algorithms'},
-    {RollNo: '21CS004', Name: 'Alice Brown', Year: 'II', Section: 'B', SubjectCode: 'CS202', SubjectName: 'Database'},
-    {RollNo: '21CS005', Name: 'Charlie Wilson', Year: 'III', Section: 'C', SubjectCode: 'CS301', SubjectName: 'Networks'},
-    {RollNo: '21CS006', Name: 'Diana Davis', Year: 'III', Section: 'C', SubjectCode: 'CS302', SubjectName: 'Operating Systems'}
+    {RollNo: '21CS001', Name: 'John Doe', Year: 'I', Section: 'A', SubjectCode: 'CS101', Subject: 'Programming'},
+    {RollNo: '21CS002', Name: 'Jane Smith', Year: 'I', Section: 'A', SubjectCode: 'CS102', Subject: 'Data Structures'},
+    {RollNo: '21CS003', Name: 'Bob Johnson', Year: 'II', Section: 'B', SubjectCode: 'CS201', Subject: 'Algorithms'},
+    {RollNo: '21CS004', Name: 'Alice Brown', Year: 'II', Section: 'B', SubjectCode: 'CS202', Subject: 'Database'},
+    {RollNo: '21CS005', Name: 'Charlie Wilson', Year: 'III', Section: 'C', SubjectCode: 'CS301', Subject: 'Networks'},
+    {RollNo: '21CS006', Name: 'Diana Davis', Year: 'III', Section: 'C', SubjectCode: 'CS302', Subject: 'Operating Systems'},
+    {RollNo: '21CS007', Name: 'Eve Martinez', Year: 'IV', Section: 'D', SubjectCode: 'CS401', Subject: 'AI'},
+    {RollNo: '21CS008', Name: 'Frank Garcia', Year: 'IV', Section: 'D', SubjectCode: 'CS402', Subject: 'Machine Learning'}
   ];
-  showMessage(`Loaded ${students.length} sample students.`);
+  showMessage(`Loaded ${students.length} sample students. Add halls and click Preview!`);
 });
 
 })();
