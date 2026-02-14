@@ -836,7 +836,7 @@
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
       
       // FN session: Hall/Seat visible after 7:00 PM (19:00)
-      const fnVisibleTime = 19 * 60; // 7:00 PM in minutes
+      const fnVisibleTime = 7 * 60; // 7:00 PM in minutes
       
       // AN session: Hall/Seat visible after 12:30 PM (12:30)
       const anVisibleTime = 12 * 60 + 30; // 12:30 PM in minutes
@@ -856,7 +856,7 @@
         // Check if explicitly locked
         if (row.HallNo === "Locked") {
           div.className = "exam-box";
-          const unlockTime = batch === "FN" ? "7:00 PM" : "12:30 PM";
+          const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
           div.innerHTML = `
             <div class="locked">
               <i class="fas fa-lock"></i>
@@ -942,7 +942,7 @@
         infoMsg.className = "info-message warning";
         infoMsg.innerHTML = `
           <i class="fas fa-info-circle"></i>
-          <span>Hall and Seat information will be available at the designated times (FN: 7:00 PM, AN: 12:30 PM)</span>
+          <span>Hall and Seat information will be available at the designated times (FN: 7:00 AM, AN: 12:30 PM)</span>
         `;
         infoMsg.style.display = "flex";
       } else if (lockedCount > 0) {
@@ -1144,3 +1144,4 @@
   </script>
 </body>
 </html>
+
