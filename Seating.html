@@ -7,119 +7,900 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Exam Seating — Multi‑Hall Allotment</title>
+<title>Advanced Exam Seating — Multi‑Hall Allotment System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-
-  --accent:#06b6d4; --accent2:#7c3aed; --muted:#94a3b8;
-
-  --seat-bg:#f0f9ff; --seat-hover:#d1f0ff;
-
-  --yearI:#60a5fa; --yearII:#4ade80; --yearIII:#fbbf24; --yearIV:#f87171;
-
+  --primary: #0ea5e9;
+  --primary-dark: #0284c7;
+  --secondary: #8b5cf6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #06b6d4;
+  
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  
+  --seat-empty: #f1f5f9;
+  --seat-I: #60a5fa;
+  --seat-II: #34d399;
+  --seat-III: #fbbf24;
+  --seat-IV: #f87171;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 }
 
-*{box-sizing:border-box;margin:0;padding:0;}
-
-body{font-family:Poppins,system-ui,Arial;background:linear-gradient(180deg,#e6f9ff,#f7f5ff);color:#052029;padding:10px;}
-
-.wrap{max-width:1200px;margin:0 auto;}
-
-header{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
-
-.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px;}
-
-h1{font-size:22px;margin:0;}
-
-p.lead{color:#0b5564;font-size:14px;}
-
-.main{display:grid;grid-template-columns:380px 1fr;gap:18px;}
-
-.card{background:white;border-radius:25px;padding:16px;box-shadow:0 6px 24px rgba(13,38,52,0.06);width: 100%}
-
-label{display:block;font-size:13px;color:#073741;margin-top:10px;}
-
-select,input[type=text],input[type=date],input[type=number],button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(3,37,45,0.06);font-size:14px;}
-
-.row{display:flex;gap:8px;}
-
-.small{font-size:12px;color:var(--muted);}
-
-.btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;cursor:pointer;border:none;padding:10px;border-radius:8px;font-weight:700;transition:0.3s;}
-
-.btn:hover{opacity:0.9;}
-
-.btn.ghost{background:transparent;border:1px solid rgba(3,37,45,0.06);color:#073741;}
-
-.hall-item { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; padding: 12px; border: 2px solid #e6eef3; border-radius: 10px; background: #f8fcff; }
-.hall-item input, .hall-item select, .hall-item button { width: 100%; }
-.hall-item label { margin-top: 5px; font-weight: 600; }
-.hall-item .remove-btn { grid-column: 1 / -1; margin-top: 5px; }
-
-.add-hall{display:flex;gap:8px;margin-top:10px;}
-
-.preview-area{align-items:center;display:grid;gap:6px;}
-
-.seatmap{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#f8fcff,#fbf7ff);margin-bottom:20px;border: 2px solid #e0e7ff;}
-
-.seat-row{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
-
-.row-label{width:60px;text-align:center;color:var(--muted);font-weight:600;}
-
-.seat{min-width:60px;height:30px;border-radius:8px;background:var(--seat-bg);border:1px solid #e6eef3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:10px;position:relative;transition:0.3s;cursor:pointer;}
-
-.seat.I{background:var(--yearI);color:#fff;}
-
-.seat.II{background:var(--yearII);color:#fff;}
-
-.seat.III{background:var(--yearIII);color:#fff;}
-
-.seat.IV{background:var(--yearIV);color:#fff;}
-
-.seat:hover{transform:scale(1.05);box-shadow: 0 2px 8px rgba(0,0,0,0.15);}
-
-.seat.empty{cursor:default;background:#f1f5f9;}
-
-.seat.selected{outline:3px solid #2563eb;outline-offset:2px;box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.2);}
-
-.swap-info{background:#fef3c7;padding:10px;border-radius:8px;margin-bottom:10px;font-size:13px;border-left:4px solid #fbbf24;}
-
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-
-th,td{padding:8px;border:1px solid #e6eef3;text-align:left;font-size:13px;}
-
-th{background:#edf7fb;}
-
-.controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
-
-footer{margin-top:12px;color:#6a7d86;font-size:13px;}
-
-@media(max-width:980px){
-  .main{grid-template-columns:1fr;}
-  .hall-item { grid-template-columns: 1fr; gap: 6px; }
-  .hall-item input, .hall-item select, .hall-item button { width: 100%; }
-  .seat { min-width: 40px; height: 20px; font-size: 6px; }
-  .row-label { width: 20px; font-size: 8px; }
-  .controls { flex-direction: column; gap: 6px; }
-  header { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .logo { width: 50px; height: 50px; font-size: 18px; }
-  h1 { font-size: 18px; }
-  p.lead { font-size: 12px; }
-  .preview-area { min-height: 200px; }
-  .seat-row{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (max-width:600px) {
-  .seat { min-width: 40px; height: 20px; font-size: 6px; }
-  .row-label { width: 20px; font-size: 6px; }
-  .controls button { font-size: 12px; padding: 8px; }
-  .hall-item { grid-template-columns: 1fr; gap: 2px; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--text-primary);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 28px;
+  box-shadow: var(--shadow-md);
+}
+
+.header-content h1 {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.header-content p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Main Layout */
+.main-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Card Styles */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 4px;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+  background: var(--bg-card);
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.form-help {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  display: block;
+}
+
+/* Buttons */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: var(--bg-hover);
+  padding: 4px;
+  border-radius: var(--radius-md);
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Hall Item */
+.hall-item {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.hall-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.hall-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.hall-number {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.hall-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hall-grid-full {
+  grid-column: 1 / -1;
+}
+
+/* Statistics */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Seat Map */
+.seatmap {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.seatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.seatmap-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.seatmap-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.seat-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.row-label {
+  width: 40px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.seat {
+  min-width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  background: var(--seat-empty);
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.seat:not(.empty):hover {
+  transform: scale(1.08);
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+}
+
+.seat.I {
+  background: linear-gradient(135deg, var(--seat-I), #3b82f6);
+  color: white;
+  border-color: #2563eb;
+}
+
+.seat.II {
+  background: linear-gradient(135deg, var(--seat-II), #10b981);
+  color: white;
+  border-color: #059669;
+}
+
+.seat.III {
+  background: linear-gradient(135deg, var(--seat-III), #f59e0b);
+  color: white;
+  border-color: #d97706;
+}
+
+.seat.IV {
+  background: linear-gradient(135deg, var(--seat-IV), #ef4444);
+  color: white;
+  border-color: #dc2626;
+}
+
+.seat.selected {
+  outline: 4px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.2);
+  transform: scale(1.1);
+  z-index: 100;
+}
+
+.seat.drag-over {
+  outline: 4px dashed var(--success);
+  outline-offset: 2px;
+}
+
+.seat-id {
+  font-size: 8px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.seat.empty {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend-color {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.toast {
+  background: white;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid var(--primary);
+}
+
+.toast.success {
+  border-left-color: var(--success);
+}
+
+.toast.error {
+  border-left-color: var(--danger);
+}
+
+.toast.warning {
+  border-left-color: var(--warning);
+}
+
+.toast-icon {
+  font-size: 24px;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Action Bar */
+.action-bar {
+  position: sticky;
+  top: 20px;
+  background: white;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  z-index: 100;
+}
+
+/* Filter Panel */
+.filter-panel {
+  background: var(--bg-hover);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.badge-success {
+  background: var(--success);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.badge-danger {
+  background: var(--danger);
+  color: white;
+}
+
+/* Divider */
+.divider {
+  height: 2px;
+  background: var(--border);
+  margin: 20px 0;
+  border-radius: 2px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.empty-state-text {
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+  
+  .header {
+    padding: 16px;
+  }
+  
+  .logo {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .header-content h1 {
+    font-size: 20px;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+  
+  .hall-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .seat {
+    min-width: 40px;
+    height: 40px;
+    font-size: 8px;
+  }
+  
+  .row-label {
+    width: 30px;
+    font-size: 11px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .action-bar {
+    position: static;
+  }
+  
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+}
+
+/* Unassigned Students Panel */
+.unassigned-panel {
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  border: 2px solid var(--warning);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.unassigned-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.unassigned-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unassigned-count {
+  background: var(--warning);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.unassigned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.unassigned-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.unassigned-grid::-webkit-scrollbar-track {
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 4px;
+}
+
+.unassigned-grid::-webkit-scrollbar-thumb {
+  background: var(--warning);
+  border-radius: 4px;
+}
+
+.unassigned-grid::-webkit-scrollbar-thumb:hover {
+  background: #d97706;
+}
+
+.unassigned-student {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  cursor: move;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.unassigned-student:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--warning);
+}
+
+.unassigned-student.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.unassigned-roll {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.unassigned-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unassigned-details {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.unassigned-year-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  margin-right: 4px;
+}
+
+.unassigned-year-badge.I { background: var(--seat-I); }
+.unassigned-year-badge.II { background: var(--seat-II); }
+.unassigned-year-badge.III { background: var(--seat-III); }
+.unassigned-year-badge.IV { background: var(--seat-IV); }
+
+.seat.drop-target {
+  outline: 4px dashed var(--success);
+  outline-offset: 2px;
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.unassigned-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+}
+
+.unassigned-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+  
+  .header,
+  .action-bar,
+  .filter-panel,
+  .btn,
+  .card:first-child,
+  .unassigned-panel {
+    display: none !important;
+  }
+  
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .seatmap {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
 }
 
 </style>
@@ -128,122 +909,269 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
 <body>
 
-<div class="wrap">
+<div class="toast-container" id="toastContainer"></div>
 
-<header>
+<div class="container">
 
+<!-- Header -->
+<div class="header">
   <div class="logo">ES</div>
+  <div class="header-content">
+    <h1>Advanced Exam Seating Allotment System</h1>
+    <p>Multi-hall intelligent seat allocation with drag-and-drop management</p>
+  </div>
+</div>
 
+<!-- Main Grid -->
+<div class="main-grid">
+
+  <!-- Left Panel - Configuration -->
   <div>
-
-    <h1>Exam Seating — Multi‑Hall Allotment</h1>
-
-  </div>
-
-</header>
-
-<div class="main">
-
-<div>
-
-  <div class="card">
-
-    <label>Date</label>
-
-    <input type="date" id="inpDate">
-
-    <label>Department</label>
-
-    <select id="inpDept">
-
-      <option value="">-- Select --</option>
-
-      <option value="CSE">CSE</option>
-      <option value="ECE">ECE</option>
-      <option value="EEE">EEE</option>
-      <option value="IT">IT</option>
-      <option value="BT">BT</option>
-      <option value="ME">ME</option>
-      <option value="MTR">MTR</option>
-      <option value="CE">CIVIL</option>
-      <option value="ADS">ADS</option>
-      <option value="FY">FY</option>
-
-    </select>
-
-    <label>Batch</label>
-
-    <select id="inpBatch">
-
-      <option value="">-- Select --</option>
-
-      <option value="FN">FN</option>
-
-      <option value="AN">AN</option>
-
-    </select>
-
-    <label>Upload Student File (.xlsx / .csv)</label>
-
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-
-    <div class="small">Template columns: <code>Roll No, Name, Year, Section, Subject Code, Subject</code></div>
-
-    <div class="controls">
-
-      <button class="btn" id="btnTemplate">Download Template</button>
-
-      <button class="btn ghost" id="btnPreviewSample">Show Sample</button>
-
+    <div class="card">
+      
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="basic">Basic Info</button>
+        <button class="tab" data-tab="halls">Halls</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </div>
+      
+      <!-- Basic Info Tab -->
+      <div class="tab-content active" id="basic">
+        <div class="form-group">
+          <label class="form-label">Exam Date</label>
+          <input type="date" class="form-input" id="examDate">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select class="form-select" id="department">
+            <option value="">Select Department</option>
+            <option value="CSE">Computer Science & Engineering</option>
+            <option value="ECE">Electronics & Communication</option>
+            <option value="EEE">Electrical & Electronics</option>
+            <option value="IT">Information Technology</option>
+            <option value="ME">Mechanical Engineering</option>
+            <option value="CE">Civil Engineering</option>
+            <option value="BT">Biotechnology</option>
+            <option value="MTR">Mechatronics</option>
+            <option value="ADS">Applied Data Science</option>
+            <option value="FY">First Year</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Batch/Session</label>
+          <select class="form-select" id="batch">
+            <option value="">Select Batch</option>
+            <option value="FN">Forenoon (FN)</option>
+            <option value="AN">Afternoon (AN)</option>
+          </select>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="form-group">
+          <label class="form-label">Upload Student List</label>
+          <input type="file" class="form-input" id="fileUpload" accept=".xlsx,.xls,.csv">
+          <span class="form-help">Excel/CSV with columns: Roll No, Name, Year, Section, Subject Code, Subject</span>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm btn-block" id="btnTemplate">
+            📥 Download Template
+          </button>
+          <button class="btn btn-secondary btn-sm btn-block" id="btnSample">
+            👁️ Load Sample Data
+          </button>
+        </div>
+      </div>
+      
+      <!-- Halls Tab -->
+      <div class="tab-content" id="halls">
+        <div id="hallsList"></div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" id="btnAddHall">
+            ➕ Add Hall
+          </button>
+          <button class="btn btn-danger btn-sm" id="btnRemoveLastHall">
+            ➖ Remove Last
+          </button>
+        </div>
+      </div>
+      
+      <!-- Settings Tab -->
+      <div class="tab-content" id="settings">
+        <div class="form-group">
+          <label class="form-label">Subject Restriction</label>
+          <select class="form-select" id="subjectRestriction">
+            <option value="strict">Strict (No adjacent same subjects)</option>
+            <option value="moderate">Moderate (Allow some flexibility)</option>
+            <option value="none">None (Random allocation)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Drag & Drop</label>
+          <select class="form-select" id="dragDropMode">
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled (Click to swap only)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Auto-save Changes</label>
+          <select class="form-select" id="autoSave">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <button class="btn btn-primary btn-block" id="btnGenerate">
+          🎯 Generate Seating
+        </button>
+        <button class="btn btn-success btn-block" id="btnExport">
+          💾 Export to Excel
+        </button>
+        <button class="btn btn-secondary btn-block" id="btnPrint">
+          🖨️ Print Layout
+        </button>
+        <button class="btn btn-danger btn-sm btn-block" id="btnClear">
+          🗑️ Clear All
+        </button>
+      </div>
+      
     </div>
-
-    <hr style="margin:15px 0;border:none;border-top:1px solid #e6eef3;">
-
-   <center>
-
-    <label>Halls (add/remove)</label></center>
-
-    <div class="hall-list" id="hallList"></div>
-
-    <div class="add-hall">
-
-      <button class="btn ghost" id="btnAddHall">+ Add Hall</button>
-
-      <button class="btn" id="btnRemoveLast">Remove Last</button>
-
-    </div>
-
-    <div class="small" id="assignCounter" style="margin-top:6px"></div>
-
-    <hr style="margin:15px 0;border:none;border-top:1px solid #e6eef3;">
-
-    <div class="controls">
-
-      <button class="btn" id="btnPreview">Preview Seating</button>
-
-      <button class="btn" id="btnGenerate">💾 Generate Excel</button>
-
-      <button class="btn ghost" id="btnClear">Clear</button>
-
-    </div>
-
   </div>
-
-</div>
-
-<div>
-
-  <div class="card preview-area">
-
-    <div id="swapInfo"></div>
-
-    <div id="messages">No file loaded.</div>
-
-    <div id="preview" style="min-height:220px"></div>
-
+  
+  <!-- Right Panel - Preview & Management -->
+  <div>
+    
+    <!-- Statistics -->
+    <div class="stats-grid" id="statistics" style="display:none;">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAssigned">0</div>
+        <div class="stat-label">Assigned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statUnassigned">0</div>
+        <div class="stat-label">Unassigned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statHalls">0</div>
+        <div class="stat-label">Halls</div>
+      </div>
+    </div>
+    
+    <!-- Unassigned Students Panel -->
+    <div class="unassigned-panel" id="unassignedPanel" style="display:none;">
+      <div class="unassigned-header">
+        <div class="unassigned-title">
+          ⚠️ Unassigned Students
+          <span class="unassigned-count" id="unassignedCount">0</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnAutoAssign">
+          ⚡ Auto Assign
+        </button>
+      </div>
+      <div class="unassigned-grid" id="unassignedList">
+        <div class="unassigned-empty">
+          <div class="unassigned-empty-icon">✅</div>
+          <div>All students have been assigned!</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Action Bar -->
+    <div class="action-bar" id="actionBar" style="display:none;">
+      <button class="btn btn-secondary btn-sm" id="btnUndo">
+        ↶ Undo
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btnRedo">
+        ↷ Redo
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btnFilter">
+        🔍 Filter
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btnRefresh">
+        🔄 Refresh
+      </button>
+      <div style="flex:1"></div>
+      <span class="badge badge-primary" id="swapMode">Click Mode</span>
+    </div>
+    
+    <!-- Filter Panel -->
+    <div class="filter-panel" id="filterPanel" style="display:none;">
+      <div class="filter-grid">
+        <div>
+          <label class="form-label">Filter by Year</label>
+          <select class="form-select" id="filterYear">
+            <option value="">All Years</option>
+            <option value="I">Year I</option>
+            <option value="II">Year II</option>
+            <option value="III">Year III</option>
+            <option value="IV">Year IV</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Filter by Hall</label>
+          <select class="form-select" id="filterHall">
+            <option value="">All Halls</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Search Student</label>
+          <input type="text" class="form-input" id="searchStudent" placeholder="Roll No or Name">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="legend" id="legend" style="display:none;">
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, var(--seat-I), #3b82f6);"></div>
+        <span>Year I</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, var(--seat-II), #10b981);"></div>
+        <span>Year II</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, var(--seat-III), #f59e0b);"></div>
+        <span>Year III</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, var(--seat-IV), #ef4444);"></div>
+        <span>Year IV</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: var(--seat-empty);"></div>
+        <span>Empty</span>
+      </div>
+    </div>
+    
+    <!-- Preview Area -->
+    <div class="card">
+      <div id="previewArea">
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No Seating Plan Generated</div>
+          <div class="empty-state-text">Upload student data and configure halls to get started</div>
+        </div>
+      </div>
+    </div>
+    
   </div>
-
-</div>
 
 </div>
 
@@ -251,503 +1179,1151 @@ footer{margin-top:12px;color:#6a7d86;font-size:13px;}
 
 <script>
 
-(function(){
-
-let students=[], halls=[], hallCounter=0, allocationData=[];
-
-// Normalize uploaded rows
-function normalizeRow(r){
-  const map={};
-  for(const k in r) map[k.trim().toLowerCase()]=r[k];
-  const roll=map['roll no']||map['rollno']||map['roll']||'';
-  const name=map['name of the student']||map['name']||'';
-  const year=map['year']||''; 
-  const section=map['section']||'';
-  const subj=map['subject code']||map['subjectcode']||''; 
-  const subjname=map['subject name']||map['subjectname']||map['subject']||'';
-  return {RollNo:roll,Name:name,Year:year,Section:section,SubjectCode:subj,Subject:subjname};
-}
-
-// Render hall list
-function renderHallList(){
-  const container=document.getElementById('hallList'); 
-  container.innerHTML='';
-  halls.forEach((h, idx) =>{
-    const div=document.createElement('div'); 
-    div.className='hall-item';
-    div.innerHTML=`
-      <div style="grid-column: 1 / -1;">
-        <label>Hall Name</label>
-        <input type='text' id='hall_name_${h.id}' value='${h.name}' placeholder='Hall ${idx + 1}'>
-      </div>
-      <div>
-        <label>No of Rows</label>
-        <input type='number' id='hall_rows_${h.id}' value='${h.rows}' min='1' placeholder='Rows'>
-      </div>
-      <div>
-        <label>No of Columns</label>
-        <input type='number' id='hall_cols_${h.id}' value='${h.cols}' min='1' placeholder='Columns'>
-      </div>
-      <div>
-        <label>I Year</label>
-        <input type='number' id='hall_I_${h.id}' value='${h.I || 0}' min='0' placeholder='I Yr'>
-      </div>
-      <div>
-        <label>II Year</label>
-        <input type='number' id='hall_II_${h.id}' value='${h.II || 0}' min='0' placeholder='II Yr'>
-      </div>
-      <div>
-        <label>III Year</label>
-        <input type='number' id='hall_III_${h.id}' value='${h.III || 0}' min='0' placeholder='III Yr'>
-      </div>
-      <div>
-        <label>IV Year</label>
-        <input type='number' id='hall_IV_${h.id}' value='${h.IV || 0}' min='0' placeholder='IV Yr'>
-      </div>
-      <div style="grid-column: 1 / -1;">
-        <label>Seating Pattern</label>
-        <select id='hall_pattern_${h.id}'>
-          <option value='column' ${h.pattern==='column'?'selected':''}>Column</option>
-          <option value='row' ${h.pattern==='row'?'selected':''}>Row</option>
-          <option value='zigzag' ${h.pattern==='zigzag'?'selected':''}>Zigzag</option>
-          <option value='alternate' ${h.pattern==='alternate'?'selected':''}>Alternate</option>
-        </select>
-      </div>
-      <button type='button' data-remove='${h.id}' class='remove-btn' style='background:#ff6b6b;color:white;border:none;border-radius:6px;padding:8px;cursor:pointer;font-weight:600;'>× Remove Hall</button>
-    `;
-    container.appendChild(div);
-  });
-  container.querySelectorAll('.remove-btn').forEach(btn=> btn.addEventListener('click', ()=>{
-    const id=Number(btn.getAttribute('data-remove')); 
-    halls=halls.filter(x=>x.id!==id); 
-    renderHallList();
-  }));
-}
-
-function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6, pattern='column'){
-  hallCounter++; 
-  halls.push({id:hallCounter,name,rows,cols,pattern,I:0,II:0,III:0,IV:0}); 
-  renderHallList(); 
-}
-
-function removeLastHall(){ 
-  if(halls.length){ 
-    halls.pop(); 
-    renderHallList(); 
-  } 
-}
-
-function showMessage(msg){ 
-  document.getElementById('messages').innerHTML=`<strong>${msg}</strong>`; 
-}
-
-// File parsing
-function parseCSV(text){
-  const lines=text.split(/\r?\n/).filter(Boolean);
-  const sep=lines[0].includes(',')? ',':'\t';
-  const headers=lines[0].split(sep).map(h=>h.trim());
-  const rows=lines.slice(1).map(l=>{
-    const cols=l.split(sep).map(c=>c.trim()); 
-    const obj={}; 
-    headers.forEach((h,i)=>obj[h]=cols[i]||''); 
-    return obj;
-  });
-  return {headers,rows};
-}
-
-document.getElementById('fileInput').addEventListener('change',async(e)=>{
-  const f=e.target.files[0]; 
-  if(!f) return;
-  const name=f.name.toLowerCase();
-  try{
-    if(name.endsWith('.csv')){
-      const text=await f.text();
-      students=parseCSV(text).rows.map(normalizeRow);
-    } else {
-      const data=await f.arrayBuffer();
-      const wb=XLSX.read(data,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      students=XLSX.utils.sheet_to_json(ws,{defval:''}).map(normalizeRow);
-    }
-    showMessage(`Loaded ${students.length} students.`);
-  }catch(err){ 
-    showMessage('Failed to load file: '+err.message); 
-  }
-});
-
-// Download template
-document.getElementById('btnTemplate').addEventListener('click',()=>{
-  const headers=['Roll No','Name','Year','Section','Subject Code','Subject'];
-  const ws=XLSX.utils.aoa_to_sheet([
-    headers,
-    ['21CS001','John Doe','I','A','CS101','Programming'],
-    ['21CS002','Jane Smith','I','A','CS102','Data Structures']
-  ]);
-  const wb=XLSX.utils.book_new(); 
-  XLSX.utils.book_append_sheet(wb,ws,'Template');
-  XLSX.writeFile(wb,'Seating_Template.xlsx');
-});
-
-// Seat id
-function seatId(c,r){ 
-  return `${String.fromCharCode(65+c)}${r+1}`; 
-}
-
-// Build seat order with patterns
-function buildSeatOrder(rows, cols, pattern = "row") {
-  const order = [];
-  if (pattern === "row") {
-    for (let r = 0; r < rows; r++)
-      for (let c = 0; c < cols; c++) order.push({ r, c });
-  }
-  else if (pattern === "column") {
-    for (let c = 0; c < cols; c++)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
-  }
-  else if (pattern === "zigzag") {
-    for (let r = 0; r < rows; r++) {
-      if (r % 2 === 0)
-        for (let c = 0; c < cols; c++) order.push({ r, c });
-      else
-        for (let c = cols - 1; c >= 0; c--) order.push({ r, c });
-    }
-  } else if (pattern === "alternate") {
-    for (let c = 0; c < cols; c += 2)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
-    for (let c = 1; c < cols; c += 2)
-      for (let r = 0; r < rows; r++) order.push({ r, c });
-  }
-  return order;
-}
-
-// Allocate students with left/right subject restriction
-function allocateToHall(stuList, hall){
-  const rows = Number(hall.rows), cols = Number(hall.cols);
-  const seats = Array.from({length: rows}, () => Array.from({length: cols}, () => null));
-  const pattern = hall.pattern || "row";
-  const order = buildSeatOrder(rows, cols, pattern);
-  let pool = stuList.slice();
-
-  const yearCounts = {I: Number(hall.I), II: Number(hall.II), III: Number(hall.III), IV: Number(hall.IV)};
-  const yearPools = {I: [], II: [], III: [], IV: []};
-  pool.forEach(s => { if(yearPools[s.Year]) yearPools[s.Year].push(s); });
-
-  function canSitHere(stu,left,right){
-    if(!stu) return false;
-    if((left && stu.SubjectCode===left.SubjectCode)||(right && stu.SubjectCode===right.SubjectCode)) return false;
-    return true;
-  }
-
-  for(const pos of order){
-    let assigned=false;
-    const left = pos.c>0?seats[pos.r][pos.c-1]:null;
-    const right = pos.c<cols-1?seats[pos.r][pos.c+1]:null;
-
-    for(const yr of ['I','II','III','IV']){
-      if(yearCounts[yr]>0 && yearPools[yr].length){
-        let idx = yearPools[yr].findIndex(s=>canSitHere(s,left,right));
-        if(idx===-1) continue;
-        seats[pos.r][pos.c]=yearPools[yr].splice(idx,1)[0];
-        yearCounts[yr]--; 
-        assigned=true; 
-        break;
-      }
-    }
-
-    if(!assigned && pool.length){
-      let idx = pool.findIndex(s=>canSitHere(s,left,right));
-      if(idx===-1) idx=0;
-      if(pool[idx]) seats[pos.r][pos.c]=pool.splice(idx,1)[0];
-    }
-  }
-
-  const assigned=[];
-  for(let r=0;r<rows;r++)
-    for(let c=0;c<cols;c++)
-      assigned.push({row:r,col:c,student:seats[r][c],SeatingNo:seatId(c,r)});
-
-  return {assigned,remaining:pool};
-}
-
-// Render preview
-function renderPreview(){
-  if (!students.length) {
-    document.getElementById('preview').innerHTML = '<p style="color:#94a3b8;">No data loaded. Please upload a student file.</p>';
-    return;
-  }
-
-  const preview = document.getElementById('preview');
-  preview.innerHTML = '';
-  let unassigned = [...students];
-  let totalAssigned = 0;
-  const usedRolls = new Set();
-  allocationData = []; // Reset allocation data
-
-  halls.forEach((h, hallIndex) => {
-    const hallConf = {
-      name: document.getElementById(`hall_name_${h.id}`).value || h.name,
-      rows: Number(document.getElementById(`hall_rows_${h.id}`).value) || h.rows,
-      cols: Number(document.getElementById(`hall_cols_${h.id}`).value) || h.cols,
-      I: Number(document.getElementById(`hall_I_${h.id}`).value) || 0,
-      II: Number(document.getElementById(`hall_II_${h.id}`).value) || 0,
-      III: Number(document.getElementById(`hall_III_${h.id}`).value) || 0,
-      IV: Number(document.getElementById(`hall_IV_${h.id}`).value) || 0,
-      pattern: document.getElementById(`hall_pattern_${h.id}`).value || h.pattern
+(function() {
+  
+  // Global State
+  let students = [];
+  let halls = [];
+  let hallCounter = 0;
+  let allocationData = [];
+  let unassignedStudents = [];
+  let selectedSeat = null;
+  let draggedSeat = null;
+  let draggedStudent = null;
+  let undoStack = [];
+  let redoStack = [];
+  let maxUndoSteps = 50;
+  
+  // Toast Notification System
+  function showToast(title, message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️'
     };
-
-    const available = unassigned.filter(s => !usedRolls.has(s.RollNo));
-    const { assigned } = allocateToHall(available, hallConf);
-
-    // Store allocation data for this hall
-    allocationData.push({
-      hallName: hallConf.name,
-      rows: hallConf.rows,
-      cols: hallConf.cols,
-      seats: assigned
-    });
-
-    assigned.forEach(a => {
-      if (a.student && !usedRolls.has(a.student.RollNo)) {
-        usedRolls.add(a.student.RollNo);
-      }
-    });
-
-    unassigned = unassigned.filter(s => !usedRolls.has(s.RollNo));
-    totalAssigned += assigned.filter(a => a.student).length;
-
-    // Render Hall
-    const hallDiv = document.createElement('div');
-    hallDiv.className = 'seatmap';
-    hallDiv.setAttribute('data-hall-index', hallIndex);
-    hallDiv.innerHTML = `<strong style="font-size:16px;color:#0369a1;">${hallConf.name}</strong>`;
-
-    for (let r = 0; r < hallConf.rows; r++) {
-      const rowDiv = document.createElement('div');
-      rowDiv.className = 'seat-row';
-      const label = document.createElement('div');
-      label.className = 'row-label';
-      label.textContent = r + 1;
-      rowDiv.appendChild(label);
-
-      for (let c = 0; c < hallConf.cols; c++) {
-        const seatDiv = document.createElement('div');
-        seatDiv.className = 'seat empty';
-        seatDiv.setAttribute('data-row', r);
-        seatDiv.setAttribute('data-col', c);
-        seatDiv.setAttribute('data-hall-index', hallIndex);
-        
-        const s = assigned.find(a => a.row === r && a.col === c);
-        if (s && s.student) {
-          seatDiv.className = 'seat ' + s.student.Year;
-          seatDiv.textContent = s.student.RollNo;
-          seatDiv.setAttribute('data-roll', s.student.RollNo);
-          seatDiv.setAttribute('data-name', s.student.Name);
-          seatDiv.setAttribute('data-year', s.student.Year);
-          seatDiv.setAttribute('data-section', s.student.Section);
-          seatDiv.setAttribute('data-subject-code', s.student.SubjectCode);
-          seatDiv.setAttribute('data-subject', s.student.Subject);
-          seatDiv.title = `${s.student.Name} | ${s.student.SubjectCode} - ${s.student.Subject}`;
-        }
-        rowDiv.appendChild(seatDiv);
-      }
-      hallDiv.appendChild(rowDiv);
+    
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type]}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+  
+  // Data Normalization
+  function normalizeRow(row) {
+    const map = {};
+    for (const key in row) {
+      map[key.trim().toLowerCase()] = row[key];
     }
-
-    preview.appendChild(hallDiv);
-  });
-
-  enableSeatSwapping();
-  document.getElementById('assignCounter').textContent =
-    `Assigned: ${totalAssigned} / ${students.length}`;
-}
-
-// === Enable Seat Swapping Across All Halls ===
-let selectedSeat = null;
-
-function enableSeatSwapping() {
-  document.querySelectorAll('.seat').forEach(seat => {
-    seat.addEventListener('click', () => {
-      if (!seat.textContent || seat.classList.contains('empty')) return;
-      
-      if (!selectedSeat) {
-        // Select first seat
-        selectedSeat = seat;
-        seat.classList.add('selected');
-        updateSwapInfo(seat, null);
-      } else if (selectedSeat === seat) {
-        // Deselect same seat
-        seat.classList.remove('selected');
-        selectedSeat = null;
-        document.getElementById('swapInfo').innerHTML = '';
+    
+    return {
+      RollNo: map['roll no'] || map['rollno'] || map['roll'] || '',
+      Name: map['name of the student'] || map['name'] || '',
+      Year: map['year'] || '',
+      Section: map['section'] || '',
+      SubjectCode: map['subject code'] || map['subjectcode'] || '',
+      Subject: map['subject name'] || map['subjectname'] || map['subject'] || ''
+    };
+  }
+  
+  // CSV Parser
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    const separator = lines[0].includes(',') ? ',' : '\t';
+    const headers = lines[0].split(separator).map(h => h.trim());
+    const rows = lines.slice(1).map(line => {
+      const cols = line.split(separator).map(c => c.trim());
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = cols[i] || '');
+      return obj;
+    });
+    return { headers, rows };
+  }
+  
+  // File Upload Handler
+  document.getElementById('fileUpload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const fileName = file.name.toLowerCase();
+    
+    try {
+      if (fileName.endsWith('.csv')) {
+        const text = await file.text();
+        students = parseCSV(text).rows.map(normalizeRow);
       } else {
-        // Swap seat contents (can be across different halls)
-        const hallIndex1 = Number(selectedSeat.getAttribute('data-hall-index'));
-        const row1 = Number(selectedSeat.getAttribute('data-row'));
-        const col1 = Number(selectedSeat.getAttribute('data-col'));
-        
-        const hallIndex2 = Number(seat.getAttribute('data-hall-index'));
-        const row2 = Number(seat.getAttribute('data-row'));
-        const col2 = Number(seat.getAttribute('data-col'));
-
-        // Get student data from both seats
-        const student1 = {
-          RollNo: selectedSeat.getAttribute('data-roll'),
-          Name: selectedSeat.getAttribute('data-name'),
-          Year: selectedSeat.getAttribute('data-year'),
-          Section: selectedSeat.getAttribute('data-section'),
-          SubjectCode: selectedSeat.getAttribute('data-subject-code'),
-          Subject: selectedSeat.getAttribute('data-subject')
-        };
-
-        const student2 = {
-          RollNo: seat.getAttribute('data-roll'),
-          Name: seat.getAttribute('data-name'),
-          Year: seat.getAttribute('data-year'),
-          Section: seat.getAttribute('data-section'),
-          SubjectCode: seat.getAttribute('data-subject-code'),
-          Subject: seat.getAttribute('data-subject')
-        };
-
-        // Update allocation data for hall 1
-        if (allocationData[hallIndex1] && allocationData[hallIndex1].seats) {
-          const seat1Data = allocationData[hallIndex1].seats.find(s => s.row === row1 && s.col === col1);
-          if (seat1Data) seat1Data.student = student2;
-        }
-
-        // Update allocation data for hall 2
-        if (allocationData[hallIndex2] && allocationData[hallIndex2].seats) {
-          const seat2Data = allocationData[hallIndex2].seats.find(s => s.row === row2 && s.col === col2);
-          if (seat2Data) seat2Data.student = student1;
-        }
-
-        // Swap visual representation of seat 1
-        selectedSeat.textContent = student2.RollNo;
-        selectedSeat.setAttribute('data-roll', student2.RollNo);
-        selectedSeat.setAttribute('data-name', student2.Name);
-        selectedSeat.setAttribute('data-year', student2.Year);
-        selectedSeat.setAttribute('data-section', student2.Section);
-        selectedSeat.setAttribute('data-subject-code', student2.SubjectCode);
-        selectedSeat.setAttribute('data-subject', student2.Subject);
-        selectedSeat.className = 'seat ' + student2.Year;
-        selectedSeat.title = `${student2.Name} | ${student2.SubjectCode} - ${student2.Subject}`;
-
-        // Swap visual representation of seat 2
-        seat.textContent = student1.RollNo;
-        seat.setAttribute('data-roll', student1.RollNo);
-        seat.setAttribute('data-name', student1.Name);
-        seat.setAttribute('data-year', student1.Year);
-        seat.setAttribute('data-section', student1.Section);
-        seat.setAttribute('data-subject-code', student1.SubjectCode);
-        seat.setAttribute('data-subject', student1.Subject);
-        seat.className = 'seat ' + student1.Year;
-        seat.title = `${student1.Name} | ${student1.SubjectCode} - ${student1.Subject}`;
-
-        // Show swap confirmation
-        const hall1Name = allocationData[hallIndex1].hallName;
-        const hall2Name = allocationData[hallIndex2].hallName;
-        const swapMsg = hallIndex1 === hallIndex2 
-          ? `✓ Swapped within ${hall1Name}`
-          : `✓ Swapped between ${hall1Name} ↔ ${hall2Name}`;
-        
-        document.getElementById('swapInfo').innerHTML = `<div class="swap-info">${swapMsg}: ${student1.RollNo} ↔ ${student2.RollNo}</div>`;
-        
-        setTimeout(() => {
-          document.getElementById('swapInfo').innerHTML = '';
-        }, 3000);
-
-        // Remove selection
-        selectedSeat.classList.remove('selected');
-        selectedSeat = null;
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        students = XLSX.utils.sheet_to_json(ws, { defval: '' }).map(normalizeRow);
       }
+      
+      showToast('Success', `Loaded ${students.length} students`, 'success');
+      updateStatistics();
+    } catch (err) {
+      showToast('Error', `Failed to load file: ${err.message}`, 'error');
+    }
+  });
+  
+  // Download Template
+  document.getElementById('btnTemplate').addEventListener('click', () => {
+    const headers = ['Roll No', 'Name', 'Year', 'Section', 'Subject Code', 'Subject'];
+    const sampleData = [
+      ['21CS001', 'John Doe', 'I', 'A', 'CS101', 'Programming'],
+      ['21CS002', 'Jane Smith', 'I', 'A', 'CS102', 'Data Structures'],
+      ['21CS003', 'Bob Johnson', 'II', 'B', 'CS201', 'Algorithms']
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'Exam_Seating_Template.xlsx');
+    
+    showToast('Downloaded', 'Template file downloaded', 'success');
+  });
+  
+  // Load Sample Data
+  document.getElementById('btnSample').addEventListener('click', () => {
+    students = [
+      {RollNo: '21CS001', Name: 'Arjun Kumar', Year: 'I', Section: 'A', SubjectCode: 'CS101', Subject: 'Programming'},
+      {RollNo: '21CS002', Name: 'Priya Sharma', Year: 'I', Section: 'A', SubjectCode: 'CS102', Subject: 'Data Structures'},
+      {RollNo: '21CS003', Name: 'Rahul Patel', Year: 'I', Section: 'B', SubjectCode: 'CS101', Subject: 'Programming'},
+      {RollNo: '21CS004', Name: 'Sneha Reddy', Year: 'II', Section: 'A', SubjectCode: 'CS201', Subject: 'Algorithms'},
+      {RollNo: '21CS005', Name: 'Amit Singh', Year: 'II', Section: 'A', SubjectCode: 'CS202', Subject: 'Database'},
+      {RollNo: '21CS006', Name: 'Kavya Nair', Year: 'II', Section: 'B', SubjectCode: 'CS201', Subject: 'Algorithms'},
+      {RollNo: '21CS007', Name: 'Vijay Krishna', Year: 'III', Section: 'A', SubjectCode: 'CS301', Subject: 'Networks'},
+      {RollNo: '21CS008', Name: 'Divya Iyer', Year: 'III', Section: 'A', SubjectCode: 'CS302', Subject: 'Operating Systems'},
+      {RollNo: '21CS009', Name: 'Karthik Menon', Year: 'III', Section: 'B', SubjectCode: 'CS301', Subject: 'Networks'},
+      {RollNo: '21CS010', Name: 'Anjali Gupta', Year: 'IV', Section: 'A', SubjectCode: 'CS401', Subject: 'Artificial Intelligence'},
+      {RollNo: '21CS011', Name: 'Rohan Desai', Year: 'IV', Section: 'A', SubjectCode: 'CS402', Subject: 'Machine Learning'},
+      {RollNo: '21CS012', Name: 'Meera Krishnan', Year: 'IV', Section: 'B', SubjectCode: 'CS401', Subject: 'Artificial Intelligence'},
+      {RollNo: '21CS013', Name: 'Aditya Verma', Year: 'I', Section: 'A', SubjectCode: 'CS103', Subject: 'Digital Logic'},
+      {RollNo: '21CS014', Name: 'Pooja Rao', Year: 'II', Section: 'B', SubjectCode: 'CS203', Subject: 'Software Engineering'},
+      {RollNo: '21CS015', Name: 'Nikhil Joshi', Year: 'III', Section: 'A', SubjectCode: 'CS303', Subject: 'Computer Architecture'},
+      {RollNo: '21CS016', Name: 'Ritu Saxena', Year: 'IV', Section: 'B', SubjectCode: 'CS403', Subject: 'Cloud Computing'},
+      {RollNo: '21CS017', Name: 'Sandeep Pillai', Year: 'I', Section: 'B', SubjectCode: 'CS102', Subject: 'Data Structures'},
+      {RollNo: '21CS018', Name: 'Lakshmi Bhat', Year: 'II', Section: 'A', SubjectCode: 'CS204', Subject: 'Theory of Computation'},
+      {RollNo: '21CS019', Name: 'Harish Kumar', Year: 'III', Section: 'B', SubjectCode: 'CS304', Subject: 'Compiler Design'},
+      {RollNo: '21CS020', Name: 'Swati Kapoor', Year: 'IV', Section: 'A', SubjectCode: 'CS404', Subject: 'Blockchain Technology'}
+    ];
+    
+    showToast('Loaded', `${students.length} sample students loaded`, 'success');
+    updateStatistics();
+  });
+  
+  // Tab Switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.getAttribute('data-tab');
+      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      
+      tab.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
     });
   });
-}
-
-function updateSwapInfo(seat1, seat2) {
-  const info = document.getElementById('swapInfo');
-  if (!seat2) {
-    const hallName = allocationData[Number(seat1.getAttribute('data-hall-index'))].hallName;
-    info.innerHTML = `<div class="swap-info">Selected: ${seat1.getAttribute('data-roll')} in ${hallName}. Click another seat to swap.</div>`;
+  
+  // Render Hall List
+  function renderHallList() {
+    const container = document.getElementById('hallsList');
+    container.innerHTML = '';
+    
+    if (halls.length === 0) {
+      container.innerHTML = '<div class="empty-state-text" style="padding:20px;text-align:center;">No halls added yet. Click "Add Hall" to start.</div>';
+      return;
+    }
+    
+    halls.forEach((hall, index) => {
+      const hallDiv = document.createElement('div');
+      hallDiv.className = 'hall-item';
+      hallDiv.innerHTML = `
+        <div class="hall-header">
+          <span class="hall-number">Hall ${index + 1}</span>
+          <button class="btn btn-danger btn-sm" data-remove="${hall.id}">Remove</button>
+        </div>
+        
+        <div class="hall-grid">
+          <div class="hall-grid-full">
+            <label class="form-label">Hall Name</label>
+            <input type="text" class="form-input" id="hall_name_${hall.id}" value="${hall.name}" placeholder="Hall ${index + 1}">
+          </div>
+          
+          <div>
+            <label class="form-label">Columns</label>
+            <input type="number" class="form-input" id="hall_cols_${hall.id}" value="${hall.cols}" min="1" max="20">
+          </div>
+          
+          <div>
+            <label class="form-label">Rows</label>
+            <input type="number" class="form-input" id="hall_rows_${hall.id}" value="${hall.rows}" min="1" max="20">
+          </div>
+          
+          <div>
+            <label class="form-label">Year I</label>
+            <input type="number" class="form-input" id="hall_I_${hall.id}" value="${hall.I}" min="0">
+          </div>
+          
+          <div>
+            <label class="form-label">Year II</label>
+            <input type="number" class="form-input" id="hall_II_${hall.id}" value="${hall.II}" min="0">
+          </div>
+          
+          <div>
+            <label class="form-label">Year III</label>
+            <input type="number" class="form-input" id="hall_III_${hall.id}" value="${hall.III}" min="0">
+          </div>
+          
+          <div>
+            <label class="form-label">Year IV</label>
+            <input type="number" class="form-input" id="hall_IV_${hall.id}" value="${hall.IV}" min="0">
+          </div>
+          
+          <div class="hall-grid-full">
+            <label class="form-label">Seating Pattern</label>
+            <select class="form-select" id="hall_pattern_${hall.id}">
+              <option value="row" ${hall.pattern === 'row' ? 'selected' : ''}>Row-wise</option>
+              <option value="column" ${hall.pattern === 'column' ? 'selected' : ''}>Column-wise</option>
+              <option value="zigzag" ${hall.pattern === 'zigzag' ? 'selected' : ''}>Zigzag</option>
+              <option value="alternate" ${hall.pattern === 'alternate' ? 'selected' : ''}>Alternate Columns</option>
+            </select>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(hallDiv);
+    });
+    
+    // Remove button handlers
+    container.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.getAttribute('data-remove'));
+        halls = halls.filter(h => h.id !== id);
+        renderHallList();
+        showToast('Removed', 'Hall removed successfully', 'info');
+      });
+    });
   }
-}
-
-// Event listeners
-document.getElementById('btnAddHall').addEventListener('click',()=>addHall());
-document.getElementById('btnRemoveLast').addEventListener('click',()=>removeLastHall());
-document.getElementById('btnPreview').addEventListener('click',()=>renderPreview());
-document.getElementById('btnClear').addEventListener('click',()=>{
-  students=[];
-  halls=[];
-  allocationData=[];
-  hallCounter=0;
+  
+  // Add Hall
+  document.getElementById('btnAddHall').addEventListener('click', () => {
+    hallCounter++;
+    halls.push({
+      id: hallCounter,
+      name: `Hall ${hallCounter}`,
+      rows: 6,
+      cols: 6,
+      pattern: 'row',
+      I: 0,
+      II: 0,
+      III: 0,
+      IV: 0
+    });
+    renderHallList();
+    showToast('Added', 'New hall added', 'success');
+  });
+  
+  // Remove Last Hall
+  document.getElementById('btnRemoveLastHall').addEventListener('click', () => {
+    if (halls.length > 0) {
+      halls.pop();
+      renderHallList();
+      showToast('Removed', 'Last hall removed', 'info');
+    }
+  });
+  
+  // Seat ID Generator
+  function seatId(col, row) {
+    return `${String.fromCharCode(65 + col)}${row + 1}`;
+  }
+  
+  // Build Seat Order
+  function buildSeatOrder(rows, cols, pattern) {
+    const order = [];
+    
+    switch (pattern) {
+      case 'row':
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            order.push({ r, c });
+          }
+        }
+        break;
+        
+      case 'column':
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            order.push({ r, c });
+          }
+        }
+        break;
+        
+      case 'zigzag':
+        for (let r = 0; r < rows; r++) {
+          if (r % 2 === 0) {
+            for (let c = 0; c < cols; c++) order.push({ r, c });
+          } else {
+            for (let c = cols - 1; c >= 0; c--) order.push({ r, c });
+          }
+        }
+        break;
+        
+      case 'alternate':
+        for (let c = 0; c < cols; c += 2) {
+          for (let r = 0; r < rows; r++) order.push({ r, c });
+        }
+        for (let c = 1; c < cols; c += 2) {
+          for (let r = 0; r < rows; r++) order.push({ r, c });
+        }
+        break;
+    }
+    
+    return order;
+  }
+  
+  // Allocate Students to Hall
+  function allocateToHall(studentList, hall) {
+    const rows = Number(hall.rows);
+    const cols = Number(hall.cols);
+    const seats = Array.from({ length: rows }, () => Array(cols).fill(null));
+    const pattern = hall.pattern || 'row';
+    const order = buildSeatOrder(rows, cols, pattern);
+    
+    const yearCounts = {
+      I: Number(hall.I),
+      II: Number(hall.II),
+      III: Number(hall.III),
+      IV: Number(hall.IV)
+    };
+    
+    const yearPools = { I: [], II: [], III: [], IV: [] };
+    studentList.forEach(s => {
+      if (yearPools[s.Year]) yearPools[s.Year].push(s);
+    });
+    
+    function canSitHere(student, left, right) {
+      if (!student) return false;
+      if (left && student.SubjectCode === left.SubjectCode) return false;
+      if (right && student.SubjectCode === right.SubjectCode) return false;
+      return true;
+    }
+    
+    for (const pos of order) {
+      let assigned = false;
+      const left = pos.c > 0 ? seats[pos.r][pos.c - 1] : null;
+      const right = pos.c < cols - 1 ? seats[pos.r][pos.c + 1] : null;
+      
+      for (const year of ['I', 'II', 'III', 'IV']) {
+        if (yearCounts[year] > 0 && yearPools[year].length > 0) {
+          const idx = yearPools[year].findIndex(s => canSitHere(s, left, right));
+          if (idx === -1) continue;
+          
+          seats[pos.r][pos.c] = yearPools[year].splice(idx, 1)[0];
+          yearCounts[year]--;
+          assigned = true;
+          break;
+        }
+      }
+      
+      if (!assigned && studentList.length > 0) {
+        const idx = studentList.findIndex(s => canSitHere(s, left, right));
+        if (idx !== -1) {
+          seats[pos.r][pos.c] = studentList.splice(idx, 1)[0];
+        }
+      }
+    }
+    
+    const assigned = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        assigned.push({
+          row: r,
+          col: c,
+          student: seats[r][c],
+          SeatingNo: seatId(c, r)
+        });
+      }
+    }
+    
+    return { assigned };
+  }
+  
+  // Generate Seating Plan
+  document.getElementById('btnGenerate').addEventListener('click', () => {
+    if (students.length === 0) {
+      showToast('Error', 'Please upload student data first', 'error');
+      return;
+    }
+    
+    if (halls.length === 0) {
+      showToast('Error', 'Please add at least one hall', 'error');
+      return;
+    }
+    
+    generateSeatingPlan();
+  });
+  
+  function generateSeatingPlan() {
+    allocationData = [];
+    let unassigned = [...students];
+    const usedRolls = new Set();
+    
+    halls.forEach((h, hallIndex) => {
+      const hallConf = {
+        name: document.getElementById(`hall_name_${h.id}`).value || h.name,
+        rows: Number(document.getElementById(`hall_rows_${h.id}`).value) || h.rows,
+        cols: Number(document.getElementById(`hall_cols_${h.id}`).value) || h.cols,
+        I: Number(document.getElementById(`hall_I_${h.id}`).value) || 0,
+        II: Number(document.getElementById(`hall_II_${h.id}`).value) || 0,
+        III: Number(document.getElementById(`hall_III_${h.id}`).value) || 0,
+        IV: Number(document.getElementById(`hall_IV_${h.id}`).value) || 0,
+        pattern: document.getElementById(`hall_pattern_${h.id}`).value || h.pattern
+      };
+      
+      const available = unassigned.filter(s => !usedRolls.has(s.RollNo));
+      const { assigned } = allocateToHall(available, hallConf);
+      
+      allocationData.push({
+        hallName: hallConf.name,
+        hallIndex,
+        rows: hallConf.rows,
+        cols: hallConf.cols,
+        seats: assigned
+      });
+      
+      assigned.forEach(a => {
+        if (a.student && !usedRolls.has(a.student.RollNo)) {
+          usedRolls.add(a.student.RollNo);
+        }
+      });
+      
+      unassigned = unassigned.filter(s => !usedRolls.has(s.RollNo));
+    });
+    
+    // Store unassigned students
+    unassignedStudents = unassigned;
+    
+    renderSeatingPlan();
+    renderUnassignedStudents();
+    updateStatistics();
+    showToast('Success', 'Seating plan generated successfully', 'success');
+    
+    // Save initial state for undo
+    saveState();
+    
+    // Show UI elements
+    document.getElementById('statistics').style.display = 'grid';
+    document.getElementById('actionBar').style.display = 'flex';
+    document.getElementById('legend').style.display = 'flex';
+    
+    // Show unassigned panel if there are unassigned students
+    if (unassignedStudents.length > 0) {
+      document.getElementById('unassignedPanel').style.display = 'block';
+      showToast('Warning', `${unassignedStudents.length} students remain unassigned`, 'warning');
+    } else {
+      document.getElementById('unassignedPanel').style.display = 'none';
+    }
+  }
+  
+  // Render Unassigned Students
+  function renderUnassignedStudents() {
+    const container = document.getElementById('unassignedList');
+    const countEl = document.getElementById('unassignedCount');
+    
+    countEl.textContent = unassignedStudents.length;
+    container.innerHTML = '';
+    
+    if (unassignedStudents.length === 0) {
+      container.innerHTML = `
+        <div class="unassigned-empty">
+          <div class="unassigned-empty-icon">✅</div>
+          <div>All students have been assigned!</div>
+        </div>
+      `;
+      return;
+    }
+    
+    unassignedStudents.forEach(student => {
+      const studentDiv = document.createElement('div');
+      studentDiv.className = 'unassigned-student';
+      studentDiv.setAttribute('draggable', 'true');
+      studentDiv.setAttribute('data-roll', student.RollNo);
+      studentDiv.setAttribute('data-name', student.Name);
+      studentDiv.setAttribute('data-year', student.Year);
+      studentDiv.setAttribute('data-section', student.Section);
+      studentDiv.setAttribute('data-subject-code', student.SubjectCode);
+      studentDiv.setAttribute('data-subject', student.Subject);
+      
+      studentDiv.innerHTML = `
+        <div class="unassigned-roll">${student.RollNo}</div>
+        <div class="unassigned-name" title="${student.Name}">${student.Name}</div>
+        <div class="unassigned-details">
+          <span class="unassigned-year-badge ${student.Year}">${student.Year}</span>
+          ${student.Section} | ${student.SubjectCode}
+        </div>
+      `;
+      
+      // Drag handlers for unassigned students
+      studentDiv.addEventListener('dragstart', handleUnassignedDragStart);
+      studentDiv.addEventListener('dragend', handleUnassignedDragEnd);
+      
+      container.appendChild(studentDiv);
+    });
+  }
+  
+  // Handle Unassigned Student Drag Start
+  function handleUnassignedDragStart(e) {
+    draggedStudent = {
+      RollNo: e.currentTarget.getAttribute('data-roll'),
+      Name: e.currentTarget.getAttribute('data-name'),
+      Year: e.currentTarget.getAttribute('data-year'),
+      Section: e.currentTarget.getAttribute('data-section'),
+      SubjectCode: e.currentTarget.getAttribute('data-subject-code'),
+      Subject: e.currentTarget.getAttribute('data-subject')
+    };
+    
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    
+    document.getElementById('swapMode').textContent = 'Assign Mode';
+    document.getElementById('swapMode').className = 'badge badge-warning';
+  }
+  
+  // Handle Unassigned Student Drag End
+  function handleUnassignedDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    draggedStudent = null;
+    
+    document.querySelectorAll('.seat').forEach(s => s.classList.remove('drop-target'));
+    
+    document.getElementById('swapMode').textContent = 'Click Mode';
+    document.getElementById('swapMode').className = 'badge badge-primary';
+  }
+  
+  // Render Seating Plan
+  function renderSeatingPlan() {
+    const container = document.getElementById('previewArea');
+    container.innerHTML = '';
+    
+    allocationData.forEach((hall, hallIndex) => {
+      const hallDiv = document.createElement('div');
+      hallDiv.className = 'seatmap';
+      hallDiv.setAttribute('data-hall-index', hallIndex);
+      
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'seatmap-header';
+      
+      const assignedCount = hall.seats.filter(s => s.student).length;
+      const totalSeats = hall.rows * hall.cols;
+      
+      headerDiv.innerHTML = `
+        <div class="seatmap-title">${hall.hallName}</div>
+        <div class="seatmap-info">${assignedCount} / ${totalSeats} seats filled</div>
+      `;
+      
+      hallDiv.appendChild(headerDiv);
+      
+      for (let r = 0; r < hall.rows; r++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'seat-row';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'row-label';
+        labelDiv.textContent = r + 1;
+        rowDiv.appendChild(labelDiv);
+        
+        for (let c = 0; c < hall.cols; c++) {
+          const seatDiv = document.createElement('div');
+          seatDiv.className = 'seat empty';
+          seatDiv.setAttribute('data-hall-index', hallIndex);
+          seatDiv.setAttribute('data-row', r);
+          seatDiv.setAttribute('data-col', c);
+          seatDiv.setAttribute('draggable', 'false');
+          
+          const seatData = hall.seats.find(s => s.row === r && s.col === c);
+          
+          if (seatData && seatData.student) {
+            const student = seatData.student;
+            seatDiv.className = `seat ${student.Year}`;
+            seatDiv.setAttribute('draggable', 'true');
+            seatDiv.setAttribute('data-roll', student.RollNo);
+            seatDiv.setAttribute('data-name', student.Name);
+            seatDiv.setAttribute('data-year', student.Year);
+            seatDiv.setAttribute('data-section', student.Section);
+            seatDiv.setAttribute('data-subject-code', student.SubjectCode);
+            seatDiv.setAttribute('data-subject', student.Subject);
+            seatDiv.title = `${student.Name}\n${student.RollNo}\n${student.SubjectCode} - ${student.Subject}\nYear ${student.Year}, Section ${student.Section}`;
+            
+            seatDiv.innerHTML = `
+              <div style="font-weight:700;">${student.RollNo}</div>
+              <div class="seat-id">${seatData.SeatingNo}</div>
+            `;
+          } else {
+            seatDiv.innerHTML = `<div class="seat-id">${seatId(c, r)}</div>`;
+          }
+          
+          rowDiv.appendChild(seatDiv);
+        }
+        
+        hallDiv.appendChild(rowDiv);
+      }
+      
+      container.appendChild(hallDiv);
+    });
+    
+    enableSeatInteraction();
+    updateFilterHallOptions();
+  }
+  
+  // Enable Seat Interaction
+  function enableSeatInteraction() {
+    document.querySelectorAll('.seat').forEach(seat => {
+      
+      // Click to Select/Swap
+      seat.addEventListener('click', handleSeatClick);
+      
+      // Drag & Drop for occupied seats
+      if (!seat.classList.contains('empty')) {
+        seat.addEventListener('dragstart', handleDragStart);
+        seat.addEventListener('dragend', handleDragEnd);
+      }
+      
+      // Drop handlers for all seats (including empty)
+      seat.addEventListener('dragover', handleDragOver);
+      seat.addEventListener('drop', handleDrop);
+      seat.addEventListener('dragleave', handleDragLeave);
+    });
+  }
+  
+  // Handle Seat Click
+  function handleSeatClick(e) {
+    const seat = e.currentTarget;
+    
+    if (!selectedSeat) {
+      // Select first seat
+      selectedSeat = seat;
+      seat.classList.add('selected');
+      
+      const rollNo = seat.getAttribute('data-roll');
+      const hallIndex = seat.getAttribute('data-hall-index');
+      const hallName = allocationData[hallIndex].hallName;
+      
+      showToast('Selected', `${rollNo} in ${hallName}. Click another seat to swap.`, 'info');
+    } else if (selectedSeat === seat) {
+      // Deselect
+      seat.classList.remove('selected');
+      selectedSeat = null;
+      showToast('Deselected', 'Selection cleared', 'info');
+    } else {
+      // Swap seats
+      swapSeats(selectedSeat, seat);
+      selectedSeat.classList.remove('selected');
+      selectedSeat = null;
+    }
+  }
+  
+  // Handle Drag Start
+  function handleDragStart(e) {
+    if (document.getElementById('dragDropMode').value === 'disabled') {
+      e.preventDefault();
+      return;
+    }
+    
+    draggedSeat = e.currentTarget;
+    e.currentTarget.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+    
+    document.getElementById('swapMode').textContent = 'Drag Mode';
+    document.getElementById('swapMode').className = 'badge badge-success';
+  }
+  
+  // Handle Drag End
+  function handleDragEnd(e) {
+    e.currentTarget.style.opacity = '1';
+    document.querySelectorAll('.seat').forEach(s => {
+      s.classList.remove('drag-over');
+      s.classList.remove('drop-target');
+    });
+    draggedSeat = null;
+    
+    document.getElementById('swapMode').textContent = 'Click Mode';
+    document.getElementById('swapMode').className = 'badge badge-primary';
+  }
+  
+  // Handle Drag Over
+  function handleDragOver(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Show drop target styling
+    e.currentTarget.classList.add('drop-target');
+    
+    return false;
+  }
+  
+  // Handle Drag Leave
+  function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drop-target');
+  }
+  
+  // Handle Drop
+  function handleDrop(e) {
+    if (e.stopPropagation) {
+      e.stopPropagation();
+    }
+    
+    e.currentTarget.classList.remove('drop-target');
+    
+    // Check if dropping an unassigned student
+    if (draggedStudent) {
+      assignStudentToSeat(draggedStudent, e.currentTarget);
+    } 
+    // Otherwise it's a seat swap
+    else if (draggedSeat && draggedSeat !== e.currentTarget) {
+      swapSeats(draggedSeat, e.currentTarget);
+    }
+    
+    return false;
+  }
+  
+  // Assign Unassigned Student to Seat
+  function assignStudentToSeat(student, seat) {
+    const hallIndex = Number(seat.getAttribute('data-hall-index'));
+    const row = Number(seat.getAttribute('data-row'));
+    const col = Number(seat.getAttribute('data-col'));
+    
+    // Check if seat is empty
+    const isEmpty = seat.classList.contains('empty');
+    
+    if (isEmpty) {
+      // Assign to empty seat
+      const seatData = allocationData[hallIndex].seats.find(s => s.row === row && s.col === col);
+      if (seatData) {
+        seatData.student = student;
+      }
+      
+      // Remove from unassigned list
+      unassignedStudents = unassignedStudents.filter(s => s.RollNo !== student.RollNo);
+      
+      // Update seat visual
+      seat.classList.remove('empty');
+      seat.setAttribute('draggable', 'true');
+      updateSeatVisual(seat, student);
+      
+      // Update unassigned panel
+      renderUnassignedStudents();
+      updateStatistics();
+      
+      showToast('Assigned', `${student.RollNo} assigned successfully`, 'success');
+      
+      // Hide unassigned panel if all assigned
+      if (unassignedStudents.length === 0) {
+        document.getElementById('unassignedPanel').style.display = 'none';
+      }
+      
+      // Save state
+      saveState();
+      
+      // Re-enable interactions
+      enableSeatInteraction();
+    } else {
+      // Swap with existing student
+      const existingStudent = {
+        RollNo: seat.getAttribute('data-roll'),
+        Name: seat.getAttribute('data-name'),
+        Year: seat.getAttribute('data-year'),
+        Section: seat.getAttribute('data-section'),
+        SubjectCode: seat.getAttribute('data-subject-code'),
+        Subject: seat.getAttribute('data-subject')
+      };
+      
+      // Update seat with new student
+      const seatData = allocationData[hallIndex].seats.find(s => s.row === row && s.col === col);
+      if (seatData) {
+        seatData.student = student;
+      }
+      
+      // Remove new student from unassigned
+      unassignedStudents = unassignedStudents.filter(s => s.RollNo !== student.RollNo);
+      
+      // Add existing student to unassigned
+      unassignedStudents.push(existingStudent);
+      
+      // Update visuals
+      updateSeatVisual(seat, student);
+      renderUnassignedStudents();
+      updateStatistics();
+      
+      showToast('Swapped', `${student.RollNo} ↔ ${existingStudent.RollNo}`, 'success');
+      
+      // Save state
+      saveState();
+      
+      // Re-enable interactions
+      enableSeatInteraction();
+    }
+  }
+  
+  // Swap Seats
+  function swapSeats(seat1, seat2) {
+    const hall1Index = Number(seat1.getAttribute('data-hall-index'));
+    const row1 = Number(seat1.getAttribute('data-row'));
+    const col1 = Number(seat1.getAttribute('data-col'));
+    
+    const hall2Index = Number(seat2.getAttribute('data-hall-index'));
+    const row2 = Number(seat2.getAttribute('data-row'));
+    const col2 = Number(seat2.getAttribute('data-col'));
+    
+    // Get student data
+    const student1 = {
+      RollNo: seat1.getAttribute('data-roll'),
+      Name: seat1.getAttribute('data-name'),
+      Year: seat1.getAttribute('data-year'),
+      Section: seat1.getAttribute('data-section'),
+      SubjectCode: seat1.getAttribute('data-subject-code'),
+      Subject: seat1.getAttribute('data-subject')
+    };
+    
+    const student2 = {
+      RollNo: seat2.getAttribute('data-roll'),
+      Name: seat2.getAttribute('data-name'),
+      Year: seat2.getAttribute('data-year'),
+      Section: seat2.getAttribute('data-section'),
+      SubjectCode: seat2.getAttribute('data-subject-code'),
+      Subject: seat2.getAttribute('data-subject')
+    };
+    
+    // Update allocation data
+    const seat1Data = allocationData[hall1Index].seats.find(s => s.row === row1 && s.col === col1);
+    const seat2Data = allocationData[hall2Index].seats.find(s => s.row === row2 && s.col === col2);
+    
+    if (seat1Data) seat1Data.student = student2;
+    if (seat2Data) seat2Data.student = student1;
+    
+    // Update visual
+    updateSeatVisual(seat1, student2);
+    updateSeatVisual(seat2, student1);
+    
+    // Show notification
+    const hall1Name = allocationData[hall1Index].hallName;
+    const hall2Name = allocationData[hall2Index].hallName;
+    
+    const message = hall1Index === hall2Index
+      ? `Swapped within ${hall1Name}`
+      : `Swapped between ${hall1Name} ↔ ${hall2Name}`;
+    
+    showToast('Swapped', `${student1.RollNo} ↔ ${student2.RollNo}`, 'success');
+    
+    // Save state for undo
+    saveState();
+  }
+  
+  // Update Seat Visual
+  function updateSeatVisual(seat, student) {
+    seat.setAttribute('data-roll', student.RollNo);
+    seat.setAttribute('data-name', student.Name);
+    seat.setAttribute('data-year', student.Year);
+    seat.setAttribute('data-section', student.Section);
+    seat.setAttribute('data-subject-code', student.SubjectCode);
+    seat.setAttribute('data-subject', student.Subject);
+    seat.className = `seat ${student.Year}`;
+    seat.title = `${student.Name}\n${student.RollNo}\n${student.SubjectCode} - ${student.Subject}\nYear ${student.Year}, Section ${student.Section}`;
+    
+    const seatIdText = seat.querySelector('.seat-id').textContent;
+    seat.innerHTML = `
+      <div style="font-weight:700;">${student.RollNo}</div>
+      <div class="seat-id">${seatIdText}</div>
+    `;
+  }
+  
+  // Auto Assign Unassigned Students
+  document.getElementById('btnAutoAssign').addEventListener('click', () => {
+    if (unassignedStudents.length === 0) {
+      showToast('Info', 'No unassigned students to assign', 'info');
+      return;
+    }
+    
+    let assignedCount = 0;
+    const studentsToAssign = [...unassignedStudents];
+    
+    // Find empty seats across all halls
+    for (const hall of allocationData) {
+      for (const seatData of hall.seats) {
+        if (!seatData.student && studentsToAssign.length > 0) {
+          // Assign first unassigned student to this empty seat
+          seatData.student = studentsToAssign.shift();
+          assignedCount++;
+        }
+      }
+    }
+    
+    // Update unassigned list
+    unassignedStudents = studentsToAssign;
+    
+    // Re-render everything
+    renderSeatingPlan();
+    renderUnassignedStudents();
+    updateStatistics();
+    
+    if (assignedCount > 0) {
+      showToast('Success', `Auto-assigned ${assignedCount} student(s)`, 'success');
+      saveState();
+    }
+    
+    if (unassignedStudents.length === 0) {
+      document.getElementById('unassignedPanel').style.display = 'none';
+    }
+  });
+  
+  // Update Statistics
+  function updateStatistics() {
+    const total = students.length;
+    const assigned = allocationData.reduce((sum, hall) => 
+      sum + hall.seats.filter(s => s.student).length, 0
+    );
+    const unassigned = total - assigned;
+    const hallCount = halls.length;
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statAssigned').textContent = assigned;
+    document.getElementById('statUnassigned').textContent = unassigned;
+    document.getElementById('statHalls').textContent = hallCount;
+  }
+  
+  // Undo/Redo System
+  function saveState() {
+    const state = {
+      allocation: JSON.parse(JSON.stringify(allocationData)),
+      unassigned: JSON.parse(JSON.stringify(unassignedStudents))
+    };
+    undoStack.push(state);
+    
+    if (undoStack.length > maxUndoSteps) {
+      undoStack.shift();
+    }
+    
+    redoStack = [];
+  }
+  
+  document.getElementById('btnUndo').addEventListener('click', () => {
+    if (undoStack.length > 1) {
+      redoStack.push(undoStack.pop());
+      const state = undoStack[undoStack.length - 1];
+      allocationData = JSON.parse(JSON.stringify(state.allocation));
+      unassignedStudents = JSON.parse(JSON.stringify(state.unassigned));
+      renderSeatingPlan();
+      renderUnassignedStudents();
+      updateStatistics();
+      
+      // Update unassigned panel visibility
+      if (unassignedStudents.length > 0) {
+        document.getElementById('unassignedPanel').style.display = 'block';
+      } else {
+        document.getElementById('unassignedPanel').style.display = 'none';
+      }
+      
+      showToast('Undo', 'Action undone', 'info');
+    } else {
+      showToast('Cannot Undo', 'No more actions to undo', 'warning');
+    }
+  });
+  
+  document.getElementById('btnRedo').addEventListener('click', () => {
+    if (redoStack.length > 0) {
+      const state = redoStack.pop();
+      undoStack.push(state);
+      allocationData = JSON.parse(JSON.stringify(state.allocation));
+      unassignedStudents = JSON.parse(JSON.stringify(state.unassigned));
+      renderSeatingPlan();
+      renderUnassignedStudents();
+      updateStatistics();
+      
+      // Update unassigned panel visibility
+      if (unassignedStudents.length > 0) {
+        document.getElementById('unassignedPanel').style.display = 'block';
+      } else {
+        document.getElementById('unassignedPanel').style.display = 'none';
+      }
+      
+      showToast('Redo', 'Action redone', 'info');
+    } else {
+      showToast('Cannot Redo', 'No more actions to redo', 'warning');
+    }
+  });
+  
+  // Filter System
+  document.getElementById('btnFilter').addEventListener('click', () => {
+    const panel = document.getElementById('filterPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  });
+  
+  function updateFilterHallOptions() {
+    const select = document.getElementById('filterHall');
+    select.innerHTML = '<option value="">All Halls</option>';
+    
+    allocationData.forEach((hall, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = hall.hallName;
+      select.appendChild(option);
+    });
+  }
+  
+  document.getElementById('filterYear').addEventListener('change', applyFilters);
+  document.getElementById('filterHall').addEventListener('change', applyFilters);
+  document.getElementById('searchStudent').addEventListener('input', applyFilters);
+  
+  function applyFilters() {
+    const yearFilter = document.getElementById('filterYear').value;
+    const hallFilter = document.getElementById('filterHall').value;
+    const searchText = document.getElementById('searchStudent').value.toLowerCase();
+    
+    document.querySelectorAll('.seat:not(.empty)').forEach(seat => {
+      let show = true;
+      
+      if (yearFilter && seat.getAttribute('data-year') !== yearFilter) {
+        show = false;
+      }
+      
+      if (hallFilter && seat.getAttribute('data-hall-index') !== hallFilter) {
+        show = false;
+      }
+      
+      if (searchText) {
+        const roll = seat.getAttribute('data-roll').toLowerCase();
+        const name = seat.getAttribute('data-name').toLowerCase();
+        if (!roll.includes(searchText) && !name.includes(searchText)) {
+          show = false;
+        }
+      }
+      
+      seat.style.display = show ? 'flex' : 'none';
+    });
+  }
+  
+  // Refresh
+  document.getElementById('btnRefresh').addEventListener('click', () => {
+    document.getElementById('filterYear').value = '';
+    document.getElementById('filterHall').value = '';
+    document.getElementById('searchStudent').value = '';
+    applyFilters();
+    showToast('Refreshed', 'Filters cleared', 'info');
+  });
+  
+  // Export to Excel
+  document.getElementById('btnExport').addEventListener('click', () => {
+    const date = document.getElementById('examDate').value;
+    const dept = document.getElementById('department').value;
+    const batch = document.getElementById('batch').value;
+    
+    if (!date || !dept || !batch) {
+      showToast('Error', 'Please fill Date, Department, and Batch', 'error');
+      return;
+    }
+    
+    if (allocationData.length === 0) {
+      showToast('Error', 'Please generate seating plan first', 'error');
+      return;
+    }
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [['Date', 'Department', 'Batch', 'Hall No', 'Student Roll No', 'Name', 'Seating No', 'Subject Code', 'Subject', 'Year', 'Section']];
+    
+    allocationData.forEach(hall => {
+      hall.seats.forEach(seat => {
+        if (seat.student) {
+          wsData.push([
+            date,
+            dept,
+            batch,
+            hall.hallName,
+            seat.student.RollNo,
+            seat.student.Name,
+            seat.SeatingNo,
+            seat.student.SubjectCode,
+            seat.student.Subject,
+            seat.student.Year,
+            seat.student.Section
+          ]);
+        }
+      });
+    });
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // Auto-size columns
+    const colWidths = wsData[0].map((_, colIndex) => {
+      const maxLength = Math.max(...wsData.map(row => 
+        row[colIndex] ? row[colIndex].toString().length : 0
+      ));
+      return { wch: Math.min(maxLength + 2, 30) };
+    });
+    ws['!cols'] = colWidths;
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Seating_Plan');
+    
+    const fileName = `${dept}_${batch}_${date}_Seating.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    showToast('Success', 'Excel file exported successfully', 'success');
+  });
+  
+  // Print
+  document.getElementById('btnPrint').addEventListener('click', () => {
+    window.print();
+  });
+  
+  // Clear All
+  document.getElementById('btnClear').addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+      students = [];
+      halls = [];
+      allocationData = [];
+      unassignedStudents = [];
+      hallCounter = 0;
+      undoStack = [];
+      redoStack = [];
+      selectedSeat = null;
+      
+      renderHallList();
+      document.getElementById('previewArea').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No Seating Plan Generated</div>
+          <div class="empty-state-text">Upload student data and configure halls to get started</div>
+        </div>
+      `;
+      
+      document.getElementById('statistics').style.display = 'none';
+      document.getElementById('actionBar').style.display = 'none';
+      document.getElementById('legend').style.display = 'none';
+      document.getElementById('unassignedPanel').style.display = 'none';
+      
+      showToast('Cleared', 'All data cleared', 'info');
+    }
+  });
+  
+  // Initialize
   renderHallList();
-  document.getElementById('preview').innerHTML='';
-  document.getElementById('swapInfo').innerHTML='';
-  showMessage('Cleared');
-});
-
-// Generate Excel from allocation data
-document.getElementById('btnGenerate').addEventListener('click', () => {
-  const date = document.getElementById('inpDate').value,
-        dept = document.getElementById('inpDept').value,
-        batch = document.getElementById('inpBatch').value;
-
-  if (!date || !dept || !batch) { 
-    alert('Please fill in Date, Department, and Batch'); 
-    return; 
-  }
-
-  if (!allocationData.length) {
-    alert('Please preview seating first');
-    return;
-  }
-
-  const wb = XLSX.utils.book_new();
-  const wsData = [['Date','Department','Batch','Hall No','Student Roll No','Name','Seating No','Subject Code','Subject','Year','Section']];
-
-  // Use allocation data instead of reading from DOM
-  allocationData.forEach(hall => {
-    hall.seats.forEach(seatData => {
-      if (seatData.student) {
-        wsData.push([
-          date,
-          dept,
-          batch,
-          hall.hallName,
-          seatData.student.RollNo,
-          seatData.student.Name,
-          seatData.SeatingNo,
-          seatData.student.SubjectCode,
-          seatData.student.Subject,
-          seatData.student.Year,
-          seatData.student.Section
-        ]);
-      }
-    });
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  XLSX.utils.book_append_sheet(wb, ws, 'Seating_All_Halls');
-  XLSX.writeFile(wb, `${dept}_${batch}_${date}_Seating.xlsx`);
-  alert("✅ Excel generated successfully with all hall swaps!");
-});
-
-// Show sample data
-document.getElementById('btnPreviewSample').addEventListener('click', () => {
-  students = [
-    {RollNo: '21CS001', Name: 'John Doe', Year: 'I', Section: 'A', SubjectCode: 'CS101', Subject: 'Programming'},
-    {RollNo: '21CS002', Name: 'Jane Smith', Year: 'I', Section: 'A', SubjectCode: 'CS102', Subject: 'Data Structures'},
-    {RollNo: '21CS003', Name: 'Bob Johnson', Year: 'II', Section: 'B', SubjectCode: 'CS201', Subject: 'Algorithms'},
-    {RollNo: '21CS004', Name: 'Alice Brown', Year: 'II', Section: 'B', SubjectCode: 'CS202', Subject: 'Database'},
-    {RollNo: '21CS005', Name: 'Charlie Wilson', Year: 'III', Section: 'C', SubjectCode: 'CS301', Subject: 'Networks'},
-    {RollNo: '21CS006', Name: 'Diana Davis', Year: 'III', Section: 'C', SubjectCode: 'CS302', Subject: 'Operating Systems'},
-    {RollNo: '21CS007', Name: 'Eve Martinez', Year: 'IV', Section: 'D', SubjectCode: 'CS401', Subject: 'AI'},
-    {RollNo: '21CS008', Name: 'Frank Garcia', Year: 'IV', Section: 'D', SubjectCode: 'CS402', Subject: 'Machine Learning'}
-  ];
-  showMessage(`Loaded ${students.length} sample students. Add halls and click Preview!`);
-});
-
+  
 })();
+
 </script>
 
 </body>
