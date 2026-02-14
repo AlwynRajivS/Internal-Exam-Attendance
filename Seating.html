@@ -324,7 +324,7 @@ function renderHallList(){
   }));
 }
 
-function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6, pattern='row'){ 
+function addHall(name=`Hall ${hallCounter+1}`, rows=6, cols=6, pattern='column'){
   hallCounter++; 
   halls.push({id:hallCounter,name,rows,cols,pattern,I:0,II:0,III:0,IV:0}); 
   renderHallList(); 
