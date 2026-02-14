@@ -955,7 +955,7 @@ body {
             <option value="CE">Civil Engineering</option>
             <option value="BT">Biotechnology</option>
             <option value="MTR">Mechatronics</option>
-            <option value="ADS">Applied Data Science</option>
+            <option value="ADS">Artificial Intelligence Data Science</option>
             <option value="FY">First Year</option>
           </select>
         </div>
@@ -1396,8 +1396,8 @@ body {
           <div class="hall-grid-full">
             <label class="form-label">Seating Pattern</label>
             <select class="form-select" id="hall_pattern_${hall.id}">
-              <option value="row" ${hall.pattern === 'row' ? 'selected' : ''}>Row-wise</option>
               <option value="column" ${hall.pattern === 'column' ? 'selected' : ''}>Column-wise</option>
+              <option value="row" ${hall.pattern === 'row' ? 'selected' : ''}>Row-wise</option>
               <option value="zigzag" ${hall.pattern === 'zigzag' ? 'selected' : ''}>Zigzag</option>
               <option value="alternate" ${hall.pattern === 'alternate' ? 'selected' : ''}>Alternate Columns</option>
             </select>
@@ -1427,7 +1427,7 @@ body {
       name: `Hall ${hallCounter}`,
       rows: 6,
       cols: 6,
-      pattern: 'row',
+      pattern: 'col',
       I: 0,
       II: 0,
       III: 0,
