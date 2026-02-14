@@ -770,7 +770,7 @@
       userData = user;
       
       // Set student info
-      document.getElementById("studentName").innerText = user.name;
+      document.getElementById("studentName").innerText = user.name || "Student";
       document.getElementById("studentRoll").innerText = `Roll No: ${user.studentRollNo || 'N/A'}`;
       
       // Set avatar initial
@@ -791,13 +791,16 @@
       
       if (!res.success || !res.seating || res.seating.length === 0) {
         showEmptyState();
+        // Still load upcoming and history even if no exams today
+        await loadUpcomingExams();
+        await loadHistory();
         return;
       }
 
       allSeatingData = res.seating;
       displayTodaySeating(res.seating);
-      loadUpcomingExams();
-      loadHistory();
+      await loadUpcomingExams();
+      await loadHistory();
     }
 
     async function loadStatistics() {
@@ -902,33 +905,52 @@
         const res = await apiFetch({ action: "getUpcomingExams", email: userData.email });
         const container = document.getElementById("upcomingContainer");
         
+        console.log('Upcoming exams response:', res); // Debug log
+        
         if (res.success && res.exams && res.exams.length > 0) {
           let html = '<div class="grid-container">';
           
+          const batchTimes = { "FN": "8:30 AM", "AN": "1:00 PM" };
+          
           res.exams.forEach(exam => {
-            const batchTimes = { "FN": "8:30 AM", "AN": "1:00 PM" };
+            const examDate = exam.Date || 'N/A';
+            const examBatch = exam.Batch || 'N/A';
+            const examHall = exam.HallNo || 'TBA';
+            const examSeat = exam.SeatNo || 'TBA';
+            const subjectCode = exam.SubjectCode || 'N/A';
+            const subject = exam.Subject || 'N/A';
+            const batchTime = batchTimes[examBatch.toUpperCase()] || examBatch;
+            
             html += `
               <div class="exam-box">
-                <div class="exam-hall"><i class="fas fa-calendar-check"></i> ${exam.Subject}</div>
+                <div class="exam-hall"><i class="fas fa-book-open"></i> ${subject}</div>
                 <div class="exam-detail">
                   <i class="fas fa-calendar"></i>
-                  <strong>Date:</strong> <span>${exam.Date}</span>
-                </div>
-                <div class="exam-detail">
-                  <i class="fas fa-door-open"></i>
-                  <strong>Hall:</strong> <span>${exam.HallNo}</span>
+                  <strong>Date:</strong> <span>${examDate}</span>
                 </div>
                 <div class="exam-detail">
                   <i class="fas fa-clock"></i>
-                  <strong>Time:</strong> <span>${exam.Batch} (${batchTimes[exam.Batch.toUpperCase()] || exam.Batch})</span>
-                </div>
-                <div class="exam-detail">
-                  <i class="fas fa-chair"></i>
-                  <strong>Seat:</strong> <span>${exam.SeatNo}</span>
+                  <strong>Session:</strong> <span>${examBatch} (${batchTime})</span>
                 </div>
                 <div class="exam-detail">
                   <i class="fas fa-hashtag"></i>
-                  <strong>Code:</strong> <span>${exam.SubjectCode}</span>
+                  <strong>Subject Code:</strong> <span>${subjectCode}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-door-open"></i>
+                  <strong>Hall:</strong> <span>${examHall}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-chair"></i>
+                  <strong>Seat:</strong> <span>${examSeat}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-building"></i>
+                  <strong>Department:</strong> <span>${exam.Department || 'N/A'}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-graduation-cap"></i>
+                  <strong>Year/Section:</strong> <span>${exam.Year || 'N/A'} - ${exam.Section || 'N/A'}</span>
                 </div>
               </div>
             `;
@@ -946,7 +968,7 @@
           `;
         }
       } catch (e) {
-        console.log('Error loading upcoming exams:', e);
+        console.error('Error loading upcoming exams:', e);
         const container = document.getElementById("upcomingContainer");
         container.innerHTML = `
           <div class="empty-state">
@@ -963,42 +985,55 @@
         const res = await apiFetch({ action: "getExamHistory", email: userData.email });
         const container = document.getElementById("historyContainer");
         
+        console.log('History response:', res); // Debug log
+        
         if (res.success && res.history && res.history.length > 0) {
           let html = '<div class="timeline">';
           
           res.history.forEach(exam => {
-            const statusClass = exam.Status.toLowerCase();
-            const statusIcon = exam.Status === "Present" ? "check-circle" : 
-                             exam.Status === "Absent" ? "times-circle" : "clipboard";
-            const statusColor = exam.Status === "Present" ? "#10b981" : 
-                              exam.Status === "Absent" ? "#ef4444" : "#f59e0b";
+            const status = exam.Status || 'Unknown';
+            const statusUpper = status.toUpperCase();
+            const statusIcon = statusUpper === "PRESENT" ? "check-circle" : 
+                             statusUpper === "ABSENT" ? "times-circle" : "clipboard";
+            const statusColor = statusUpper === "PRESENT" ? "#10b981" : 
+                              statusUpper === "ABSENT" ? "#ef4444" : "#f59e0b";
+            
+            const examDate = exam.Date || 'N/A';
+            const examBatch = exam.Batch || 'N/A';
+            const examHall = exam.HallNo || 'N/A';
+            const subject = exam.Subject || 'N/A';
+            const subjectCode = exam.SubjectCode || 'N/A';
+            const seat = exam.SeatNo || 'N/A';
+            const year = exam.Year || 'N/A';
+            const section = exam.Section || 'N/A';
+            const reason = exam.Reason || '';
             
             html += `
               <div class="timeline-item">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                  <div>
-                    <h4 style="margin-bottom: 6px; color: var(--text-primary); font-size: 16px;">
-                      ${exam.Subject}
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; gap: 12px;">
+                  <div style="flex: 1;">
+                    <h4 style="margin-bottom: 6px; color: var(--text-primary); font-size: 16px; font-weight: 700;">
+                      ${subject}
                     </h4>
                     <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
-                      <i class="fas fa-calendar"></i> ${exam.Date} | 
-                      <i class="fas fa-clock"></i> ${exam.Batch} | 
-                      <i class="fas fa-door-open"></i> Hall ${exam.HallNo}
+                      <i class="fas fa-calendar"></i> ${examDate} | 
+                      <i class="fas fa-clock"></i> ${examBatch} | 
+                      <i class="fas fa-door-open"></i> Hall ${examHall}
                     </p>
                   </div>
                   <div style="padding: 6px 12px; border-radius: 8px; background: ${statusColor}20; border: 2px solid ${statusColor}; font-weight: 700; font-size: 12px; color: ${statusColor}; white-space: nowrap;">
-                    <i class="fas fa-${statusIcon}"></i> ${exam.Status}
+                    <i class="fas fa-${statusIcon}"></i> ${status}
                   </div>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 13px; color: var(--text-secondary);">
-                  <div><strong>Subject Code:</strong> ${exam.SubjectCode}</div>
-                  <div><strong>Seat No:</strong> ${exam.SeatNo}</div>
-                  <div><strong>Year:</strong> ${exam.Year}</div>
-                  <div><strong>Section:</strong> ${exam.Section}</div>
+                  <div><strong>Subject Code:</strong> ${subjectCode}</div>
+                  <div><strong>Seat No:</strong> ${seat}</div>
+                  <div><strong>Year:</strong> ${year}</div>
+                  <div><strong>Section:</strong> ${section}</div>
                 </div>
-                ${exam.Reason ? `
+                ${reason ? `
                   <div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 13px;">
-                    <strong>Reason:</strong> ${exam.Reason}
+                    <strong>Reason:</strong> ${reason}
                   </div>
                 ` : ''}
               </div>
@@ -1017,7 +1052,7 @@
           `;
         }
       } catch (e) {
-        console.log('Error loading history:', e);
+        console.error('Error loading history:', e);
         const container = document.getElementById("historyContainer");
         container.innerHTML = `
           <div class="empty-state">
