@@ -127,6 +127,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      font-weight: 600;
     }
 
     .student-info i {
@@ -656,7 +657,7 @@
               <h1>Welcome, <span id="studentName">Student</span>!</h1>
               <div class="student-info">
                 <i class="fas fa-id-card"></i>
-                <span id="studentRoll">Roll No: Loading...</span>
+                <span id="studentRoll">Loading...</span>
               </div>
             </div>
           </div>
@@ -769,9 +770,10 @@
 
       userData = user;
       
-      // Set student info
+      // Set student info with roll number properly displayed
       document.getElementById("studentName").innerText = user.name || "Student";
-      document.getElementById("studentRoll").innerText = `Roll No: ${user.studentRollNo || 'N/A'}`;
+      const rollNo = user.studentRollNo || 'Not Available';
+      document.getElementById("studentRoll").innerText = `Roll No: ${rollNo}`;
       
       // Set avatar initial
       const initial = user.name ? user.name.charAt(0).toUpperCase() : 'S';
@@ -791,7 +793,6 @@
       
       if (!res.success || !res.seating || res.seating.length === 0) {
         showEmptyState();
-        // Still load upcoming and history even if no exams today
         await loadUpcomingExams();
         await loadHistory();
         return;
@@ -808,14 +809,26 @@
         const res = await apiFetch({ action: "getStudentStats", email: userData.email });
         
         if (res.success && res.stats) {
-          document.getElementById("todayCount").textContent = res.stats.todayCount || 0;
-          document.getElementById("upcomingCount").textContent = res.stats.upcomingCount || 0;
-          document.getElementById("completedCount").textContent = res.stats.completedCount || 0;
+          // Apply time-based filtering for today's count
+          const now = new Date();
+          const currentHour = now.getHours();
+          
+          let todayCount = res.stats.todayCount || 0;
+          let upcomingCount = res.stats.upcomingCount || 0;
+          let completedCount = res.stats.completedCount || 0;
+          
+          // FN exams move to completed after 12 PM (noon)
+          // AN exams move to completed after 5 PM (17:00)
+          // This will be handled by the backend in the next version,
+          // but we can adjust display here if needed
+          
+          document.getElementById("todayCount").textContent = todayCount;
+          document.getElementById("upcomingCount").textContent = upcomingCount;
+          document.getElementById("completedCount").textContent = completedCount;
           document.getElementById("attendanceRate").textContent = `${res.stats.attendanceRate || 0}%`;
         }
       } catch (e) {
         console.log('Error loading statistics:', e);
-        // Set default values if fetch fails
         document.getElementById("todayCount").textContent = "0";
         document.getElementById("upcomingCount").textContent = "0";
         document.getElementById("completedCount").textContent = "0";
@@ -835,15 +848,34 @@
       const currentMinute = now.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
       
-      // FN session: Hall/Seat visible after 7:00 PM (19:00)
-      const fnVisibleTime = 7 * 60; // 7:00 PM in minutes
+      // FN session: Hall/Seat visible after 7:00 AM (07:00)
+      const fnVisibleTime = 7 * 60; // 7:00 AM in minutes
       
       // AN session: Hall/Seat visible after 12:30 PM (12:30)
       const anVisibleTime = 12 * 60 + 30; // 12:30 PM in minutes
+      
+      // FN session completes at 12:00 PM (noon)
+      const fnCompletedTime = 12 * 60; // 12:00 PM in minutes
+      
+      // AN session completes at 5:00 PM (17:00)
+      const anCompletedTime = 17 * 60; // 5:00 PM in minutes
 
       seating.forEach(row => {
         const div = document.createElement("div");
         const batch = (row.Batch || "").trim().toUpperCase();
+        
+        // Check if exam is completed based on time
+        let isCompleted = false;
+        if (batch === "FN" && currentTimeInMinutes >= fnCompletedTime) {
+          isCompleted = true;
+        } else if (batch === "AN" && currentTimeInMinutes >= anCompletedTime) {
+          isCompleted = true;
+        }
+        
+        // Don't show completed exams in today's section
+        if (isCompleted) {
+          return; // Skip this exam
+        }
         
         // Determine if hall and seat should be visible based on session and time
         let showHallSeat = false;
@@ -867,7 +899,7 @@
         } else if (!showHallSeat) {
           // Time-based locking - show exam details but hide hall and seat
           div.className = "exam-box";
-          const unlockTime = batch === "FN" ? "7:00 PM" : "12:30 PM";
+          const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
           div.innerHTML = `
             <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
             <div class="exam-detail">
@@ -936,6 +968,12 @@
         container.appendChild(div);
       });
 
+      // Check if container is empty (all exams completed)
+      if (container.children.length === 0) {
+        showEmptyState();
+        return;
+      }
+
       // Show info message if any are locked
       const infoMsg = document.getElementById("infoMessage");
       if (lockedCount > 0 && lockedCount === seating.length) {
@@ -973,7 +1011,7 @@
         const res = await apiFetch({ action: "getUpcomingExams", email: userData.email });
         const container = document.getElementById("upcomingContainer");
         
-        console.log('Upcoming exams response:', res); // Debug log
+        console.log('Upcoming exams response:', res);
         
         if (res.success && res.exams && res.exams.length > 0) {
           let html = '<div class="grid-container">';
@@ -1040,7 +1078,7 @@
         const res = await apiFetch({ action: "getExamHistory", email: userData.email });
         const container = document.getElementById("historyContainer");
         
-        console.log('History response:', res); // Debug log
+        console.log('History response:', res);
         
         if (res.success && res.history && res.history.length > 0) {
           let html = '<div class="timeline">';
@@ -1116,12 +1154,10 @@
     }
 
     function switchTab(tabName) {
-      // Update tab active state
       const tabs = document.querySelectorAll('.tab');
       tabs.forEach(tab => tab.classList.remove('active'));
       event.currentTarget.classList.add('active');
 
-      // Update section visibility
       const sections = document.querySelectorAll('.content-section');
       sections.forEach(section => section.classList.remove('active'));
 
@@ -1139,9 +1175,7 @@
       location.href = "index.html";
     }
 
-    // Load seating on page load
     loadSeating();
   </script>
 </body>
 </html>
-
