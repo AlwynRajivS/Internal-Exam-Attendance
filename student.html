@@ -777,6 +777,9 @@
       const initial = user.name ? user.name.charAt(0).toUpperCase() : 'S';
       document.getElementById("avatarIcon").innerText = initial;
 
+      // Fetch statistics first
+      await loadStatistics();
+
       // Get today's date
       const today = new Date();
       const formattedDate = today.getFullYear() + "-" +
@@ -793,9 +796,28 @@
 
       allSeatingData = res.seating;
       displayTodaySeating(res.seating);
-      updateStats(res.seating);
       loadUpcomingExams();
       loadHistory();
+    }
+
+    async function loadStatistics() {
+      try {
+        const res = await apiFetch({ action: "getStudentStats", email: userData.email });
+        
+        if (res.success && res.stats) {
+          document.getElementById("todayCount").textContent = res.stats.todayCount || 0;
+          document.getElementById("upcomingCount").textContent = res.stats.upcomingCount || 0;
+          document.getElementById("completedCount").textContent = res.stats.completedCount || 0;
+          document.getElementById("attendanceRate").textContent = `${res.stats.attendanceRate || 0}%`;
+        }
+      } catch (e) {
+        console.log('Error loading statistics:', e);
+        // Set default values if fetch fails
+        document.getElementById("todayCount").textContent = "0";
+        document.getElementById("upcomingCount").textContent = "0";
+        document.getElementById("completedCount").textContent = "0";
+        document.getElementById("attendanceRate").textContent = "0%";
+      }
     }
 
     function displayTodaySeating(seating) {
@@ -873,50 +895,138 @@
           <p>You don't have any exams scheduled for today. Enjoy your day!</p>
         </div>
       `;
-      
-      document.getElementById("todayCount").textContent = "0";
-    }
-
-    function updateStats(seating) {
-      // Today's count
-      const todayCount = seating.filter(s => s.HallNo !== "Locked").length;
-      document.getElementById("todayCount").textContent = todayCount;
-
-      // Mock data for other stats (you can implement actual API calls)
-      document.getElementById("upcomingCount").textContent = Math.floor(Math.random() * 10);
-      document.getElementById("completedCount").textContent = Math.floor(Math.random() * 15);
-      document.getElementById("attendanceRate").textContent = `${Math.floor(85 + Math.random() * 10)}%`;
     }
 
     async function loadUpcomingExams() {
-      const container = document.getElementById("upcomingContainer");
-      
-      // Mock upcoming exams (implement actual API call if available)
-      const upcomingHTML = `
-        <div class="empty-state">
-          <i class="fas fa-calendar-plus"></i>
-          <h3>Upcoming Exams</h3>
-          <p>Check back later for upcoming exam schedules</p>
-        </div>
-      `;
-      
-      container.innerHTML = upcomingHTML;
+      try {
+        const res = await apiFetch({ action: "getUpcomingExams", email: userData.email });
+        const container = document.getElementById("upcomingContainer");
+        
+        if (res.success && res.exams && res.exams.length > 0) {
+          let html = '<div class="grid-container">';
+          
+          res.exams.forEach(exam => {
+            const batchTimes = { "FN": "8:30 AM", "AN": "1:00 PM" };
+            html += `
+              <div class="exam-box">
+                <div class="exam-hall"><i class="fas fa-calendar-check"></i> ${exam.Subject}</div>
+                <div class="exam-detail">
+                  <i class="fas fa-calendar"></i>
+                  <strong>Date:</strong> <span>${exam.Date}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-door-open"></i>
+                  <strong>Hall:</strong> <span>${exam.HallNo}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-clock"></i>
+                  <strong>Time:</strong> <span>${exam.Batch} (${batchTimes[exam.Batch.toUpperCase()] || exam.Batch})</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-chair"></i>
+                  <strong>Seat:</strong> <span>${exam.SeatNo}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-hashtag"></i>
+                  <strong>Code:</strong> <span>${exam.SubjectCode}</span>
+                </div>
+              </div>
+            `;
+          });
+          
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calendar-plus"></i>
+              <h3>No Upcoming Exams</h3>
+              <p>You don't have any exams scheduled in the near future.</p>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.log('Error loading upcoming exams:', e);
+        const container = document.getElementById("upcomingContainer");
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Unable to Load</h3>
+            <p>Could not fetch upcoming exam data. Please try again later.</p>
+          </div>
+        `;
+      }
     }
 
     async function loadHistory() {
-      const container = document.getElementById("historyContainer");
-      
-      // Mock history (implement actual API call if available)
-      const historyHTML = `
-        <div class="timeline">
-          <div class="timeline-item">
-            <h4 style="margin-bottom: 8px; color: var(--text-primary);">Previous Exam Records</h4>
-            <p style="color: var(--text-secondary);">Your exam history will appear here once available.</p>
+      try {
+        const res = await apiFetch({ action: "getExamHistory", email: userData.email });
+        const container = document.getElementById("historyContainer");
+        
+        if (res.success && res.history && res.history.length > 0) {
+          let html = '<div class="timeline">';
+          
+          res.history.forEach(exam => {
+            const statusClass = exam.Status.toLowerCase();
+            const statusIcon = exam.Status === "Present" ? "check-circle" : 
+                             exam.Status === "Absent" ? "times-circle" : "clipboard";
+            const statusColor = exam.Status === "Present" ? "#10b981" : 
+                              exam.Status === "Absent" ? "#ef4444" : "#f59e0b";
+            
+            html += `
+              <div class="timeline-item">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                  <div>
+                    <h4 style="margin-bottom: 6px; color: var(--text-primary); font-size: 16px;">
+                      ${exam.Subject}
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                      <i class="fas fa-calendar"></i> ${exam.Date} | 
+                      <i class="fas fa-clock"></i> ${exam.Batch} | 
+                      <i class="fas fa-door-open"></i> Hall ${exam.HallNo}
+                    </p>
+                  </div>
+                  <div style="padding: 6px 12px; border-radius: 8px; background: ${statusColor}20; border: 2px solid ${statusColor}; font-weight: 700; font-size: 12px; color: ${statusColor}; white-space: nowrap;">
+                    <i class="fas fa-${statusIcon}"></i> ${exam.Status}
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 13px; color: var(--text-secondary);">
+                  <div><strong>Subject Code:</strong> ${exam.SubjectCode}</div>
+                  <div><strong>Seat No:</strong> ${exam.SeatNo}</div>
+                  <div><strong>Year:</strong> ${exam.Year}</div>
+                  <div><strong>Section:</strong> ${exam.Section}</div>
+                </div>
+                ${exam.Reason ? `
+                  <div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 13px;">
+                    <strong>Reason:</strong> ${exam.Reason}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+          
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-history"></i>
+              <h3>No Exam History</h3>
+              <p>Your completed exams will appear here.</p>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.log('Error loading history:', e);
+        const container = document.getElementById("historyContainer");
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Unable to Load</h3>
+            <p>Could not fetch exam history. Please try again later.</p>
           </div>
-        </div>
-      `;
-      
-      container.innerHTML = historyHTML;
+        `;
+      }
     }
 
     function switchTab(tabName) {
