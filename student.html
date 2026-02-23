@@ -764,30 +764,33 @@
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || user.role !== "Student") {
         alert("Please login as student.");
-        location.href = "index.html";
+        location.href = "login.html";
         return;
       }
 
       userData = user;
-
+      
+      // Set student info with roll number properly displayed
       document.getElementById("studentName").innerText = user.name || "Student";
       const rollNo = user.studentRollNo || 'Not Available';
       document.getElementById("studentRoll").innerText = `Roll No: ${rollNo}`;
-
+      
+      // Set avatar initial
       const initial = user.name ? user.name.charAt(0).toUpperCase() : 'S';
       document.getElementById("avatarIcon").innerText = initial;
 
+      // Fetch statistics first
       await loadStatistics();
 
+      // Get today's date
       const today = new Date();
       const formattedDate = today.getFullYear() + "-" +
                             String(today.getMonth()+1).padStart(2,"0") + "-" +
                             String(today.getDate()).padStart(2,"0");
 
+      // Fetch seating data
       const res = await apiFetch({ action: "getStudentSeating", email: user.email, date: formattedDate });
-
-      console.log("RAW Seating Response:", JSON.stringify(res));
-
+      
       if (!res.success || !res.seating || res.seating.length === 0) {
         showEmptyState();
         await loadUpcomingExams();
@@ -796,8 +799,6 @@
       }
 
       allSeatingData = res.seating;
-      console.log("Seating data:", JSON.stringify(allSeatingData));
-
       displayTodaySeating(res.seating);
       await loadUpcomingExams();
       await loadHistory();
@@ -806,11 +807,24 @@
     async function loadStatistics() {
       try {
         const res = await apiFetch({ action: "getStudentStats", email: userData.email });
-
+        
         if (res.success && res.stats) {
-          document.getElementById("todayCount").textContent = res.stats.todayCount || 0;
-          document.getElementById("upcomingCount").textContent = res.stats.upcomingCount || 0;
-          document.getElementById("completedCount").textContent = res.stats.completedCount || 0;
+          // Apply time-based filtering for today's count
+          const now = new Date();
+          const currentHour = now.getHours();
+          
+          let todayCount = res.stats.todayCount || 0;
+          let upcomingCount = res.stats.upcomingCount || 0;
+          let completedCount = res.stats.completedCount || 0;
+          
+          // FN exams move to completed after 12 PM (noon)
+          // AN exams move to completed after 5 PM (17:00)
+          // This will be handled by the backend in the next version,
+          // but we can adjust display here if needed
+          
+          document.getElementById("todayCount").textContent = todayCount;
+          document.getElementById("upcomingCount").textContent = upcomingCount;
+          document.getElementById("completedCount").textContent = completedCount;
           document.getElementById("attendanceRate").textContent = `${res.stats.attendanceRate || 0}%`;
         }
       } catch (e) {
@@ -827,23 +841,29 @@
       container.innerHTML = "";
 
       let lockedCount = 0;
-
+      
+      // Get current time
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-      const fnVisibleTime = 7 * 60;       // 7:00 AM
-      const anVisibleTime = 12 * 60 + 30; // 12:30 PM
-      const fnCompletedTime = 12 * 60;    // 12:00 PM
-      const anCompletedTime = 19 * 60;    // 7:00 PM
+      
+      // FN session: Hall/Seat visible after 7:00 AM (07:00)
+      const fnVisibleTime = 7 * 60; // 7:00 AM in minutes
+      
+      // AN session: Hall/Seat visible after 12:30 PM (12:30)
+      const anVisibleTime = 12 * 60 + 30; // 12:30 PM in minutes
+      
+      // FN session completes at 12:00 PM (noon)
+      const fnCompletedTime = 12 * 60; // 12:00 PM in minutes
+      
+      // AN session completes at 5:00 PM (17:00)
+      const anCompletedTime = 19 * 60; // 5:00 PM in minutes
 
       seating.forEach(row => {
         const div = document.createElement("div");
         const batch = (row.Batch || "").trim().toUpperCase();
-
-        console.log(`Row data - Batch: ${batch}, HallNo: ${row.HallNo}, SeatNo: ${row.SeatNo}`);
-
+        
         // Check if exam is completed based on time
         let isCompleted = false;
         if (batch === "FN" && currentTimeInMinutes >= fnCompletedTime) {
@@ -851,9 +871,12 @@
         } else if (batch === "AN" && currentTimeInMinutes >= anCompletedTime) {
           isCompleted = true;
         }
-
-        if (isCompleted) return;
-
+        
+        // Don't show completed exams in today's section
+        if (isCompleted) {
+          return; // Skip this exam
+        }
+        
         // Determine if hall and seat should be visible based on session and time
         let showHallSeat = false;
         if (batch === "FN" && currentTimeInMinutes >= fnVisibleTime) {
@@ -862,91 +885,96 @@
           showHallSeat = true;
         }
 
-        div.className = "exam-box";
-
-        if (!showHallSeat) {
-          // Time not reached yet — hide hall and seat
+        // Check if explicitly locked
+        if (row.HallNo === "Locked") {
+          div.className = "exam-box";
+          const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
+          div.innerHTML = `
+            <div class="locked">
+              <i class="fas fa-lock"></i>
+              <div>Hall and Seat details will be available after ${unlockTime}</div>
+            </div>
+          `;
+          lockedCount++;
+        } else if (!showHallSeat) {
+          // Time-based locking - show exam details but hide hall and seat
+          div.className = "exam-box";
           const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
           div.innerHTML = `
             <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
-            <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
-            <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
-            <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
-            <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
-            <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
-            <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;border-radius:8px;">
-              <div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#78350f;">
+            <div class="exam-detail">
+              <i class="fas fa-calendar"></i>
+              <strong>Date:</strong> <span>${row.Date || ''}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-building"></i>
+              <strong>Department:</strong> <span>${row.Department}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-clock"></i>
+              <strong>Session:</strong> <span>${row.Batch}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-hashtag"></i>
+              <strong>Subject Code:</strong> <span>${row.SubjectCode}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-graduation-cap"></i>
+              <strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span>
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; border-radius: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #78350f;">
                 <i class="fas fa-info-circle"></i>
                 <span>Hall and Seat details will be visible after ${unlockTime}</span>
               </div>
             </div>
           `;
           lockedCount++;
-
         } else {
-          // Time has passed — check if backend has actual data
-          // Treat "Locked", null, undefined, or empty string as not yet available
-          const hallNo = row.HallNo;
-          const seatNo = row.SeatNo;
-          const isBackendLocked = !hallNo || hallNo === "Locked" || hallNo === "" || hallNo === null;
-          const isSeatMissing = !seatNo || seatNo === "Locked" || seatNo === "" || seatNo === null;
-
-          if (isBackendLocked || isSeatMissing) {
-            // Backend hasn't released data yet — show refresh option
-            div.innerHTML = `
-              <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
-              <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
-              <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
-              <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
-              <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
-              <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
-              <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;border-radius:8px;">
-                <div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#78350f;margin-bottom:10px;">
-                  <i class="fas fa-sync-alt"></i>
-                  <span>Hall and Seat details are being updated. Tap refresh to check.</span>
-                </div>
-                <button onclick="loadSeating()" style="
-                  background:#f59e0b;
-                  color:white;
-                  border:none;
-                  padding:8px 20px;
-                  border-radius:8px;
-                  font-weight:700;
-                  font-size:14px;
-                  cursor:pointer;
-                  display:flex;
-                  align-items:center;
-                  gap:6px;
-                ">
-                  <i class="fas fa-sync-alt"></i> Refresh Now
-                </button>
-              </div>
-            `;
-            lockedCount++;
-
-          } else {
-            // Full data available — show everything
-            div.innerHTML = `
-              <div class="exam-hall"><i class="fas fa-door-open"></i> Hall ${row.HallNo}</div>
-              <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
-              <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
-              <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
-              <div class="exam-detail"><i class="fas fa-chair"></i><strong>Seat No:</strong> <span>${row.SeatNo}</span></div>
-              <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
-              <div class="exam-detail"><i class="fas fa-book"></i><strong>Subject:</strong> <span>${row.Subject}</span></div>
-              <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
-            `;
-          }
+          // Show full details including hall and seat
+          div.className = "exam-box";
+          div.innerHTML = `
+            <div class="exam-hall"><i class="fas fa-door-open"></i> Hall ${row.HallNo}</div>
+            <div class="exam-detail">
+              <i class="fas fa-calendar"></i>
+              <strong>Date:</strong> <span>${row.Date || ''}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-building"></i>
+              <strong>Department:</strong> <span>${row.Department}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-clock"></i>
+              <strong>Session:</strong> <span>${row.Batch}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-chair"></i>
+              <strong>Seat No:</strong> <span>${row.SeatNo}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-hashtag"></i>
+              <strong>Subject Code:</strong> <span>${row.SubjectCode}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-book"></i>
+              <strong>Subject:</strong> <span>${row.Subject}</span>
+            </div>
+            <div class="exam-detail">
+              <i class="fas fa-graduation-cap"></i>
+              <strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span>
+            </div>
+          `;
         }
-
         container.appendChild(div);
       });
 
+      // Check if container is empty (all exams completed)
       if (container.children.length === 0) {
         showEmptyState();
         return;
       }
 
+      // Show info message if any are locked
       const infoMsg = document.getElementById("infoMessage");
       if (lockedCount > 0 && lockedCount === seating.length) {
         infoMsg.className = "info-message warning";
@@ -957,6 +985,10 @@
         infoMsg.style.display = "flex";
       } else if (lockedCount > 0) {
         infoMsg.className = "info-message";
+        infoMsg.innerHTML = `
+          <i class="fas fa-info-circle"></i>
+          <span>Some exam seating details are not yet available. Check back at the designated time.</span>
+        `;
         infoMsg.style.display = "flex";
       } else {
         infoMsg.style.display = "none";
@@ -978,23 +1010,45 @@
       try {
         const res = await apiFetch({ action: "getUpcomingExams", email: userData.email });
         const container = document.getElementById("upcomingContainer");
-
+        
+        console.log('Upcoming exams response:', res);
+        
         if (res.success && res.exams && res.exams.length > 0) {
           let html = '<div class="grid-container">';
-
+          
           res.exams.forEach(exam => {
+            const examDate = exam.Date || 'N/A';
+            const examBatch = exam.Batch || 'N/A';
+            const subjectCode = exam.SubjectCode || 'N/A';
+            const subject = exam.Subject || 'N/A';
+            
             html += `
               <div class="exam-box">
-                <div class="exam-hall"><i class="fas fa-book-open"></i> ${exam.Subject || 'N/A'}</div>
-                <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${exam.Date || 'N/A'}</span></div>
-                <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${exam.Batch || 'N/A'}</span></div>
-                <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${exam.SubjectCode || 'N/A'}</span></div>
-                <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${exam.Department || 'N/A'}</span></div>
-                <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${exam.Year || 'N/A'} - ${exam.Section || 'N/A'}</span></div>
+                <div class="exam-hall"><i class="fas fa-book-open"></i> ${subject}</div>
+                <div class="exam-detail">
+                  <i class="fas fa-calendar"></i>
+                  <strong>Date:</strong> <span>${examDate}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-clock"></i>
+                  <strong>Session:</strong> <span>${examBatch}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-hashtag"></i>
+                  <strong>Subject Code:</strong> <span>${subjectCode}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-building"></i>
+                  <strong>Department:</strong> <span>${exam.Department || 'N/A'}</span>
+                </div>
+                <div class="exam-detail">
+                  <i class="fas fa-graduation-cap"></i>
+                  <strong>Year/Section:</strong> <span>${exam.Year || 'N/A'} - ${exam.Section || 'N/A'}</span>
+                </div>
               </div>
             `;
           });
-
+          
           html += '</div>';
           container.innerHTML = html;
         } else {
@@ -1008,7 +1062,8 @@
         }
       } catch (e) {
         console.error('Error loading upcoming exams:', e);
-        document.getElementById("upcomingContainer").innerHTML = `
+        const container = document.getElementById("upcomingContainer");
+        container.innerHTML = `
           <div class="empty-state">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>Unable to Load</h3>
@@ -1022,46 +1077,58 @@
       try {
         const res = await apiFetch({ action: "getExamHistory", email: userData.email });
         const container = document.getElementById("historyContainer");
-
+        
+        console.log('History response:', res);
+        
         if (res.success && res.history && res.history.length > 0) {
           let html = '<div class="timeline">';
-
+          
           res.history.forEach(exam => {
             const status = exam.Status || 'Unknown';
             const statusUpper = status.toUpperCase();
-            const statusIcon = statusUpper === "PRESENT" ? "check-circle" :
-                               statusUpper === "ABSENT" ? "times-circle" : "clipboard";
-            const statusColor = statusUpper === "PRESENT" ? "#10b981" :
-                                statusUpper === "ABSENT" ? "#ef4444" : "#f59e0b";
-
+            const statusIcon = statusUpper === "PRESENT" ? "check-circle" : 
+                             statusUpper === "ABSENT" ? "times-circle" : "clipboard";
+            const statusColor = statusUpper === "PRESENT" ? "#10b981" : 
+                              statusUpper === "ABSENT" ? "#ef4444" : "#f59e0b";
+            
+            const examDate = exam.Date || 'N/A';
+            const examBatch = exam.Batch || 'N/A';
+            const subject = exam.Subject || 'N/A';
+            const subjectCode = exam.SubjectCode || 'N/A';
+            const year = exam.Year || 'N/A';
+            const section = exam.Section || 'N/A';
+            const reason = exam.Reason || '';
+            
             html += `
               <div class="timeline-item">
-                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;gap:12px;">
-                  <div style="flex:1;">
-                    <h4 style="margin-bottom:6px;color:var(--text-primary);font-size:16px;font-weight:700;">${exam.Subject || 'N/A'}</h4>
-                    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:4px;">
-                      <i class="fas fa-calendar"></i> ${exam.Date || 'N/A'} |
-                      <i class="fas fa-clock"></i> Session: ${exam.Batch || 'N/A'}
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; gap: 12px;">
+                  <div style="flex: 1;">
+                    <h4 style="margin-bottom: 6px; color: var(--text-primary); font-size: 16px; font-weight: 700;">
+                      ${subject}
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                      <i class="fas fa-calendar"></i> ${examDate} | 
+                      <i class="fas fa-clock"></i> Session: ${examBatch}
                     </p>
                   </div>
-                  <div style="padding:6px 12px;border-radius:8px;background:${statusColor}20;border:2px solid ${statusColor};font-weight:700;font-size:12px;color:${statusColor};white-space:nowrap;">
+                  <div style="padding: 6px 12px; border-radius: 8px; background: ${statusColor}20; border: 2px solid ${statusColor}; font-weight: 700; font-size: 12px; color: ${statusColor}; white-space: nowrap;">
                     <i class="fas fa-${statusIcon}"></i> ${status}
                   </div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:13px;color:var(--text-secondary);">
-                  <div><strong>Subject Code:</strong> ${exam.SubjectCode || 'N/A'}</div>
-                  <div><strong>Year:</strong> ${exam.Year || 'N/A'}</div>
-                  <div><strong>Section:</strong> ${exam.Section || 'N/A'}</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 13px; color: var(--text-secondary);">
+                  <div><strong>Subject Code:</strong> ${subjectCode}</div>
+                  <div><strong>Year:</strong> ${year}</div>
+                  <div><strong>Section:</strong> ${section}</div>
                 </div>
-                ${exam.Reason ? `
-                  <div style="margin-top:10px;padding:10px;background:#fef3c7;border-left:3px solid #f59e0b;border-radius:6px;font-size:13px;">
-                    <strong>Reason:</strong> ${exam.Reason}
+                ${reason ? `
+                  <div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 13px;">
+                    <strong>Reason:</strong> ${reason}
                   </div>
                 ` : ''}
               </div>
             `;
           });
-
+          
           html += '</div>';
           container.innerHTML = html;
         } else {
@@ -1075,7 +1142,8 @@
         }
       } catch (e) {
         console.error('Error loading history:', e);
-        document.getElementById("historyContainer").innerHTML = `
+        const container = document.getElementById("historyContainer");
+        container.innerHTML = `
           <div class="empty-state">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>Unable to Load</h3>
@@ -1107,25 +1175,12 @@
       location.href = "index.html";
     }
 
-    // Auto-refresh every 60 seconds if seating is still locked after unlock time
-    function checkAndScheduleRefresh() {
-      const now = new Date();
-      const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
-      const fnVisibleTime = 7 * 60;
-      const anVisibleTime = 12 * 60 + 30;
-
-      const nearFN = currentTimeInMinutes >= fnVisibleTime && currentTimeInMinutes <= fnVisibleTime + 30;
-      const nearAN = currentTimeInMinutes >= anVisibleTime && currentTimeInMinutes <= anVisibleTime + 30;
-
-      if (nearFN || nearAN) {
-        setTimeout(async () => {
-          await loadSeating();
-          checkAndScheduleRefresh();
-        }, 60000); // retry every 60 seconds
-      }
-    }
-
-    loadSeating().then(() => checkAndScheduleRefresh());
+    loadSeating();
   </script>
 </body>
 </html>
+
+
+
+
+
