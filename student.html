@@ -837,163 +837,123 @@
     }
 
     function displayTodaySeating(seating) {
-      const container = document.getElementById("seatingContainer");
-      container.innerHTML = "";
+  const container = document.getElementById("seatingContainer");
+  container.innerHTML = "";
 
-      let lockedCount = 0;
-      
-      // Get current time
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const currentTimeInMinutes = currentHour * 60 + currentMinute;
-      
-      // FN session: Hall/Seat visible after 7:00 AM (07:00)
-      const fnVisibleTime = 7 * 60; // 7:00 AM in minutes
-      
-      // AN session: Hall/Seat visible after 12:30 PM (12:30)
-      const anVisibleTime = 12 * 60 + 30; // 12:30 PM in minutes
-      
-      // FN session completes at 12:00 PM (noon)
-      const fnCompletedTime = 12 * 60; // 12:00 PM in minutes
-      
-      // AN session completes at 5:00 PM (17:00)
-      const anCompletedTime = 19 * 60; // 5:00 PM in minutes
+  let lockedCount = 0;
 
-      seating.forEach(row => {
-        const div = document.createElement("div");
-        const batch = (row.Batch || "").trim().toUpperCase();
-        
-        // Check if exam is completed based on time
-        let isCompleted = false;
-        if (batch === "FN" && currentTimeInMinutes >= fnCompletedTime) {
-          isCompleted = true;
-        } else if (batch === "AN" && currentTimeInMinutes >= anCompletedTime) {
-          isCompleted = true;
-        }
-        
-        // Don't show completed exams in today's section
-        if (isCompleted) {
-          return; // Skip this exam
-        }
-        
-        // Determine if hall and seat should be visible based on session and time
-        let showHallSeat = false;
-        if (batch === "FN" && currentTimeInMinutes >= fnVisibleTime) {
-          showHallSeat = true;
-        } else if (batch === "AN" && currentTimeInMinutes >= anVisibleTime) {
-          showHallSeat = true;
-        }
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
-        // Check if explicitly locked
-        if (row.HallNo === "Locked") {
-          div.className = "exam-box";
-          const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
-          div.innerHTML = `
-            <div class="locked">
-              <i class="fas fa-lock"></i>
-              <div>Hall and Seat details will be available after ${unlockTime}</div>
-            </div>
-          `;
-          lockedCount++;
-        } else if (!showHallSeat) {
-          // Time-based locking - show exam details but hide hall and seat
-          div.className = "exam-box";
-          const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
-          div.innerHTML = `
-            <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
-            <div class="exam-detail">
-              <i class="fas fa-calendar"></i>
-              <strong>Date:</strong> <span>${row.Date || ''}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-building"></i>
-              <strong>Department:</strong> <span>${row.Department}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-clock"></i>
-              <strong>Session:</strong> <span>${row.Batch}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-hashtag"></i>
-              <strong>Subject Code:</strong> <span>${row.SubjectCode}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-graduation-cap"></i>
-              <strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span>
-            </div>
-            <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; border-radius: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #78350f;">
-                <i class="fas fa-info-circle"></i>
-                <span>Hall and Seat details will be visible after ${unlockTime}</span>
-              </div>
-            </div>
-          `;
-          lockedCount++;
-        } else {
-          // Show full details including hall and seat
-          div.className = "exam-box";
-          div.innerHTML = `
-            <div class="exam-hall"><i class="fas fa-door-open"></i> Hall ${row.HallNo}</div>
-            <div class="exam-detail">
-              <i class="fas fa-calendar"></i>
-              <strong>Date:</strong> <span>${row.Date || ''}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-building"></i>
-              <strong>Department:</strong> <span>${row.Department}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-clock"></i>
-              <strong>Session:</strong> <span>${row.Batch}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-chair"></i>
-              <strong>Seat No:</strong> <span>${row.SeatNo}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-hashtag"></i>
-              <strong>Subject Code:</strong> <span>${row.SubjectCode}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-book"></i>
-              <strong>Subject:</strong> <span>${row.Subject}</span>
-            </div>
-            <div class="exam-detail">
-              <i class="fas fa-graduation-cap"></i>
-              <strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span>
-            </div>
-          `;
-        }
-        container.appendChild(div);
-      });
+  const fnVisibleTime = 7 * 60;       // 7:00 AM
+  const anVisibleTime = 12 * 60 + 30; // 12:30 PM
+  const fnCompletedTime = 12 * 60;    // 12:00 PM
+  const anCompletedTime = 19 * 60;    // 7:00 PM
 
-      // Check if container is empty (all exams completed)
-      if (container.children.length === 0) {
-        showEmptyState();
-        return;
-      }
+  seating.forEach(row => {
+    const div = document.createElement("div");
+    const batch = (row.Batch || "").trim().toUpperCase();
 
-      // Show info message if any are locked
-      const infoMsg = document.getElementById("infoMessage");
-      if (lockedCount > 0 && lockedCount === seating.length) {
-        infoMsg.className = "info-message warning";
-        infoMsg.innerHTML = `
-          <i class="fas fa-info-circle"></i>
-          <span>Hall and Seat information will be available at the designated times (FN: 7:00 AM, AN: 12:30 PM)</span>
-        `;
-        infoMsg.style.display = "flex";
-      } else if (lockedCount > 0) {
-        infoMsg.className = "info-message";
-        infoMsg.innerHTML = `
-          <i class="fas fa-info-circle"></i>
-          <span>Some exam seating details are not yet available. Check back at the designated time.</span>
-        `;
-        infoMsg.style.display = "flex";
-      } else {
-        infoMsg.style.display = "none";
-      }
+    // Check if exam is completed based on time
+    let isCompleted = false;
+    if (batch === "FN" && currentTimeInMinutes >= fnCompletedTime) {
+      isCompleted = true;
+    } else if (batch === "AN" && currentTimeInMinutes >= anCompletedTime) {
+      isCompleted = true;
     }
+
+    if (isCompleted) return;
+
+    // Determine if hall and seat should be visible based on session and time
+    let showHallSeat = false;
+    if (batch === "FN" && currentTimeInMinutes >= fnVisibleTime) {
+      showHallSeat = true;
+    } else if (batch === "AN" && currentTimeInMinutes >= anVisibleTime) {
+      showHallSeat = true;
+    }
+
+    div.className = "exam-box";
+
+    if (!showHallSeat) {
+      // Time not reached yet — hide hall and seat
+      const unlockTime = batch === "FN" ? "7:00 AM" : "12:30 PM";
+      div.innerHTML = `
+        <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
+        <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
+        <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
+        <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
+        <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
+        <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
+        <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4px solid #f59e0b;border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#78350f;">
+            <i class="fas fa-info-circle"></i>
+            <span>Hall and Seat details will be visible after ${unlockTime}</span>
+          </div>
+        </div>
+      `;
+      lockedCount++;
+
+    } else if (row.HallNo === "Locked" || !row.HallNo || !row.SeatNo) {
+      // Time has passed but backend still returning Locked — show what we have
+      // and show a soft warning instead of hard lock
+      div.innerHTML = `
+        <div class="exam-hall"><i class="fas fa-book-open"></i> ${row.Subject}</div>
+        <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
+        <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
+        <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
+        <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
+        <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
+        <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-left:4px solid #ef4444;border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#991b1b;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Hall and Seat details not yet assigned. Please contact your exam coordinator.</span>
+          </div>
+        </div>
+      `;
+
+    } else {
+      // All good — show full details
+      div.innerHTML = `
+        <div class="exam-hall"><i class="fas fa-door-open"></i> Hall ${row.HallNo}</div>
+        <div class="exam-detail"><i class="fas fa-calendar"></i><strong>Date:</strong> <span>${row.Date || ''}</span></div>
+        <div class="exam-detail"><i class="fas fa-building"></i><strong>Department:</strong> <span>${row.Department}</span></div>
+        <div class="exam-detail"><i class="fas fa-clock"></i><strong>Session:</strong> <span>${row.Batch}</span></div>
+        <div class="exam-detail"><i class="fas fa-chair"></i><strong>Seat No:</strong> <span>${row.SeatNo}</span></div>
+        <div class="exam-detail"><i class="fas fa-hashtag"></i><strong>Subject Code:</strong> <span>${row.SubjectCode}</span></div>
+        <div class="exam-detail"><i class="fas fa-book"></i><strong>Subject:</strong> <span>${row.Subject}</span></div>
+        <div class="exam-detail"><i class="fas fa-graduation-cap"></i><strong>Year/Section:</strong> <span>${row.Year} - ${row.Section}</span></div>
+      `;
+    }
+
+    container.appendChild(div);
+  });
+
+  if (container.children.length === 0) {
+    showEmptyState();
+    return;
+  }
+
+  const infoMsg = document.getElementById("infoMessage");
+  if (lockedCount > 0 && lockedCount === seating.length) {
+    infoMsg.className = "info-message warning";
+    infoMsg.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <span>Hall and Seat information will be available at the designated times (FN: 7:00 AM, AN: 12:30 PM)</span>
+    `;
+    infoMsg.style.display = "flex";
+  } else if (lockedCount > 0) {
+    infoMsg.className = "info-message";
+    infoMsg.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <span>Some exam seating details are not yet available. Check back at the designated time.</span>
+    `;
+    infoMsg.style.display = "flex";
+  } else {
+    infoMsg.style.display = "none";
+  }
+}
 
     function showEmptyState() {
       const container = document.getElementById("seatingContainer");
