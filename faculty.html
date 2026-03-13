@@ -190,6 +190,7 @@ input[type="file"]:focus, input[type="date"]:focus, select:focus, .input:focus {
 .btn-info    { background:linear-gradient(135deg,var(--info),#0891b2); }
 .btn-secondary { background:linear-gradient(135deg,#64748b,#475569); }
 .btn-purple  { background:linear-gradient(135deg,#7c3aed,#6d28d9); }
+.btn-teal    { background:linear-gradient(135deg,#0d9488,#0f766e); }
 .btn:disabled { opacity:.5; cursor:not-allowed; transform:none !important; }
 
 .status-message { padding:12px 16px; border-radius:var(--radius); font-size:14px; font-weight:500; margin-top:12px; animation:slideDown .3s ease; }
@@ -286,6 +287,8 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
   padding:36px;
   width:520px;
   max-width:95vw;
+  max-height:90vh;
+  overflow-y:auto;
   box-shadow:var(--shadow-xl);
   animation:slideUp .3s ease;
 }
@@ -408,7 +411,10 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
     </div>
     <div class="form-row mt-2">
       <button class="btn btn-info" onclick="downloadHallPlan()">
-        <span>⏬</span><span>Download Hall Plan PDF</span>
+        <span>⏬</span><span>Download Hall Plan Class Room PDF</span>
+      </button>
+      <button class="btn btn-info" onclick="downloadHallPlan1()">
+        <span>⏬</span><span>Download Hall Plan Hall Invigilator PDF</span>
       </button>
       <button class="btn btn-secondary" onclick="generateHallPlanSchedule()">
         <span>📅</span><span>Download Schedule PDF</span>
@@ -483,6 +489,10 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
       <button class="btn btn-purple" onclick="openAbsenteeReportModal()">
         <span>📑</span><span>Download Absentee Report PDF</span>
       </button>
+      <!-- ★ NEW BUTTON -->
+      <button class="btn btn-teal" onclick="openHallAbsenteeModal()">
+        <span>🏛️</span><span>Consolidated Hall Absentees Report</span>
+      </button>
     </div>
 
     <hr>
@@ -506,7 +516,9 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
 
 </div>
 
-<!-- PDF Report Modal -->
+<!-- ================================================================
+     ABSENTEE REPORT MODAL (existing)
+     ================================================================ -->
 <div class="modal-overlay" id="reportModal">
   <div class="modal-box">
     <h3>📑 Generate Absentee Report PDF</h3>
@@ -522,12 +534,10 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
         <option value="Model Exam">Model Exam</option>
       </select>
     </div>
-
     <div class="form-group">
       <label class="form-label">Academic Year</label>
       <input type="text" id="reportAcYear" class="input" value="2025 – 2026" placeholder="e.g. 2025 – 2026" />
     </div>
-
     <div class="form-group">
       <label class="form-label">Report Prepared By</label>
       <input type="text" id="reportPreparedBy" class="input" placeholder="Faculty Name / Designation" />
@@ -537,6 +547,51 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
       <button class="modal-close-btn" onclick="closeReportModal()">Cancel</button>
       <button class="btn btn-purple" onclick="generateAbsenteeReportPDF()">
         <span>📑</span><span>Generate PDF</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     ★ NEW — CONSOLIDATED HALL ABSENTEES REPORT MODAL
+     ================================================================ -->
+<div class="modal-overlay" id="hallAbsenteeModal">
+  <div class="modal-box">
+    <h3>🏛️ Consolidated Hall Absentees Report</h3>
+    <p class="modal-sub">Generates a professional PDF showing hall-wise absentee &amp; OD counts with full student details per hall — ideal for CoE submission and hall invigilator records.</p>
+
+    <div class="form-group">
+      <label class="form-label">Examination Title</label>
+      <select id="hallReportExamType" class="input">
+        <option value="Cycle Test 1">Cycle Test 1</option>
+        <option value="Cycle Test 2">Cycle Test 2</option>
+        <option value="Internal Exam I">Internal Exam I</option>
+        <option value="Internal Exam II">Internal Exam II</option>
+        <option value="Model Exam">Model Exam</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Academic Year</label>
+      <input type="text" id="hallReportAcYear" class="input" value="2025 – 2026" placeholder="e.g. 2025 – 2026" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Report Prepared By</label>
+      <input type="text" id="hallReportPreparedBy" class="input" placeholder="Faculty Name / Designation" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Report Scope</label>
+      <select id="hallReportScope" class="input">
+        <option value="all">All Halls — Consolidated</option>
+        <option value="absent_only">Absent Students Only</option>
+        <option value="od_only">On Duty (OD) Only</option>
+        <option value="both">Absent + OD (separate tables per hall)</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-close-btn" onclick="closeHallAbsenteeModal()">Cancel</button>
+      <button class="btn btn-teal" onclick="generateHallAbsenteeReport()">
+        <span>🏛️</span><span>Generate Report</span>
       </button>
     </div>
   </div>
@@ -785,27 +840,9 @@ document.getElementById('downloadYearSummary').addEventListener('click',()=>{
 function logout(){ localStorage.removeItem("user"); location.href="index.html"; }
 
 /* ================================================================
-   ABSENTEE REPORT PDF
-   ================================================================ */
-
-function openAbsenteeReportModal(){
-  if(!absentees||absentees.length===0){
-    alert("Please load absentee data first before generating a report.");
-    return;
-  }
-  document.getElementById('reportPreparedBy').value = user?.name || '';
-  document.getElementById('reportModal').classList.add('active');
-}
-
-function closeReportModal(){
-  document.getElementById('reportModal').classList.remove('active');
-}
-
-/* ================================================================
    SHARED PDF LOGO LOADER
    ================================================================ */
 async function loadLogoData(){
-  // Try multiple strategies to load the logo
   const attempts = ["logo.jpeg","logo.jpg","logo.png","./logo.jpeg","./logo.jpg"];
   for(const src of attempts){
     try {
@@ -821,90 +858,11 @@ async function loadLogoData(){
                w: bmp.width, h: bmp.height };
     } catch(e){ /* try next */ }
   }
-  return null; // no logo found — skip gracefully
+  return null;
 }
 
 /* ================================================================
-   SHARED: draw college header block (logo + title lines)
-   Returns new Y position after header
-   ================================================================ */
-function drawCollegeHeader(doc, logo, PW, ML, MR, examType, deptFull, acYear, displayDate, batch, y){
-  // Logo
-  if(logo){
-    const maxW=220, maxH=60;
-    const ratio = logo.w/logo.h;
-    let lw=maxW, lh=maxW/ratio;
-    if(lh>maxH){ lh=maxH; lw=maxH*ratio; }
-    doc.addImage(logo.data, logo.fmt, (PW-lw)/2, y, lw, lh);
-    y += lh + 6;
-  }
-
-  // Institution name (centered)
-  doc.setFont("times","bold");
-  doc.setFontSize(11);
-  doc.setTextColor(0);
-  doc.text("Office of the Controller of Examinations", PW/2, y, {align:"center"});
-  y += 13;
-
-  doc.setFont("times","normal");
-  doc.setFontSize(10);
-  doc.text("ODD Semester of " + acYear, PW/2, y, {align:"center"});
-  y += 10;
-
-  // Solid top border line
-  doc.setDrawColor(0); doc.setLineWidth(1.2);
-  doc.line(ML, y, PW-MR, y); y+=2;
-
-  // Bold title line with box
-  doc.setFillColor(0);
-  doc.rect(ML, y, PW-ML-MR, 20, "F");
-  doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(255);
-  doc.text("ABSENTEE ANALYSIS REPORT", PW/2, y+13, {align:"center"});
-  y += 20;
-
-  // Bottom border line
-  doc.setTextColor(0);
-  doc.setDrawColor(0); doc.setLineWidth(1.2);
-  doc.line(ML, y, PW-MR, y); y += 2;
-
-  // Thin rule
-  doc.setLineWidth(0.4);
-  doc.line(ML, y, PW-MR, y); y += 10;
-
-  // Info block — two columns
-  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
-  const CW = PW-ML-MR;
-  const col2 = ML + CW/2 + 8;
-
-  const leftInfo  = [["Examination :", examType],["Department :", deptFull],["Prepared By :", ""]];
-  const rightInfo = [["Academic Year :", acYear],["Date :", displayDate||"—"],["Session / Batch :", batch||"—"]];
-
-  let iy = y;
-  leftInfo.forEach(([lbl,val],i)=>{
-    doc.setFont("times","bold");  doc.text(lbl, ML, iy+i*14);
-    doc.setFont("times","normal");
-    // Wrap long dept name
-    const lines = doc.splitTextToSize(val, CW/2-65);
-    lines.forEach((ln,li)=> doc.text(ln, ML+72, iy+i*14+li*11));
-  });
-  rightInfo.forEach(([lbl,val],i)=>{
-    doc.setFont("times","bold");  doc.text(lbl, col2, iy+i*14);
-    doc.setFont("times","normal"); doc.text(val, col2+72, iy+i*14);
-  });
-
-  // Advance y by max rows (dept may wrap)
-  const deptLines = doc.splitTextToSize(deptFull, CW/2-65).length;
-  y += Math.max(leftInfo.length, rightInfo.length)*14 + (deptLines>1?(deptLines-1)*11:0) + 6;
-
-  // Divider
-  doc.setDrawColor(0); doc.setLineWidth(0.8);
-  doc.line(ML, y, PW-MR, y); y += 8;
-
-  return y;
-}
-
-/* ================================================================
-   SHARED: page footer
+   SHARED PAGE FOOTER
    ================================================================ */
 function drawFooter(doc, PW, ML, MR, PH, pageNum, totalPg, genTime){
   doc.setLineWidth(0.5); doc.setDrawColor(0);
@@ -914,10 +872,101 @@ function drawFooter(doc, PW, ML, MR, PH, pageNum, totalPg, genTime){
   doc.text("Page " + pageNum + " of " + totalPg, PW-MR, PH-14, {align:"right"});
 }
 
-async function generateAbsenteeReportPDF(){
-  const examType = document.getElementById('reportExamType').value;
-  const acYear   = document.getElementById('reportAcYear').value || '2025 – 2026';
-  const prepBy   = document.getElementById('reportPreparedBy').value || '';
+/* ================================================================
+   EXISTING: ABSENTEE REPORT MODAL CONTROLS
+   ================================================================ */
+function openAbsenteeReportModal(){
+  if(!absentees||absentees.length===0){ alert("Please load absentee data first before generating a report."); return; }
+  document.getElementById('reportPreparedBy').value = user?.name || '';
+  document.getElementById('reportModal').classList.add('active');
+}
+function closeReportModal(){
+  document.getElementById('reportModal').classList.remove('active');
+}
+
+/* ================================================================
+   ★ NEW: CONSOLIDATED HALL ABSENTEES REPORT MODAL CONTROLS
+   ================================================================ */
+function openHallAbsenteeModal(){
+  if(!absentees||absentees.length===0){
+    alert("Please load absentee data first before generating a hall report.");
+    return;
+  }
+  const absOdCount = absentees.filter(r=>{
+    const s=(r.Status||'').toUpperCase();
+    return s==='ABSENT'||s==='OD';
+  }).length;
+  if(absOdCount===0){
+    alert("No absentees or OD students found in the loaded data.");
+    return;
+  }
+  document.getElementById('hallReportPreparedBy').value = user?.name || '';
+  document.getElementById('hallAbsenteeModal').classList.add('active');
+}
+function closeHallAbsenteeModal(){
+  document.getElementById('hallAbsenteeModal').classList.remove('active');
+}
+
+/* ================================================================
+   ★ NEW: CONSOLIDATED HALL ABSENTEES REPORT PDF GENERATOR
+   ================================================================ */
+/* ================================================================
+   ★ UPDATED: CONSOLIDATED HALL ATTENDANCE REPORT — SINGLE TABLE SHEET
+   
+   Table columns:
+   S.No | Hall No | Total Students | Total Present | Total Absent | On Duty (OD) | Absent & OD Student Details | Faculty Signature
+
+   Student details format (stacked in cell):
+   1. 25UEC001 - Abdul - AB
+   2. 25UEC012 - Raja - OD
+   ...
+   ================================================================ */
+/* ================================================================
+   ★ UPDATED: CONSOLIDATED HALL ATTENDANCE REPORT — SINGLE TABLE SHEET
+   
+   Table columns:
+   S.No | Hall No | Total Students | Total Present | Total Absent | On Duty (OD) | Absent & OD Student Details | Faculty Signature
+
+   Student details format (stacked in cell):
+   1. 25UEC001 - Abdul - AB
+   2. 25UEC012 - Raja - OD
+   ...
+   ================================================================ */
+/* ================================================================
+   CONSOLIDATED HALL ATTENDANCE REPORT — FINAL
+   Portrait A4 | Single consolidated table
+
+   Columns:
+   S.No | Hall No | Total No. of Students | Total Present |
+   Total Absent | On Duty (OD) | Absent/OD Student Details |
+   Invigilator No  (blank — no dash — manual fill)
+
+   Student format stacked in cell:
+   1. 25UEC001 - Abdul - AB
+   2. 25UEC012 - Raja - OD
+
+   Bottom: Exam Cell Incharge signature only
+   ================================================================ */
+/* ================================================================
+   CONSOLIDATED HALL ATTENDANCE REPORT — FINAL
+   Portrait A4 | Single consolidated table
+
+   Columns:
+   S.No | Hall No | Total Absent | On Duty (OD) | 
+   Absent/OD Student Details | Invigilator No (blank)
+
+   Student format stacked in cell:
+   1. 25UEC001 - Abdul - AB
+   2. 25UEC012 - Raja - OD
+
+   Bottom: Exam Cell Incharge signature (centred)
+   ================================================================ */
+async function generateHallAbsenteeReport() {
+
+  const examType = document.getElementById('hallReportExamType').value;
+  const acYear   = document.getElementById('hallReportAcYear').value   || '2025 – 2026';
+  const prepBy   = document.getElementById('hallReportPreparedBy').value || '';
+  const scope    = document.getElementById('hallReportScope').value;
 
   const dept    = document.getElementById('deptSelect').value || user?.department || '';
   const dateVal = document.getElementById('dateFilter').value || '';
@@ -926,40 +975,413 @@ async function generateAbsenteeReportPDF(){
   const deptMap = {
     "CSE": "COMPUTER SCIENCE AND ENGINEERING",
     "ECE": "ELECTRONICS AND COMMUNICATION ENGINEERING",
-    "ME":  "MECHANICAL ENGINEERING",
-    "CE":  "CIVIL ENGINEERING",
-    "ADS": "ARTIFICIAL INTELLIGENCE AND DATA SCIENCE"
+    "ME" : "MECHANICAL ENGINEERING",
+    "CE" : "CIVIL ENGINEERING",
+    "ADS": "ARTIFICIAL INTELLIGENCE AND DATA SCIENCE",
+    "FY" : "FIRST YEAR DEPARTMENT",
   };
   const deptFull = deptMap[dept] || (dept ? dept.toUpperCase() : "DEPARTMENT");
 
-  /* ---------------------------------------------------------------
-     CORRECT STATS: use currentTotals (from server) for real counts.
-     absentees[] only contains absent+OD rows — NOT the whole class.
-  --------------------------------------------------------------- */
+  /* ── filter by scope ── */
+  const allAbsOD = absentees.filter(r => {
+    const s = (r.Status || '').toUpperCase();
+    return s === 'ABSENT' || s === 'OD';
+  });
+  let workingSet = allAbsOD;
+  if (scope === 'absent_only') workingSet = allAbsOD.filter(r => (r.Status||'').toUpperCase() === 'ABSENT');
+  if (scope === 'od_only')     workingSet = allAbsOD.filter(r => (r.Status||'').toUpperCase() === 'OD');
+
+  /* ── hall maps ── */
+  const hallMapAll = {};
+  absentees.forEach(r => {
+    const h = r.HallNo || r['Hall No'] || r.Hall || 'Unknown';
+    if (!hallMapAll[h]) hallMapAll[h] = [];
+    hallMapAll[h].push(r);
+  });
+
+  const hallMap = {};
+  workingSet.forEach(r => {
+    const h = r.HallNo || r['Hall No'] || r.Hall || 'Unknown';
+    if (!hallMap[h]) hallMap[h] = [];
+    hallMap[h].push(r);
+  });
+
+  const halls = Object.keys(hallMap).sort();
+  if (!halls.length) { alert("No data to generate report."); return; }
+
+  /* ── grand totals ── */
+  const grandAbsent  = allAbsOD.filter(r => (r.Status||'').toUpperCase() === 'ABSENT').length;
+  const grandOD      = allAbsOD.filter(r => (r.Status||'').toUpperCase() === 'OD').length;
+  const grandTotal   = currentTotals ? (currentTotals.total   || 0) : absentees.length;
+  const grandPresent = currentTotals ? (currentTotals.present || 0) : (grandTotal - grandAbsent - grandOD);
+  const grandAttPct  = grandTotal === 0 ? 0 : Math.round((grandPresent / grandTotal) * 10000) / 100;
+
+  /* ── display date ── */
+  let displayDate = dateVal;
+  if (dateVal) {
+    const d = new Date(dateVal);
+    displayDate = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+  }
+
+  /* ═══════════════════════════════════════
+     PDF SETUP — PORTRAIT A4
+     ═══════════════════════════════════════ */
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("portrait", "pt", "a4");
+  const PW  = doc.internal.pageSize.getWidth();   // 595
+  const PH  = doc.internal.pageSize.getHeight();  // 842
+  const ML  = 36, MR = 36, CW = PW - ML - MR;    // 523
+  const genTime = new Date().toLocaleString('en-IN');
+  const logo    = await loadLogoData();
+
+  /* ── footer ── */
+  function addFooter(pg, tot) {
+    doc.setLineWidth(0.4); doc.setDrawColor(150);
+    doc.line(ML, PH-22, PW-MR, PH-22);
+    doc.setFont("times","italic"); doc.setFontSize(7.5); doc.setTextColor(120);
+    doc.text("Generated: " + genTime, ML, PH-12);
+    doc.text("Page " + pg + " of " + tot, PW-MR, PH-12, {align:"right"});
+    doc.setTextColor(0);
+  }
+
+  /* ── full page header — returns y ── */
+  function drawHeader(isContd) {
+    let y = 14;
+    if (logo) {
+      const maxW=200, maxH=50, ratio=logo.w/logo.h;
+      let lw=maxW, lh=maxW/ratio;
+      if(lh>maxH){lh=maxH;lw=maxH*ratio;}
+      doc.addImage(logo.data, logo.fmt, (PW-lw)/2, y, lw, lh);
+      y += lh + 4;
+    }
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
+    doc.text("Office of the Controller of Examinations", PW/2, y, {align:"center"}); y+=12;
+    doc.setFont("times","normal"); doc.setFontSize(9.5);
+    doc.text("EVEN Semester – " + acYear, PW/2, y, {align:"center"}); y+=7;
+
+    doc.setDrawColor(0); doc.setLineWidth(1.6); doc.line(ML,y,PW-MR,y); y+=2.5;
+    doc.setLineWidth(0.5);                      doc.line(ML,y,PW-MR,y); y+=2.5;
+
+    doc.setFillColor(0); doc.rect(ML,y,CW,20,"F");
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(255);
+    doc.text(
+      isContd ? "CONSOLIDATED HALL ATTENDANCE REPORT  (contd.)"
+              : "CONSOLIDATED HALL ATTENDANCE REPORT",
+      PW/2, y+13.5, {align:"center"}
+    ); y+=20;
+
+    doc.setTextColor(0); doc.setDrawColor(0);
+    doc.setLineWidth(0.5); doc.line(ML,y,PW-MR,y); y+=2;
+    doc.setLineWidth(1.6); doc.line(ML,y,PW-MR,y); y+=7;
+    return y;
+  }
+
+  /* ── info grid — returns y ── */
+  function drawInfoGrid(y) {
+    const rows = [
+      ["Examination",   examType,      "Academic Year", acYear],
+      ["Department",    deptFull,      "Date",          displayDate || "—"],
+      ["Session/Batch", batch || "—",  "Prepared By",   prepBy || "—"],
+    ];
+    const rH=16, c1w=62, c2w=CW/2-67, c3w=62, c4w=CW/2-62;
+    const totH = rows.length * rH;
+    doc.setLineWidth(0.6); doc.setDrawColor(0);
+    doc.rect(ML,y,CW,totH,"D");
+    const x2=ML+c1w, x3=x2+c2w, x4=x3+c3w;
+    doc.line(x2,y,x2,y+totH); doc.line(x3,y,x3,y+totH); doc.line(x4,y,x4,y+totH);
+    rows.forEach((row,ri) => {
+      const ry=y+ri*rH;
+      if(ri>0){doc.setLineWidth(0.3);doc.line(ML,ry,ML+CW,ry);}
+      doc.setFont("times","bold"); doc.setFontSize(8.5); doc.setTextColor(0);
+      doc.text(row[0]+":", ML+3, ry+11);
+      doc.text(row[2]+":", x3+3, ry+11);
+      doc.setFont("times","normal");
+      doc.text(doc.splitTextToSize(row[1],c2w-4)[0], x2+3, ry+11);
+      doc.text(doc.splitTextToSize(row[3],c4w-4)[0], x4+3, ry+11);
+    });
+    return y + totH + 8;
+  }
+
+  /* ── stats bar — returns y ── */
+  function drawStatsBar(y) {
+    const labels = ["Total Registered","Total Present","Total Absent","On Duty (OD)","Attendance %","Halls Covered"];
+    const values = [grandTotal, grandPresent, grandAbsent, grandOD, grandAttPct+"%", halls.length];
+    const cw = CW / labels.length;
+
+    doc.setFillColor(30,30,30); doc.rect(ML,y,CW,12,"F");
+    doc.setFont("times","bold"); doc.setFontSize(7.5); doc.setTextColor(255);
+    labels.forEach((l,i) => doc.text(l, ML+i*cw+cw/2, y+8.5, {align:"center"}));
+    y+=12;
+
+    doc.setFillColor(242,242,242); doc.setDrawColor(0); doc.setLineWidth(0.5);
+    doc.rect(ML,y,CW,18,"FD");
+    for(let i=1;i<labels.length;i++) doc.line(ML+i*cw,y,ML+i*cw,y+18);
+    doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(0);
+    values.forEach((v,i) => doc.text(String(v), ML+i*cw+cw/2, y+12.5, {align:"center"}));
+    return y+18+8;
+  }
+
+  /* ═══════════════════════════════════════
+     BUILD TABLE BODY
+
+     Columns (total = CW = 523 pt):
+     S.No(28) | Hall No(56) | Total Absent(56) | On Duty OD(52) |
+     Student Details(283) | Invigilator No(48)
+     28+56+56+52+283+48 = 523 ✓
+     ═══════════════════════════════════════ */
+  const COL_W = [28, 56, 56, 52, 283, 48];
+
+  const tableBody = [];
+
+  halls.forEach((hall, idx) => {
+    const allInHall   = hallMapAll[hall] || [];
+    const absOdInHall = hallMap[hall]    || [];
+
+    const absList = absOdInHall
+      .filter(r => (r.Status||'').toUpperCase() === 'ABSENT')
+      .sort((a,b) => (a.RollNo||'').localeCompare(b.RollNo||''));
+    const odList  = absOdInHall
+      .filter(r => (r.Status||'').toUpperCase() === 'OD')
+      .sort((a,b) => (a.RollNo||'').localeCompare(b.RollNo||''));
+
+    const totalAbs = absList.length;
+    const totalOD  = odList.length;
+
+    /* stacked student list */
+    const combined    = [...absList, ...odList];
+    const studentText = combined.length === 0
+      ? "Nil"
+      : combined.map((r, i) => {
+          const code   = (r.Status||'').toUpperCase() === 'ABSENT' ? 'AB' : 'OD';
+          const rollNo = r.RollNo || r['Student Roll No'] || '';
+          const name   = r.Name   || '';
+          return `${i+1}. ${rollNo} - ${name} - ${code}`;
+        }).join("\n");
+
+    tableBody.push([
+      idx + 1,      // 0  S.No
+      hall,         // 1  Hall No
+      totalAbs,     // 2  Total Absent
+      totalOD,      // 3  On Duty (OD)
+      studentText,  // 4  Student Details
+      "",           // 5  Invigilator No — completely blank
+    ]);
+  });
+
+  /* grand total row */
+  const gtAbsent = tableBody.reduce((s,r) => s + r[2], 0);
+  const gtOD     = tableBody.reduce((s,r) => s + r[3], 0);
+  tableBody.push(["", "GRAND\nTOTAL", gtAbsent, gtOD, "", ""]);
+
+  /* ═══════════════════════════════════════
+     RENDER
+     ═══════════════════════════════════════ */
+  let y = drawHeader(false);
+  y = drawInfoGrid(y);
+  y = drawStatsBar(y);
+
+  doc.autoTable({
+    head: [[
+      "S.\nNo",
+      "Hall\nNo",
+      "Total\nAbsent",
+      "On Duty\n(OD)",
+      "Absent / OD Student Details\n(No.   Roll No  –  Name  –  Status)",
+      "Invigilator\nSign."
+    ]],
+    body: tableBody,
+    startY: y,
+    theme: "grid",
+
+    headStyles: {
+      fillColor:     [0, 0, 0],
+      textColor:     [255, 255, 255],
+      fontStyle:     "bold",
+      fontSize:      9,
+      halign:        "center",
+      valign:        "middle",
+      lineColor:     [0, 0, 0],
+      lineWidth:     0.7,
+      cellPadding:   { top:4, bottom:4, left:3, right:3 },
+      minCellHeight: 30,
+    },
+
+    columnStyles: {
+      0: { halign:"center", cellWidth:COL_W[0] },
+      1: { halign:"center", cellWidth:COL_W[1], fontStyle:"bold" },
+      2: { halign:"center", cellWidth:COL_W[2] },
+      3: { halign:"center", cellWidth:COL_W[3] },
+      4: { halign:"left",   cellWidth:COL_W[4] },
+      5: { halign:"center", cellWidth:COL_W[5] },
+    },
+
+    styles: {
+      font:          "times",
+      fontSize:      9.5,
+      cellPadding:   { top:6, bottom:6, left:5, right:4 },
+      textColor:     [0, 0, 0],
+      lineColor:     [0, 0, 0],
+      lineWidth:     0.5,
+      valign:        "middle",
+      overflow:      "linebreak",
+      minCellHeight: 22,
+    },
+
+    alternateRowStyles: { fillColor: [252, 252, 252] },
+
+    didParseCell: function(d) {
+
+      /* grand total row */
+      if (d.row.index === tableBody.length - 1) {
+        d.cell.styles.fontStyle  = "bold";
+        d.cell.styles.fillColor  = [210, 210, 210];
+        d.cell.styles.fontSize   = 10;
+        d.cell.styles.halign     = "center";
+        d.cell.styles.valign     = "middle";
+        return;
+      }
+
+      if (d.section !== 'body') return;
+
+      /* student details column — top-aligned */
+      if (d.column.index === 4) {
+        d.cell.styles.fontSize    = 9;
+        d.cell.styles.valign      = "top";
+        d.cell.styles.cellPadding = { top:7, bottom:7, left:8, right:5 };
+        d.cell.styles.fontStyle   = "normal";
+      }
+
+      /* numeric columns — large bold centred */
+      if ([2, 3].includes(d.column.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fontSize  = 13;
+        d.cell.styles.halign    = "center";
+        d.cell.styles.valign    = "middle";
+      }
+
+      /* Total Absent — red when > 0 */
+      if (d.column.index === 2) {
+        if ((parseInt(d.cell.raw) || 0) > 0)
+          d.cell.styles.textColor = [180, 0, 0];
+      }
+
+      /* On Duty — amber when > 0 */
+      if (d.column.index === 3) {
+        if ((parseInt(d.cell.raw) || 0) > 0)
+          d.cell.styles.textColor = [150, 80, 0];
+      }
+
+      /* Invigilator No — white, force empty */
+      if (d.column.index === 5) {
+        d.cell.raw              = "";
+        d.cell.text             = [""];
+        d.cell.styles.fillColor = [255, 255, 255];
+      }
+    },
+
+    /* continuation header on page 2+ */
+    didDrawPage: function(d) {
+      if (d.pageNumber > 1) {
+        let hy = 14;
+        if (logo) {
+          const maxW=160, maxH=38, ratio=logo.w/logo.h;
+          let lw=maxW, lh=maxW/ratio;
+          if(lh>maxH){lh=maxH;lw=maxH*ratio;}
+          doc.addImage(logo.data, logo.fmt, (PW-lw)/2, hy, lw, lh);
+          hy += lh + 3;
+        }
+        doc.setFont("times","bold"); doc.setFontSize(9.5); doc.setTextColor(0);
+        doc.text("Office of the Controller of Examinations", PW/2, hy, {align:"center"}); hy+=10;
+        doc.setFillColor(0); doc.rect(ML, hy, CW, 16, "F");
+        doc.setTextColor(255); doc.setFontSize(9.5);
+        doc.text("CONSOLIDATED HALL ATTENDANCE REPORT  (contd.)", PW/2, hy+11, {align:"center"});
+        doc.setTextColor(0);
+      }
+    },
+
+    margin: { left:ML, right:MR, top:90, bottom:30 },
+    rowPageBreak: "avoid",
+  });
+
+  /* ═══════════════════════════════════════
+     EXAM CELL INCHARGE SIGNATURE — centred
+     ═══════════════════════════════════════ */
+  let sigY = doc.lastAutoTable.finalY + 22;
+
+  if (sigY + 60 > PH - 30) {
+    doc.addPage();
+    sigY = 60;
+  }
+
+  /* double separator */
+  doc.setDrawColor(0); doc.setLineWidth(0.5);
+  doc.line(ML, sigY, PW-MR, sigY); sigY += 2;
+  doc.setLineWidth(1.2);
+  doc.line(ML, sigY, PW-MR, sigY); sigY += 18;
+
+  /* signature line — centred */
+  const cx = PW / 2;
+  const ly = sigY + 30;
+
+  doc.setLineWidth(0.9); doc.setDrawColor(0);
+  doc.line(cx - 60, ly, cx + 60, ly);
+
+  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
+  doc.text("Exam Cell Incharge", cx, ly + 14, { align:"center" });
+
+  if (dept) {
+    doc.setFont("times","normal"); doc.setFontSize(9);
+    doc.text(dept + " Department", cx, ly + 25, { align:"center" });
+  }
+
+  /* ═══════════════════════════════════════
+     PAGE FOOTERS — all pages
+     ═══════════════════════════════════════ */
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    addFooter(p, totalPages);
+  }
+
+  /* save */
+  const safeDept = (dept||'').replace(/[^a-z0-9]/gi,'_');
+  const safeDate = dateVal || new Date().toISOString().split('T')[0];
+  const safeExam = examType.replace(/\s+/g,'_');
+  doc.save(`ConsolidatedHallReport_${safeDept}_${safeExam}_${safeDate}.pdf`);
+
+  closeHallAbsenteeModal();
+}
+
+/* ================================================================
+   EXISTING ABSENTEE REPORT PDF (unchanged)
+   ================================================================ */
+async function generateAbsenteeReportPDF(){
+  const examType = document.getElementById('reportExamType').value;
+  const acYear   = document.getElementById('reportAcYear').value || '2025 – 2026';
+  const prepBy   = document.getElementById('reportPreparedBy').value || '';
+  const dept    = document.getElementById('deptSelect').value || user?.department || '';
+  const dateVal = document.getElementById('dateFilter').value || '';
+  const batch   = document.getElementById('batchSelect').value || '';
+  const deptMap = {"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
+  const deptFull = deptMap[dept] || (dept ? dept.toUpperCase() : "DEPARTMENT");
   const absentList = absentees.filter(r=>(r.Status||'').toUpperCase()==='ABSENT');
   const odList     = absentees.filter(r=>(r.Status||'').toUpperCase()==='OD');
-
-  // Use server-supplied totals if available; fall back to absentees array only as last resort
   const total   = currentTotals ? (currentTotals.total   || 0) : absentees.length;
   const present = currentTotals ? (currentTotals.present || 0) : (absentees.length - absentList.length - odList.length);
   const absent  = currentTotals ? (currentTotals.absent  || 0) : absentList.length;
   const od      = currentTotals ? (currentTotals.od      || 0) : odList.length;
-  const attPct  = currentTotals ? (currentTotals.attendancePercent || 0)
-                                : (total===0 ? 0 : Math.round((present/total)*10000)/100);
+  const attPct  = currentTotals ? (currentTotals.attendancePercent || 0) : (total===0 ? 0 : Math.round((present/total)*10000)/100);
   const absPct  = total===0 ? 0 : Math.round((absent/total)*10000)/100;
   const odPct   = total===0 ? 0 : Math.round((od/total)*10000)/100;
-
-  /* Section map — built from currentYearSummary if available (correct totals),
-     otherwise fall back to scanning the absentees array                      */
   const secMap = {};
   if(currentYearSummary){
     for(const yr of Object.keys(currentYearSummary)){
-      const yData = currentYearSummary[yr];
+      const yData=currentYearSummary[yr];
       for(const sec of Object.keys(yData.sections)){
-        const s   = yData.sections[sec];
-        const key = `Year ${yr} - Section ${sec}`;
-        const pct = s.total===0 ? 0 : Math.round((s.present/s.total)*10000)/100;
-        secMap[key] = { total:s.total, present:s.present, absent:s.absent, od:s.od, pct };
+        const s=yData.sections[sec];
+        const key=`Year ${yr} - Section ${sec}`;
+        const pct=s.total===0?0:Math.round((s.present/s.total)*10000)/100;
+        secMap[key]={total:s.total,present:s.present,absent:s.absent,od:s.od,pct};
       }
     }
   } else {
@@ -973,588 +1395,232 @@ async function generateAbsenteeReportPDF(){
       else secMap[key].present++;
     });
     Object.keys(secMap).forEach(k=>{
-      const d=secMap[k];
-      d.present=d.total-d.absent-d.od;
+      const d=secMap[k]; d.present=d.total-d.absent-d.od;
       d.pct=d.total===0?0:Math.round((d.present/d.total)*10000)/100;
     });
   }
-
-  /* Format date */
-  let displayDate = dateVal;
-  if(dateVal){
-    const dObj=new Date(dateVal);
-    displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`;
-  }
-
-  /* =================== PDF SETUP =================== */
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("portrait","pt","a4");
-  const PW  = doc.internal.pageSize.getWidth();   // 595.28
-  const PH  = doc.internal.pageSize.getHeight();  // 841.89
-  const ML=45, MR=45, CW=PW-ML-MR;
-  const genTime = new Date().toLocaleString('en-IN');
-
-  /* ---- shared helpers ---- */
-  const logo = await loadLogoData();
-
-  // Draw compact page-continuation header (no info block, just logo+title)
+  let displayDate=dateVal;
+  if(dateVal){ const dObj=new Date(dateVal); displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF("portrait","pt","a4");
+  const PW=doc.internal.pageSize.getWidth(), PH=doc.internal.pageSize.getHeight();
+  const ML=45,MR=45,CW=PW-ML-MR, genTime=new Date().toLocaleString('en-IN');
+  const logo=await loadLogoData();
   function contHeader(){
     let _y=14;
-    if(logo){
-      const maxW=180, maxH=45, ratio=logo.w/logo.h;
-      let lw=maxW, lh=maxW/ratio;
-      if(lh>maxH){lh=maxH;lw=maxH*ratio;}
-      doc.addImage(logo.data,logo.fmt,(PW-lw)/2,_y,lw,lh);
-      _y+=lh+5;
-    }
+    if(logo){ const maxW=180,maxH=45,ratio=logo.w/logo.h; let lw=maxW,lh=maxW/ratio; if(lh>maxH){lh=maxH;lw=maxH*ratio;} doc.addImage(logo.data,logo.fmt,(PW-lw)/2,_y,lw,lh); _y+=lh+5; }
     doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
-    doc.text("Office of the Controller of Examinations",PW/2,_y,{align:"center"});
-    _y+=10;
+    doc.text("Office of the Controller of Examinations",PW/2,_y,{align:"center"}); _y+=10;
     doc.setFillColor(0); doc.rect(ML,_y,CW,16,"F");
     doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(255);
-    doc.text("ABSENTEE ANALYSIS REPORT (contd.)",PW/2,_y+11,{align:"center"});
-    _y+=16;
-    doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(0.6);
-    doc.line(ML,_y,PW-MR,_y);
+    doc.text("ABSENTEE ANALYSIS REPORT (contd.)",PW/2,_y+11,{align:"center"}); _y+=16;
+    doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(0.6); doc.line(ML,_y,PW-MR,_y);
     return _y+8;
   }
-
-  /* =================== PAGE 1 HEADER =================== */
-  let y = 14;
-
-  // Logo
-  if(logo){
-    const maxW=230, maxH=58, ratio=logo.w/logo.h;
-    let lw=maxW, lh=maxW/ratio;
-    if(lh>maxH){lh=maxH;lw=maxH*ratio;}
-    doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh);
-    y+=lh+5;
-  }
-
-  // College / CoE name
+  let y=14;
+  if(logo){ const maxW=230,maxH=58,ratio=logo.w/logo.h; let lw=maxW,lh=maxW/ratio; if(lh>maxH){lh=maxH;lw=maxH*ratio;} doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh); y+=lh+5; }
   doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
   doc.text("Office of the Controller of Examinations",PW/2,y,{align:"center"}); y+=12;
   doc.setFont("times","normal"); doc.setFontSize(10);
-  doc.text("ODD Semester – "+acYear,PW/2,y,{align:"center"}); y+=8;
-
-  // Double top border
+  doc.text("EVEN Semester – "+acYear,PW/2,y,{align:"center"}); y+=8;
   doc.setDrawColor(0); doc.setLineWidth(1.5); doc.line(ML,y,PW-MR,y); y+=2;
-  doc.setLineWidth(0.5);           doc.line(ML,y,PW-MR,y); y+=2;
-
-  // Solid black title bar
+  doc.setLineWidth(0.5); doc.line(ML,y,PW-MR,y); y+=2;
   doc.setFillColor(0); doc.rect(ML,y,CW,22,"F");
   doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(255);
-  doc.text("ABSENTEE ANALYSIS REPORT",PW/2,y+15,{align:"center"});
-  y+=22+1;
-
-  // Double bottom border
-  doc.setTextColor(0); doc.setDrawColor(0);
-  doc.setLineWidth(0.5); doc.line(ML,y,PW-MR,y); y+=2;
+  doc.text("ABSENTEE ANALYSIS REPORT",PW/2,y+15,{align:"center"}); y+=22+1;
+  doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(0.5); doc.line(ML,y,PW-MR,y); y+=2;
   doc.setLineWidth(1.5); doc.line(ML,y,PW-MR,y); y+=8;
-
-  /* =================== INFO TABLE =================== */
-  // Two-column info block drawn as a bordered table
-  const infoRows = [
-    ["Examination",    examType,       "Academic Year",   acYear],
-    ["Department",     deptFull,       "Date",            displayDate||"—"],
-    ["Session/Batch",  batch||"—",     "Prepared By",     prepBy||"—"],
-  ];
-  const iColW   = [65, CW/2-70, 65, CW/2-65];
-  const iRowH   = 16;
-  const iStartY = y;
-
-  // Draw info table manually for precise alignment
-  doc.setLineWidth(0.6); doc.setDrawColor(0);
-  // Outer box
-  const totalInfoH = infoRows.length * iRowH;
-  doc.rect(ML, iStartY, CW, totalInfoH, "D");
-  // Vertical dividers
-  const col1end = ML + iColW[0] + iColW[1];
-  doc.line(ML+iColW[0], iStartY, ML+iColW[0], iStartY+totalInfoH);
-  doc.line(col1end,     iStartY, col1end,      iStartY+totalInfoH);
-  doc.line(col1end+iColW[2], iStartY, col1end+iColW[2], iStartY+totalInfoH);
-
-  infoRows.forEach((row,ri)=>{
-    const ry = iStartY + ri*iRowH;
-    if(ri>0){ doc.setLineWidth(0.3); doc.line(ML,ry,ML+CW,ry); }
-    // Label cells
+  const infoRows2=[["Examination",examType,"Academic Year",acYear],["Department",deptFull,"Date",displayDate||"—"],["Session/Batch",batch||"—","Prepared By",prepBy||"—"]];
+  const iColW2=[65,CW/2-70,65,CW/2-65], iRowH2=16, iStartY2=y;
+  const totalInfoH2=infoRows2.length*iRowH2;
+  doc.setLineWidth(0.6); doc.setDrawColor(0); doc.rect(ML,iStartY2,CW,totalInfoH2,"D");
+  const col1end2=ML+iColW2[0]+iColW2[1];
+  doc.line(ML+iColW2[0],iStartY2,ML+iColW2[0],iStartY2+totalInfoH2);
+  doc.line(col1end2,iStartY2,col1end2,iStartY2+totalInfoH2);
+  doc.line(col1end2+iColW2[2],iStartY2,col1end2+iColW2[2],iStartY2+totalInfoH2);
+  infoRows2.forEach((row,ri)=>{
+    const ry=iStartY2+ri*iRowH2; if(ri>0){doc.setLineWidth(0.3);doc.line(ML,ry,ML+CW,ry);}
     doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(0);
-    doc.text(row[0]+":", ML+3, ry+11);
-    doc.text(row[2]+":", col1end+3, ry+11);
-    // Value cells — wrap if needed
+    doc.text(row[0]+":",ML+3,ry+11); doc.text(row[2]+":",col1end2+3,ry+11);
     doc.setFont("times","normal"); doc.setFontSize(9);
-    const v1lines = doc.splitTextToSize(row[1], iColW[1]-4);
-    doc.text(v1lines[0], ML+iColW[0]+3, ry+11);
-    const v2lines = doc.splitTextToSize(row[3], iColW[3]-4);
-    doc.text(v2lines[0], col1end+iColW[2]+3, ry+11);
+    const v1l=doc.splitTextToSize(row[1],iColW2[1]-4); doc.text(v1l[0],ML+iColW2[0]+3,ry+11);
+    const v2l=doc.splitTextToSize(row[3],iColW2[3]-4); doc.text(v2l[0],col1end2+iColW2[2]+3,ry+11);
   });
-  y += totalInfoH + 10;
-
-  /* =================== SECTION 1 — ATTENDANCE SUMMARY =================== */
+  y+=totalInfoH2+10;
   doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
   doc.text("1.  ATTENDANCE SUMMARY",ML,y); y+=5;
-
-  // 5-column summary — large bold numbers
-  const sumCols = ["Total Students","Present","Absent","On Duty (OD)","Attendance %"];
-  const sumVals = [total, present, absent, od, attPct+"%"];
-  const sumW    = CW/sumCols.length;
-  const sumH    = 34;
-
-  // Header row
-  doc.setLineWidth(0.6); doc.setDrawColor(0);
-  doc.setFillColor(0); doc.rect(ML,y,CW,14,"F");
+  const sumCols2=["Total Students","Present","Absent","On Duty (OD)","Attendance %"];
+  const sumVals2=[total,present,absent,od,attPct+"%"];
+  const sumW2=CW/sumCols2.length, sumH2=34;
+  doc.setLineWidth(0.6); doc.setDrawColor(0); doc.setFillColor(0); doc.rect(ML,y,CW,14,"F");
   doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(255);
-  sumCols.forEach((c,i)=>{
-    doc.text(c, ML+i*sumW+sumW/2, y+10, {align:"center"});
-  });
+  sumCols2.forEach((c,i)=>doc.text(c,ML+i*sumW2+sumW2/2,y+10,{align:"center"}));
   y+=14;
-
-  // Value row
-  doc.setFillColor(255,255,255); doc.setDrawColor(0); doc.setLineWidth(0.6);
-  doc.rect(ML,y,CW,sumH,"FD");
-  for(let i=1;i<sumCols.length;i++) doc.line(ML+i*sumW,y,ML+i*sumW,y+sumH);
+  doc.setFillColor(255); doc.setDrawColor(0); doc.setLineWidth(0.6); doc.rect(ML,y,CW,sumH2,"FD");
+  for(let i=1;i<sumCols2.length;i++) doc.line(ML+i*sumW2,y,ML+i*sumW2,y+sumH2);
   doc.setFont("times","bold"); doc.setFontSize(16); doc.setTextColor(0);
-  sumVals.forEach((v,i)=>{
-    doc.text(String(v), ML+i*sumW+sumW/2, y+22, {align:"center"});
-  });
-  y += sumH+12;
-
-  /* =================== SECTION 2 — SECTION-WISE BREAKDOWN =================== */
-  const secKeys = Object.keys(secMap).sort();
+  sumVals2.forEach((v,i)=>doc.text(String(v),ML+i*sumW2+sumW2/2,y+22,{align:"center"}));
+  y+=sumH2+12;
+  const secKeys=Object.keys(secMap).sort();
   if(secKeys.length){
     doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
     doc.text("2.  SECTION-WISE ATTENDANCE BREAKDOWN",ML,y); y+=5;
-
-    doc.autoTable({
-      head:[["Year / Section","Total\nStudents","Present","Absent","On Duty\n(OD)","Attendance\n%"]],
-      body: secKeys.map(k=>{
-        const d=secMap[k];
-        return [k, d.total, d.present, d.absent, d.od, d.pct+'%'];
-      }),
-      startY:y,
-      theme:"grid",
-      headStyles:{
-        fillColor:[0,0,0], textColor:[255,255,255],
-        fontStyle:"bold", fontSize:9, halign:"center",
-        lineColor:[0,0,0], lineWidth:0.5, cellPadding:4
-      },
-      columnStyles:{
-        0:{halign:"left",  fontStyle:"bold", cellWidth:130},
-        1:{halign:"center",cellWidth:60},
-        2:{halign:"center",cellWidth:60},
-        3:{halign:"center",cellWidth:60},
-        4:{halign:"center",cellWidth:65},
-        5:{halign:"center",cellWidth:70}
-      },
-      styles:{font:"times", fontSize:10, cellPadding:5, textColor:[0,0,0],
-              lineColor:[0,0,0], lineWidth:0.5},
-      alternateRowStyles:{fillColor:[245,245,245]},
-      margin:{left:ML, right:MR}
-    });
-    y = doc.lastAutoTable.finalY + 12;
+    doc.autoTable({ head:[["Year / Section","Total\nStudents","Present","Absent","On Duty\n(OD)","Attendance\n%"]], body:secKeys.map(k=>{const d=secMap[k];return[k,d.total,d.present,d.absent,d.od,d.pct+'%'];}), startY:y, theme:"grid", headStyles:{fillColor:[0,0,0],textColor:[255,255,255],fontStyle:"bold",fontSize:9,halign:"center",lineColor:[0,0,0],lineWidth:0.5,cellPadding:4}, columnStyles:{0:{halign:"left",fontStyle:"bold",cellWidth:130},1:{halign:"center",cellWidth:60},2:{halign:"center",cellWidth:60},3:{halign:"center",cellWidth:60},4:{halign:"center",cellWidth:65},5:{halign:"center",cellWidth:70}}, styles:{font:"times",fontSize:10,cellPadding:5,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:0.5}, alternateRowStyles:{fillColor:[245,245,245]}, margin:{left:ML,right:MR} });
+    y=doc.lastAutoTable.finalY+12;
   }
-
-  /* =================== SECTION 3 — ABSENTEE DETAILS =================== */
   if(absentList.length){
-    if(y > PH-160){ doc.addPage(); y=contHeader(); }
+    if(y>PH-160){doc.addPage();y=contHeader();}
     doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
     doc.text(`3.  ABSENTEE DETAILS   [${absent} Student(s)]`,ML,y); y+=5;
-
-    doc.autoTable({
-      head:[["S.No","Roll No","Student Name","Year","Sec","Hall No","Seat No","Reason / Remarks"]],
-      body: absentList.map((r,i)=>[
-        i+1, r.RollNo||"—", r.Name||"—",
-        r.Year||"—", r.Section||"—",
-        r.HallNo||"—", r.SeatNo||"—",
-        r.Reason||"—"
-      ]),
-      startY:y,
-      theme:"grid",
-      headStyles:{
-        fillColor:[0,0,0], textColor:[255,255,255],
-        fontStyle:"bold", fontSize:8.5, halign:"center",
-        lineColor:[0,0,0], lineWidth:0.5, cellPadding:4
-      },
-      columnStyles:{
-        0:{halign:"center",  cellWidth:28},
-        1:{halign:"center",  fontStyle:"bold", cellWidth:72},
-        2:{halign:"left",    cellWidth:105},
-        3:{halign:"center",  cellWidth:36},
-        4:{halign:"center",  cellWidth:28},
-        5:{halign:"center",  cellWidth:42},
-        6:{halign:"center",  cellWidth:38},
-        7:{halign:"left"}
-      },
-      styles:{font:"times", fontSize:9, cellPadding:4, textColor:[0,0,0],
-              lineColor:[0,0,0], lineWidth:0.5},
-      alternateRowStyles:{fillColor:[245,245,245]},
-      margin:{left:ML, right:MR}
-    });
-    y = doc.lastAutoTable.finalY + 12;
+    doc.autoTable({ head:[["S.No","Roll No","Student Name","Year","Sec","Hall No","Seat No","Reason / Remarks"]], body:absentList.map((r,i)=>[i+1,r.RollNo||"—",r.Name||"—",r.Year||"—",r.Section||"—",r.HallNo||"—",r.SeatNo||"—",r.Reason||"—"]), startY:y, theme:"grid", headStyles:{fillColor:[0,0,0],textColor:[255,255,255],fontStyle:"bold",fontSize:8.5,halign:"center",lineColor:[0,0,0],lineWidth:0.5,cellPadding:4}, columnStyles:{0:{halign:"center",cellWidth:28},1:{halign:"center",fontStyle:"bold",cellWidth:72},2:{halign:"left",cellWidth:105},3:{halign:"center",cellWidth:36},4:{halign:"center",cellWidth:28},5:{halign:"center",cellWidth:42},6:{halign:"center",cellWidth:38},7:{halign:"left"}}, styles:{font:"times",fontSize:9,cellPadding:4,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:0.5}, alternateRowStyles:{fillColor:[245,245,245]}, margin:{left:ML,right:MR} });
+    y=doc.lastAutoTable.finalY+12;
   }
-
-  /* =================== SECTION 4 — OD DETAILS =================== */
   if(odList.length){
-    if(y > PH-160){ doc.addPage(); y=contHeader(); }
-    const secN = absentList.length ? 4 : 3;
+    if(y>PH-160){doc.addPage();y=contHeader();}
+    const secN=absentList.length?4:3;
     doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
     doc.text(`${secN}.  ON DUTY (OD) DETAILS   [${od} Student(s)]`,ML,y); y+=5;
-
-    doc.autoTable({
-      head:[["S.No","Roll No","Student Name","Year","Sec","Hall No","Seat No","OD Purpose / Remarks"]],
-      body: odList.map((r,i)=>[
-        i+1, r.RollNo||"—", r.Name||"—",
-        r.Year||"—", r.Section||"—",
-        r.HallNo||"—", r.SeatNo||"—",
-        r.Reason||"—"
-      ]),
-      startY:y,
-      theme:"grid",
-      headStyles:{
-        fillColor:[0,0,0], textColor:[255,255,255],
-        fontStyle:"bold", fontSize:8.5, halign:"center",
-        lineColor:[0,0,0], lineWidth:0.5, cellPadding:4
-      },
-      columnStyles:{
-        0:{halign:"center",  cellWidth:28},
-        1:{halign:"center",  fontStyle:"bold", cellWidth:72},
-        2:{halign:"left",    cellWidth:105},
-        3:{halign:"center",  cellWidth:36},
-        4:{halign:"center",  cellWidth:28},
-        5:{halign:"center",  cellWidth:42},
-        6:{halign:"center",  cellWidth:38},
-        7:{halign:"left"}
-      },
-      styles:{font:"times", fontSize:9, cellPadding:4, textColor:[0,0,0],
-              lineColor:[0,0,0], lineWidth:0.5},
-      alternateRowStyles:{fillColor:[245,245,245]},
-      margin:{left:ML, right:MR}
-    });
-    y = doc.lastAutoTable.finalY + 12;
+    doc.autoTable({ head:[["S.No","Roll No","Student Name","Year","Sec","Hall No","Seat No","OD Purpose / Remarks"]], body:odList.map((r,i)=>[i+1,r.RollNo||"—",r.Name||"—",r.Year||"—",r.Section||"—",r.HallNo||"—",r.SeatNo||"—",r.Reason||"—"]), startY:y, theme:"grid", headStyles:{fillColor:[0,0,0],textColor:[255,255,255],fontStyle:"bold",fontSize:8.5,halign:"center",lineColor:[0,0,0],lineWidth:0.5,cellPadding:4}, columnStyles:{0:{halign:"center",cellWidth:28},1:{halign:"center",fontStyle:"bold",cellWidth:72},2:{halign:"left",cellWidth:105},3:{halign:"center",cellWidth:36},4:{halign:"center",cellWidth:28},5:{halign:"center",cellWidth:42},6:{halign:"center",cellWidth:38},7:{halign:"left"}}, styles:{font:"times",fontSize:9,cellPadding:4,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:0.5}, alternateRowStyles:{fillColor:[245,245,245]}, margin:{left:ML,right:MR} });
+    y=doc.lastAutoTable.finalY+12;
   }
-
-  /* =================== SECTION — ANALYSIS & REMARKS =================== */
-  if(y > PH-150){ doc.addPage(); y=contHeader(); }
-  const rmkN = 1+(secKeys.length?1:0)+(absentList.length?1:0)+(odList.length?1:0)+1;
+  if(y>PH-150){doc.addPage();y=contHeader();}
+  const rmkN=1+(secKeys.length?1:0)+(absentList.length?1:0)+(odList.length?1:0)+1;
   doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
   doc.text(`${rmkN}.  ANALYSIS & REMARKS`,ML,y); y+=5;
-
-  const attStatus = attPct >= 75
-    ? "Overall attendance is satisfactory (>= 75%). Continue monitoring for sustained compliance."
-    : "NOTE: Attendance is below the minimum 75% threshold ("+attPct+"%). Immediate follow-up and counselling is strongly recommended.";
-
-  const rmkData = [
-    ["Total Students Registered",  String(total)],
-    ["Students Present",           String(present) + "  (" + attPct + "%)"],
-    ["Students Absent",            String(absent)  + "  (" + absPct + "%)"],
-    ["Students on Official Duty",  String(od)      + "  (" + odPct  + "%)"],
-    ["Attendance Status",          attStatus],
-  ];
-
-  doc.autoTable({
-    body: rmkData,
-    startY:y,
-    theme:"grid",
-    columnStyles:{
-      0:{fontStyle:"bold", cellWidth:160, halign:"left"},
-      1:{halign:"left"}
-    },
-    styles:{font:"times", fontSize:10, cellPadding:5, textColor:[0,0,0],
-            lineColor:[0,0,0], lineWidth:0.5},
-    alternateRowStyles:{fillColor:[245,245,245]},
-    margin:{left:ML, right:MR}
-  });
-  y = doc.lastAutoTable.finalY + 18;
-
-  /* =================== SIGNATURE BLOCK =================== */
-  const sigNeed = 75;
-  if(y < PH - sigNeed - 35) y = PH - sigNeed - 35;
-  if(y > PH - 50){ doc.addPage(); y = PH - sigNeed - 35; }
-
-  // Top rule
+  const attStatus2=attPct>=75?"Overall attendance is satisfactory (>= 75%). Continue monitoring for sustained compliance.":"NOTE: Attendance is below the minimum 75% threshold ("+attPct+"%). Immediate follow-up and counselling is strongly recommended.";
+  const rmkData2=[["Total Students Registered",String(total)],["Students Present",String(present)+"  ("+attPct+"%)"],["Students Absent",String(absent)+"  ("+absPct+"%)"],["Students on Official Duty",String(od)+"  ("+odPct+"%)"],["Attendance Status",attStatus2]];
+  doc.autoTable({ body:rmkData2, startY:y, theme:"grid", columnStyles:{0:{fontStyle:"bold",cellWidth:160,halign:"left"},1:{halign:"left"}}, styles:{font:"times",fontSize:10,cellPadding:5,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:0.5}, alternateRowStyles:{fillColor:[245,245,245]}, margin:{left:ML,right:MR} });
+  y=doc.lastAutoTable.finalY+18;
+  const sigNeed2=75;
+  if(y<PH-sigNeed2-35) y=PH-sigNeed2-35;
+  if(y>PH-50){doc.addPage();y=PH-sigNeed2-35;}
   doc.setDrawColor(0); doc.setLineWidth(1.0); doc.line(ML,y,PW-MR,y);
   doc.setLineWidth(0.4); doc.line(ML,y+2,PW-MR,y+2); y+=10;
-
-  // Three signature slots evenly spaced
-  const sigSlots = [
-    {label:"Prepared By",               sub: prepBy||""},
-    {label:"Dept. Exam Cell In-charge",  sub: ""},
-    {label:"Head of Department",         sub: ""},
-  ];
-  const slotW = CW / sigSlots.length;
-  const sigLineY = y + 32;
-  sigSlots.forEach((s,i)=>{
-    const sx = ML + i*slotW;
-    const cx = sx + slotW/2;
-    // Signature line
-    doc.setLineWidth(0.8); doc.setDrawColor(0);
-    doc.line(sx+10, sigLineY, sx+slotW-10, sigLineY);
-    // Label
-    doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(0);
-    doc.text(s.label, cx, sigLineY+13, {align:"center"});
-    // Sub-label (name)
-    if(s.sub){
-      doc.setFont("times","normal"); doc.setFontSize(8.5);
-      doc.text(s.sub, cx, sigLineY+23, {align:"center"});
-    }
-  });
-
-  /* =================== PAGE FOOTERS =================== */
-  const totalPages = doc.getNumberOfPages();
-  for(let p=1; p<=totalPages; p++){
-    doc.setPage(p);
-    drawFooter(doc, PW, ML, MR, PH, p, totalPages, genTime);
-  }
-
-  const safeDept = dept.replace(/[^a-z0-9]/gi,'_');
-  const safeDate = dateVal || new Date().toISOString().split('T')[0];
-  const safeExam = examType.replace(/\s+/g,'_');
-  doc.save(`AbsenteeReport_${safeDept}_${safeExam}_${safeDate}.pdf`);
-
+  const sigSlots2=[{label:"Prepared By",sub:prepBy||""},{label:"Dept. Exam Cell In-charge",sub:""},{label:"Head of Department",sub:""}];
+  const slotW2=CW/sigSlots2.length, sigLineY2=y+32;
+  sigSlots2.forEach((s,i)=>{ const sx=ML+i*slotW2,cx=sx+slotW2/2; doc.setLineWidth(0.8);doc.setDrawColor(0);doc.line(sx+10,sigLineY2,sx+slotW2-10,sigLineY2); doc.setFont("times","bold");doc.setFontSize(9);doc.setTextColor(0);doc.text(s.label,cx,sigLineY2+13,{align:"center"}); if(s.sub){doc.setFont("times","normal");doc.setFontSize(8.5);doc.text(s.sub,cx,sigLineY2+23,{align:"center"});} });
+  const totalPages2=doc.getNumberOfPages();
+  for(let p=1;p<=totalPages2;p++){doc.setPage(p);drawFooter(doc,PW,ML,MR,PH,p,totalPages2,genTime);}
+  const safeDept2=dept.replace(/[^a-z0-9]/gi,'_'), safeDate2=dateVal||new Date().toISOString().split('T')[0], safeExam2=examType.replace(/\s+/g,'_');
+  doc.save(`AbsenteeReport_${safeDept2}_${safeExam2}_${safeDate2}.pdf`);
   closeReportModal();
 }
 
 /* ================================================================
-   YEAR SUMMARY PDF REPORT
+   EXISTING YEAR SUMMARY PDF (unchanged)
    ================================================================ */
 async function generateYearSummaryPDF(){
-  if(!currentYearSummary){ alert("No year summary data available. Please load data first."); return; }
-
-  const dept    = document.getElementById('deptSelect').value || user?.department || '';
-  const dateVal = document.getElementById('dateFilter').value || '';
-  const batch   = document.getElementById('batchSelect').value || '';
-
-  const deptMap = {
-    "CSE":"COMPUTER SCIENCE AND ENGINEERING",
-    "ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING",
-    "ME":"MECHANICAL ENGINEERING",
-    "CE":"CIVIL ENGINEERING",
-    "ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE"
-  };
-  const deptFull = deptMap[dept] || (dept?dept.toUpperCase():"DEPARTMENT");
-
-  let displayDate = dateVal;
-  if(dateVal){
-    const dObj=new Date(dateVal);
-    displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`;
-  }
-
-  const acYear = "2025 – 2026";
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("portrait","pt","a4");
-  const PW  = doc.internal.pageSize.getWidth();
-  const PH  = doc.internal.pageSize.getHeight();
-  const ML=45, MR=45, CW=PW-ML-MR;
-  const genTime = new Date().toLocaleString('en-IN');
+  if(!currentYearSummary){alert("No year summary data available. Please load data first.");return;}
+  const dept=document.getElementById('deptSelect').value||user?.department||'';
+  const dateVal=document.getElementById('dateFilter').value||'';
+  const batch=document.getElementById('batchSelect').value||'';
+  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
+  const deptFull=deptMap[dept]||(dept?dept.toUpperCase():"DEPARTMENT");
+  let displayDate=dateVal;
+  if(dateVal){const dObj=new Date(dateVal);displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`;}
+  const acYear="2025 – 2026";
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF("portrait","pt","a4");
+  const PW=doc.internal.pageSize.getWidth(),PH=doc.internal.pageSize.getHeight();
+  const ML=45,MR=45,CW=PW-ML-MR,genTime=new Date().toLocaleString('en-IN');
   let y=20;
-
-  const logo = await loadLogoData();
-
-  /* ---- Header ---- */
-  if(logo){
-    const maxW=220, maxH=60, ratio=logo.w/logo.h;
-    let lw=maxW, lh=maxW/ratio;
-    if(lh>maxH){lh=maxH;lw=maxH*ratio;}
-    doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh);
-    y+=lh+6;
-  }
-
-  doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
-  doc.text("Office of the Controller of Examinations", PW/2, y, {align:"center"}); y+=13;
-  doc.setFont("times","normal"); doc.setFontSize(10);
-  doc.text("ODD Semester of " + acYear, PW/2, y, {align:"center"}); y+=10;
-
-  doc.setDrawColor(0); doc.setLineWidth(1.2); doc.line(ML,y,PW-MR,y); y+=2;
-  doc.setFillColor(0); doc.rect(ML,y,CW,20,"F");
-  doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(255);
-  doc.text("YEAR & SECTION ATTENDANCE SUMMARY REPORT", PW/2, y+13, {align:"center"});
-  y+=20;
-  doc.setTextColor(0); doc.setDrawColor(0); doc.setLineWidth(1.2);
-  doc.line(ML,y,PW-MR,y); y+=10;
-
-  /* Info block */
-  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(0);
+  const logo=await loadLogoData();
+  if(logo){const maxW=220,maxH=60,ratio=logo.w/logo.h;let lw=maxW,lh=maxW/ratio;if(lh>maxH){lh=maxH;lw=maxH*ratio;}doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh);y+=lh+6;}
+  doc.setFont("times","bold");doc.setFontSize(11);doc.setTextColor(0);
+  doc.text("Office of the Controller of Examinations",PW/2,y,{align:"center"});y+=13;
+  doc.setFont("times","normal");doc.setFontSize(10);
+  doc.text("EVEN Semester of "+acYear,PW/2,y,{align:"center"});y+=10;
+  doc.setDrawColor(0);doc.setLineWidth(1.2);doc.line(ML,y,PW-MR,y);y+=2;
+  doc.setFillColor(0);doc.rect(ML,y,CW,20,"F");
+  doc.setFont("times","bold");doc.setFontSize(12);doc.setTextColor(255);
+  doc.text("YEAR & SECTION ATTENDANCE SUMMARY REPORT",PW/2,y+13,{align:"center"});y+=20;
+  doc.setTextColor(0);doc.setDrawColor(0);doc.setLineWidth(1.2);doc.line(ML,y,PW-MR,y);y+=10;
+  doc.setFont("times","bold");doc.setFontSize(10);doc.setTextColor(0);
   const c2=ML+CW/2+8;
-  const li=[["Department :", deptFull],["Session / Batch :", batch||"—"]];
-  const ri=[["Date :", displayDate||"—"],["Report Generated :", genTime]];
+  const li=[["Department :",deptFull],["Session / Batch :",batch||"—"]];
+  const ri=[["Date :",displayDate||"—"],["Report Generated :",genTime]];
   let iy=y;
-  li.forEach(([lb,vl],i)=>{
-    doc.setFont("times","bold"); doc.text(lb,ML,iy+i*14);
-    doc.setFont("times","normal");
-    const ls=doc.splitTextToSize(vl,CW/2-65);
-    ls.forEach((ln,j)=>doc.text(ln,ML+72,iy+i*14+j*11));
-  });
-  ri.forEach(([lb,vl],i)=>{
-    doc.setFont("times","bold"); doc.text(lb,c2,iy+i*14);
-    doc.setFont("times","normal"); doc.text(vl,c2+72,iy+i*14);
-  });
+  li.forEach(([lb,vl],i)=>{doc.setFont("times","bold");doc.text(lb,ML,iy+i*14);doc.setFont("times","normal");const ls=doc.splitTextToSize(vl,CW/2-65);ls.forEach((ln,j)=>doc.text(ln,ML+72,iy+i*14+j*11));});
+  ri.forEach(([lb,vl],i)=>{doc.setFont("times","bold");doc.text(lb,c2,iy+i*14);doc.setFont("times","normal");doc.text(vl,c2+72,iy+i*14);});
   const dL=doc.splitTextToSize(deptFull,CW/2-65).length;
   y+=Math.max(li.length,ri.length)*14+(dL>1?(dL-1)*11:0)+8;
-  doc.setDrawColor(0); doc.setLineWidth(0.8); doc.line(ML,y,PW-MR,y); y+=10;
-
-  /* ---- Grand totals row ---- */
-  let grandTotal=0, grandPresent=0, grandAbsent=0, grandOD=0;
+  doc.setDrawColor(0);doc.setLineWidth(0.8);doc.line(ML,y,PW-MR,y);y+=10;
+  let grandTotal=0,grandPresent=0,grandAbsent=0,grandOD=0;
   const tableRows=[];
   for(const yr of Object.keys(currentYearSummary).sort()){
     const yData=currentYearSummary[yr];
     for(const sec of Object.keys(yData.sections).sort()){
       const s=yData.sections[sec];
       const pct=s.total===0?0:Math.round((s.present/s.total)*10000)/100;
-      tableRows.push([yr, sec, s.total, s.present, s.absent, s.od, pct+"%"]);
-      grandTotal+=s.total; grandPresent+=s.present; grandAbsent+=s.absent; grandOD+=s.od;
+      tableRows.push([yr,sec,s.total,s.present,s.absent,s.od,pct+"%"]);
+      grandTotal+=s.total;grandPresent+=s.present;grandAbsent+=s.absent;grandOD+=s.od;
     }
   }
   const grandPct=grandTotal===0?0:Math.round((grandPresent/grandTotal)*10000)/100;
   tableRows.push(["TOTAL","—",grandTotal,grandPresent,grandAbsent,grandOD,grandPct+"%"]);
-
-  doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
-  doc.text("1. SECTION-WISE SUMMARY", ML, y); y+=6;
-
-  doc.autoTable({
-    head:[["Year","Section","Total","Present","Absent","On Duty","Attendance %"]],
-    body: tableRows,
-    startY:y,
-    theme:"grid",
-    headStyles:{ fillColor:[255,255,255], textColor:0, fontStyle:"bold", fontSize:10,
-                 halign:"center", lineColor:0, lineWidth:0.5 },
-    columnStyles:{
-      0:{halign:"center",fontStyle:"bold",cellWidth:42},
-      1:{halign:"center",cellWidth:42},
-      2:{halign:"center",cellWidth:55},
-      3:{halign:"center",cellWidth:55},
-      4:{halign:"center",cellWidth:55},
-      5:{halign:"center",cellWidth:55},
-      6:{halign:"center",cellWidth:65}
-    },
-    styles:{ font:"times", fontSize:10, cellPadding:6, textColor:0,
-             lineColor:0, lineWidth:0.5 },
-    alternateRowStyles:{ fillColor:[245,245,245] },
-    didParseCell: function(d){
-      // Bold grand total row
-      if(d.row.index === tableRows.length-1){
-        d.cell.styles.fontStyle="bold";
-        d.cell.styles.fillColor=[220,220,220];
-      }
-    },
-    margin:{left:ML, right:MR}
-  });
-  y = doc.lastAutoTable.finalY + 14;
-
-  /* ---- Year-wise consolidated summary ---- */
-  if(y > PH-180){ doc.addPage(); y=40; }
-  doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
-  doc.text("2. YEAR-WISE CONSOLIDATED SUMMARY", ML, y); y+=6;
-
+  doc.setFont("times","bold");doc.setFontSize(11);doc.setTextColor(0);
+  doc.text("1. SECTION-WISE SUMMARY",ML,y);y+=6;
+  doc.autoTable({head:[["Year","Section","Total","Present","Absent","On Duty","Attendance %"]],body:tableRows,startY:y,theme:"grid",headStyles:{fillColor:[255,255,255],textColor:0,fontStyle:"bold",fontSize:10,halign:"center",lineColor:0,lineWidth:0.5},columnStyles:{0:{halign:"center",fontStyle:"bold",cellWidth:42},1:{halign:"center",cellWidth:42},2:{halign:"center",cellWidth:55},3:{halign:"center",cellWidth:55},4:{halign:"center",cellWidth:55},5:{halign:"center",cellWidth:55},6:{halign:"center",cellWidth:65}},styles:{font:"times",fontSize:10,cellPadding:6,textColor:0,lineColor:0,lineWidth:0.5},alternateRowStyles:{fillColor:[245,245,245]},didParseCell:function(d){if(d.row.index===tableRows.length-1){d.cell.styles.fontStyle="bold";d.cell.styles.fillColor=[220,220,220];}},margin:{left:ML,right:MR}});
+  y=doc.lastAutoTable.finalY+14;
+  if(y>PH-180){doc.addPage();y=40;}
+  doc.setFont("times","bold");doc.setFontSize(11);doc.setTextColor(0);
+  doc.text("2. YEAR-WISE CONSOLIDATED SUMMARY",ML,y);y+=6;
   const yearRows=[];
   for(const yr of Object.keys(currentYearSummary).sort()){
-    const yData=currentYearSummary[yr];
-    let yT=0,yP=0,yA=0,yO=0;
+    const yData=currentYearSummary[yr];let yT=0,yP=0,yA=0,yO=0;
     Object.values(yData.sections).forEach(s=>{yT+=s.total;yP+=s.present;yA+=s.absent;yO+=s.od;});
     const yPct=yT===0?0:Math.round((yP/yT)*10000)/100;
-    yearRows.push(["Year "+yr, yT, yP, yA, yO, yPct+"%"]);
+    yearRows.push(["Year "+yr,yT,yP,yA,yO,yPct+"%"]);
   }
-
-  doc.autoTable({
-    head:[["Year","Total Students","Present","Absent","On Duty","Attendance %"]],
-    body: yearRows,
-    startY:y,
-    theme:"grid",
-    headStyles:{ fillColor:[255,255,255], textColor:0, fontStyle:"bold", fontSize:10,
-                 halign:"center", lineColor:0, lineWidth:0.5 },
-    columnStyles:{
-      0:{halign:"center",fontStyle:"bold",cellWidth:70},
-      1:{halign:"center"},2:{halign:"center"},
-      3:{halign:"center"},4:{halign:"center"},5:{halign:"center"}
-    },
-    styles:{ font:"times", fontSize:10, cellPadding:6, textColor:0,
-             lineColor:0, lineWidth:0.5 },
-    alternateRowStyles:{ fillColor:[245,245,245] },
-    margin:{left:ML, right:MR}
-  });
-  y = doc.lastAutoTable.finalY + 14;
-
-  /* ---- Remarks ---- */
-  if(y > PH-130){ doc.addPage(); y=40; }
-  doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
-  doc.text("3. REMARKS", ML, y); y+=8;
-
-  const attStatus = grandPct >= 75
-    ? "Overall attendance is satisfactory (>= 75%)."
-    : "NOTE: Overall attendance is below the 75% threshold (" + grandPct + "%). Department-level follow-up is recommended.";
-  const rmkLines=[
-    "Total registered students : " + grandTotal,
-    "Total present             : " + grandPresent + "  (" + grandPct + "%)",
-    "Total absent              : " + grandAbsent,
-    "Total on duty (OD)        : " + grandOD,
-    "",
-    attStatus
-  ];
+  doc.autoTable({head:[["Year","Total Students","Present","Absent","On Duty","Attendance %"]],body:yearRows,startY:y,theme:"grid",headStyles:{fillColor:[255,255,255],textColor:0,fontStyle:"bold",fontSize:10,halign:"center",lineColor:0,lineWidth:0.5},columnStyles:{0:{halign:"center",fontStyle:"bold",cellWidth:70},1:{halign:"center"},2:{halign:"center"},3:{halign:"center"},4:{halign:"center"},5:{halign:"center"}},styles:{font:"times",fontSize:10,cellPadding:6,textColor:0,lineColor:0,lineWidth:0.5},alternateRowStyles:{fillColor:[245,245,245]},margin:{left:ML,right:MR}});
+  y=doc.lastAutoTable.finalY+14;
+  if(y>PH-130){doc.addPage();y=40;}
+  doc.setFont("times","bold");doc.setFontSize(11);doc.setTextColor(0);
+  doc.text("3. REMARKS",ML,y);y+=8;
+  const attStatus3=grandPct>=75?"Overall attendance is satisfactory (>= 75%).":"NOTE: Overall attendance is below the 75% threshold ("+grandPct+"%). Department-level follow-up is recommended.";
+  const rmkLines=["Total registered students : "+grandTotal,"Total present             : "+grandPresent+"  ("+grandPct+"%)","Total absent              : "+grandAbsent,"Total on duty (OD)        : "+grandOD,"",attStatus3];
   const rmkH=rmkLines.length*13+18;
-  doc.setFillColor(255,255,255); doc.setDrawColor(0); doc.setLineWidth(0.8);
-  doc.rect(ML,y,CW,rmkH,"FD");
-  doc.setFont("times","normal"); doc.setFontSize(10); doc.setTextColor(0);
-  rmkLines.forEach((line,i)=>{ if(line) doc.text(line,ML+8,y+14+i*13,{maxWidth:CW-14}); });
+  doc.setFillColor(255);doc.setDrawColor(0);doc.setLineWidth(0.8);doc.rect(ML,y,CW,rmkH,"FD");
+  doc.setFont("times","normal");doc.setFontSize(10);doc.setTextColor(0);
+  rmkLines.forEach((line,i)=>{if(line)doc.text(line,ML+8,y+14+i*13,{maxWidth:CW-14});});
   y+=rmkH+18;
-
-  /* ---- Signature ---- */
   const sigAreaNeeded=80;
-  if(y < PH-sigAreaNeeded-40) y=PH-sigAreaNeeded-40;
-  if(y > PH-60){ doc.addPage(); y=PH-sigAreaNeeded-40; }
-
-  doc.setDrawColor(0); doc.setLineWidth(0.8); doc.line(ML,y,PW-MR,y); y+=6;
+  if(y<PH-sigAreaNeeded-40)y=PH-sigAreaNeeded-40;
+  if(y>PH-60){doc.addPage();y=PH-sigAreaNeeded-40;}
+  doc.setDrawColor(0);doc.setLineWidth(0.8);doc.line(ML,y,PW-MR,y);y+=6;
   const sigY=y+28;
-  const sigs=[
-    {label:"Prepared By",               x:ML},
-    {label:"Dept. Exam Cell In-charge",  x:PW/2-65},
-    {label:"Head of Department",         x:PW-MR-110},
-  ];
-  sigs.forEach(sig=>{
-    doc.setLineWidth(0.8); doc.setDrawColor(0);
-    doc.line(sig.x,sigY,sig.x+110,sigY);
-    doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(0);
-    doc.text(sig.label,sig.x+55,sigY+12,{align:"center"});
-  });
-
-  /* ---- Page footers ---- */
-  const totalPages=doc.getNumberOfPages();
-  for(let p=1;p<=totalPages;p++){
-    doc.setPage(p);
-    drawFooter(doc,PW,ML,MR,PH,p,totalPages,genTime);
-  }
-
-  const safeDept=dept.replace(/[^a-z0-9]/gi,'_');
-  const safeDate=dateVal||new Date().toISOString().split('T')[0];
-  doc.save(`YearSummaryReport_${safeDept}_${safeDate}.pdf`);
+  const sigs=[{label:"Prepared By",x:ML},{label:"Dept. Exam Cell In-charge",x:PW/2-65},{label:"Head of Department",x:PW-MR-110}];
+  sigs.forEach(sig=>{doc.setLineWidth(0.8);doc.setDrawColor(0);doc.line(sig.x,sigY,sig.x+110,sigY);doc.setFont("times","bold");doc.setFontSize(9);doc.setTextColor(0);doc.text(sig.label,sig.x+55,sigY+12,{align:"center"});});
+  const totalPages3=doc.getNumberOfPages();
+  for(let p=1;p<=totalPages3;p++){doc.setPage(p);drawFooter(doc,PW,ML,MR,PH,p,totalPages3,genTime);}
+  const safeDept3=dept.replace(/[^a-z0-9]/gi,'_'),safeDate3=dateVal||new Date().toISOString().split('T')[0];
+  doc.save(`YearSummaryReport_${safeDept3}_${safeDate3}.pdf`);
 }
 
 /* ================================================================
-   HALL PLAN FUNCTIONS (original, unchanged)
+   EXISTING HALL PLAN FUNCTIONS (unchanged)
    ================================================================ */
 async function downloadHallPlan(){
-  const selectedDate=document.getElementById("planDate").value;
-  const selectedBatch=document.getElementById("planBatch").value;
-  const selectedExam=document.getElementById("internalExam").value;
-  if(!selectedDate||!selectedBatch||!selectedExam){ alert("Please select Date, Batch, and Internal Exam"); return; }
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
+  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
   const u=JSON.parse(localStorage.getItem("user"));
-  if(!u||!u.department){ alert("Department information missing. Please login again."); return; }
-  try {
-    const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});
-    let data=Array.isArray(res)?res:res.success?res.data:res.result;
-    if(!data||data.length===0){ alert("No seating data found for your department on this date and batch."); return; }
-    await generatePDF(data,selectedExam,u.department);
-  } catch(err){ console.error(err); alert("Error fetching hall plan: "+(err.message||err)); }
+  if(!u||!u.department){alert("Department information missing. Please login again.");return;}
+  try{ const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});let data=Array.isArray(res)?res:res.success?res.data:res.result;if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}await generatePDF(data,selectedExam,u.department);} catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
 }
-
+async function downloadHallPlan1(){
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
+  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
+  const u=JSON.parse(localStorage.getItem("user"));
+  if(!u||!u.department){alert("Department information missing. Please login again.");return;}
+  try{ const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});let data=Array.isArray(res)?res:res.success?res.data:res.result;if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}await generatePDF1(data,selectedExam,u.department);} catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
+}
 async function generatePDF(data,examType,department){
-  if(!Array.isArray(data)||data.length===0){ alert("No data to generate PDF."); return; }
-  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE"};
+  if(!Array.isArray(data)||data.length===0){alert("No data to generate PDF.");return;}
+  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
   const departmentFullName=department&&deptMap[department]?deptMap[department]:(department?department.toUpperCase():"UNKNOWN DEPARTMENT");
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF("landscape","pt","a4");
-  const pageWidth=doc.internal.pageSize.getWidth();
-  const pageHeight=doc.internal.pageSize.getHeight();
-  const getField=(obj,names)=>{ for(const n of names) if(obj[n]!==undefined&&obj[n]!==null) return obj[n]; return ""; };
+  const {jsPDF}=window.jspdf;const doc=new jsPDF("landscape","pt","a4");
+  const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
+  const getField=(obj,names)=>{for(const n of names)if(obj[n]!==undefined&&obj[n]!==null)return obj[n];return "";};
   const firstSample=data[0]||{};
   const rawDateForFile=getField(firstSample,["Date","date"])||"unknown";
   const dateObjForFile=new Date(rawDateForFile);
@@ -1562,170 +1628,114 @@ async function generatePDF(data,examType,department){
   const batchTextForName=getField(firstSample,["Batch","batch"])||"Batch";
   const halls=[...new Set(data.map(row=>getField(row,["Hall No","HallNo"])))].filter(Boolean);
   let imgData=null;
-  try {
-    const resp=await fetch("logo.jpeg");
-    if(resp.ok){
-      const blob=await resp.blob();
-      const bitmap=await createImageBitmap(blob);
-      const canvas=document.createElement("canvas");
-      canvas.width=bitmap.width; canvas.height=bitmap.height;
-      canvas.getContext("2d").drawImage(bitmap,0,0);
-      imgData=canvas.toDataURL("image/jpeg");
-    }
-  } catch(e){ console.warn("Logo load failed:",e); }
-
+  try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
   for(let i=0;i<halls.length;i++){
-    const hall=halls[i];
-    const students=data.filter(r=>getField(r,["Hall No","HallNo"])==hall);
-    if(i>0) doc.addPage();
-    let y=20;
-    if(imgData){ doc.addImage(imgData,"JPEG",(pageWidth-250)/2,y,250,50); y+=80; }
-    doc.setFont("times","bold"); doc.setFontSize(12);
+    const hall=halls[i];const students=data.filter(r=>getField(r,["Hall No","HallNo"])==hall);if(i>0)doc.addPage();let y=20;
+    if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,y,250,50);y+=80;}
+    doc.setFont("times","bold");doc.setFontSize(12);
     const ct=(txt,yPos)=>doc.text(txt,pageWidth/2,yPos,{align:"center"});
-    ct("Office of the Controller of Examinations",y); y+=18;
-    ct("ODD Semester of 2025 – 2026",y); y+=18;
-    ct("HALL WISE SEATING ARRANGEMENT",y); y+=18;
-    ct(`DEPARTMENT OF ${departmentFullName}`,y); y+=18;
-    ct(`INTERNAL EXAMINATION – ${examType}`,y); y+=25;
-    const sample=students[0]||data[0];
-    const rawDate=getField(sample,["Date","date"]);
-    const dateObj=new Date(rawDate);
-    const dateStr=`${dateObj.getDate().toString().padStart(2,'0')}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getFullYear()}`;
-    const batchText=getField(sample,["Batch","batch"]);
-    doc.setFont("times","normal"); doc.setFontSize(12);
-    doc.text(`Date: ${dateStr}`,50,y);
-    doc.text(`Session: ${batchText}`,pageWidth/2,y,{align:"center"});
-    doc.text(`Hall: ${hall}`,pageWidth-50,y,{align:"right"});
-    y+=15;
+    ct("Office of the Controller of Examinations",y);y+=18;ct("EVEN Semester of 2025 – 2026",y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
+    const sample=students[0]||data[0];const rawDate=getField(sample,["Date","date"]);const dateObj=new Date(rawDate);
+    const dateStr=`${dateObj.getDate().toString().padStart(2,'0')}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getFullYear()}`;const batchText=getField(sample,["Batch","batch"]);
+    doc.setFont("times","normal");doc.setFontSize(12);doc.text(`Date: ${dateStr}`,50,y);doc.text(`Session: ${batchText}`,pageWidth/2,y,{align:"center"});doc.text(`Hall: ${hall}`,pageWidth-50,y,{align:"right"});y+=15;
     const seatSeries={};
-    students.forEach(s=>{
-      const seatNo=getField(s,["Seating No","SeatNo","Seat No"]);
-      if(!seatNo) return;
-      const series=seatNo.match(/^[A-Z]+/i)?.[0]||"?";
-      if(!seatSeries[series]) seatSeries[series]=[];
-      const seatNum=parseInt(seatNo.match(/\d+/)?.[0]||"0");
-      seatSeries[series].push({seatNo,roll:getField(s,["Student Roll No","RollNo","Roll No"]),seatNum,year:getField(s,["Year","year"]),section:getField(s,["Section","section"]),department:getField(s,["Department","Dept","department"]),subject:getField(s,["Subject Code","SubjectCode","Subject"])});
-    });
+    students.forEach(s=>{const seatNo=getField(s,["Seating No","SeatNo","Seat No"]);if(!seatNo)return;const series=seatNo.match(/^[A-Z]+/i)?.[0]||"?";if(!seatSeries[series])seatSeries[series]=[];const seatNum=parseInt(seatNo.match(/\d+/)?.[0]||"0");seatSeries[series].push({seatNo,roll:getField(s,["Student Roll No","RollNo","Roll No"]),seatNum,year:getField(s,["Year","year"]),section:getField(s,["Section","section"]),department:getField(s,["Department","Dept","department"]),subject:getField(s,["Subject Code","SubjectCode","Subject"])});});
     Object.keys(seatSeries).forEach(series=>seatSeries[series].sort((a,b)=>a.seatNum-b.seatNum));
     const maxRows=Math.max(...Object.values(seatSeries).map(arr=>arr.length));
-    const tableHeader=Object.keys(seatSeries).sort();
-    const tableHeaderRow=[]; for(const _ of tableHeader) tableHeaderRow.push("Seat No","Roll No");
+    const tableHeader=Object.keys(seatSeries).sort();const tableHeaderRow=[];for(const _ of tableHeader)tableHeaderRow.push("Seat No","Roll No");
     const tableBody=[];
-    for(let r=0;r<maxRows;r++){
-      const row=[];
-      for(const s of tableHeader){ const seat=seatSeries[s][r]; row.push(seat?seat.seatNo:"",seat?seat.roll:""); }
-      tableBody.push(row);
-    }
-    const maxSubRows=Math.max(...Object.values(seatSeries).map(group=>{ const map={}; group.forEach(s=>{ const key=`${s.year||""} ${s.section||""}`.trim(); map[key]=(map[key]||0)+1; }); return Object.keys(map).length; }));
-    for(let subRow=0;subRow<maxSubRows;subRow++){
-      const row=[];
-      for(const s of tableHeader){
-        const group=seatSeries[s];
-        if(group&&group.length>0){ const map={}; group.forEach(st=>{ const key=`${st.year||""} ${st.department||""} ${st.section||""}`.trim(); map[key]=(map[key]||0)+1; }); const entries=Object.entries(map); if(entries[subRow]){ const [yrsec,cnt]=entries[subRow]; row.push(yrsec,cnt.toString()); } else row.push("",""); }
-        else row.push("","");
-      }
-      tableBody.push(row);
-    }
-    const grandRow=new Array(tableHeader.length*2).fill("");
-    const lsi=tableHeader.length*2-2;
-    grandRow[lsi]="Total"; grandRow[lsi+1]=students.length.toString();
-    tableBody.push(grandRow);
-    doc.autoTable({
-      head:[tableHeaderRow], body:tableBody, startY:y, theme:"grid",
-      headStyles:{fillColor:[255,255,255],textColor:0,lineColor:0,lineWidth:0.5,fontStyle:"bold"},
-      styles:{font:"times",fontSize:10,textColor:0,halign:"center",valign:"middle",lineColor:0,lineWidth:0.5,fontStyle:"normal"},
-      didParseCell:function(data){ if(data.cell.raw&&(data.cell.raw.match(/^[0-9]{2}[A-Z]+[0-9]+$/i)||data.cell.raw==="Total"||data.cell.raw===students.length.toString())) data.cell.styles.fontStyle="bold"; },
-      tableWidth:"auto", margin:{left:40,right:40}
-    });
-    const subjectCounts={};
-    students.forEach(s=>{ const subj=getField(s,["Subject Code","SubjectCode","Subject"]); if(subj) subjectCounts[subj]=(subjectCounts[subj]||0)+1; });
-    let subjY=doc.lastAutoTable.finalY+25;
-    doc.setFont("times","bold"); doc.setFontSize(12); doc.text("Subject-wise Count:",60,subjY); subjY+=25;
-    doc.setFont("times","normal");
-    Object.entries(subjectCounts).forEach(([subj,count])=>{ doc.text(`${subj} - ${count}`,80,subjY); subjY+=14; });
-    doc.setFontSize(13);
-    doc.text("Department Exam Cell In-charge",90,pageHeight-40);
-    doc.text("HoD",pageWidth-130,pageHeight-40,{align:"right"});
+    for(let r=0;r<maxRows;r++){const row=[];for(const s of tableHeader){const seat=seatSeries[s][r];row.push(seat?seat.seatNo:"",seat?seat.roll:"");}tableBody.push(row);}
+    const maxSubRows=Math.max(...Object.values(seatSeries).map(group=>{const map={};group.forEach(s=>{const key=`${s.year||""} ${s.section||""}`.trim();map[key]=(map[key]||0)+1;});return Object.keys(map).length;}));
+    for(let subRow=0;subRow<maxSubRows;subRow++){const row=[];for(const s of tableHeader){const group=seatSeries[s];if(group&&group.length>0){const map={};group.forEach(st=>{const key=`${st.year||""} ${st.department||""} ${st.section||""}`.trim();map[key]=(map[key]||0)+1;});const entries=Object.entries(map);if(entries[subRow]){const[yrsec,cnt]=entries[subRow];row.push(yrsec,cnt.toString());}else row.push("","");}else row.push("","");}tableBody.push(row);}
+    const grandRow=new Array(tableHeader.length*2).fill("");const lsi=tableHeader.length*2-2;grandRow[lsi]="Total";grandRow[lsi+1]=students.length.toString();tableBody.push(grandRow);
+    doc.autoTable({head:[tableHeaderRow],body:tableBody,startY:y,theme:"grid",headStyles:{fillColor:[255,255,255],textColor:0,lineColor:0,lineWidth:0.5,fontStyle:"bold"},styles:{font:"times",fontSize:10,textColor:0,halign:"center",valign:"middle",lineColor:0,lineWidth:0.5,fontStyle:"normal"},didParseCell:function(data){if(data.cell.raw&&(data.cell.raw.match(/^[0-9]{2}[A-Z]+[0-9]+$/i)||data.cell.raw==="Total"||data.cell.raw===students.length.toString()))data.cell.styles.fontStyle="bold";},tableWidth:"auto",margin:{left:40,right:40}});
+    const subjectCounts={};students.forEach(s=>{const subj=getField(s,["Subject Code","SubjectCode","Subject"]);if(subj)subjectCounts[subj]=(subjectCounts[subj]||0)+1;});
+    let subjY=doc.lastAutoTable.finalY+25;doc.setFont("times","bold");doc.setFontSize(12);doc.text("Subject-wise Count:",60,subjY);subjY+=25;doc.setFont("times","normal");
+    Object.entries(subjectCounts).forEach(([subj,count])=>{doc.text(`${subj} - ${count}`,80,subjY);subjY+=14;});
+    doc.setFontSize(13);doc.text("Department Exam Cell In-charge",90,pageHeight-40);doc.text("HoD",pageWidth-130,pageHeight-40,{align:"right"});
   }
   doc.save(`HallPlan_${dateForName}_${batchTextForName}_Exam${examType}.pdf`);
 }
-
+async function generatePDF1(data,examType,department){
+  if(!Array.isArray(data)||data.length===0){alert("No data to generate PDF.");return;}
+  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
+  const departmentFullName=department&&deptMap[department]?deptMap[department]:(department?department.toUpperCase():"UNKNOWN DEPARTMENT");
+  const {jsPDF}=window.jspdf;const doc=new jsPDF("landscape","pt","a4");
+  const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
+  const getField=(obj,names)=>{for(const n of names)if(obj[n]!==undefined&&obj[n]!==null)return obj[n];return "";};
+  const firstSample=data[0]||{};
+  const rawDateForFile=getField(firstSample,["Date","date"])||"unknown";const dateObjForFile=new Date(rawDateForFile);
+  const dateForName=`${dateObjForFile.getDate().toString().padStart(2,'0')}_${(dateObjForFile.getMonth()+1).toString().padStart(2,'0')}_${dateObjForFile.getFullYear()}`;
+  const batchTextForName=getField(firstSample,["Batch","batch"])||"Batch";
+  const halls=[...new Set(data.map(row=>getField(row,["Hall No","HallNo"])))].filter(Boolean);
+  let imgData=null;
+  try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
+  for(let i=0;i<halls.length;i++){
+    const hall=halls[i];const students=data.filter(r=>getField(r,["Hall No","HallNo"])==hall);if(i>0)doc.addPage();let y=20;
+    if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,y,250,50);y+=80;}
+    doc.setFont("times","bold");doc.setFontSize(12);
+    const ct=(txt,yPos)=>doc.text(txt,pageWidth/2,yPos,{align:"center"});
+    ct("Office of the Controller of Examinations",y);y+=18;ct("EVEN Semester of 2025 – 2026",y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
+    const sample=students[0]||data[0];const rawDate=getField(sample,["Date","date"]);const dateObj=new Date(rawDate);
+    const dateStr=`${dateObj.getDate().toString().padStart(2,'0')}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getFullYear()}`;const batchText=getField(sample,["Batch","batch"]);
+    doc.setFont("times","normal");doc.setFontSize(12);doc.text(`Date: ${dateStr}`,50,y);doc.text(`Session: ${batchText}`,pageWidth/2,y,{align:"center"});doc.text(`Hall: ${hall}`,pageWidth-50,y,{align:"right"});y+=15;
+    const seatSeries={};
+    students.forEach(s=>{const seatNo=getField(s,["Seating No","SeatNo","Seat No"]);if(!seatNo)return;const series=seatNo.match(/^[A-Z]+/i)?.[0]||"?";if(!seatSeries[series])seatSeries[series]=[];const seatNum=parseInt(seatNo.match(/\d+/)?.[0]||"0");seatSeries[series].push({seatNo,roll:getField(s,["Student Roll No","RollNo","Roll No"]),seatNum,year:getField(s,["Year","year"]),section:getField(s,["Section","section"]),department:getField(s,["Department","Dept","department"]),subject:getField(s,["Subject Code","SubjectCode","Subject"])});});
+    Object.keys(seatSeries).forEach(series=>seatSeries[series].sort((a,b)=>a.seatNum-b.seatNum));
+    const maxRows=Math.max(...Object.values(seatSeries).map(arr=>arr.length));
+    const tableHeader=Object.keys(seatSeries).sort();const tableHeaderRow=[];for(const _ of tableHeader)tableHeaderRow.push("Seat No","Roll No");
+    const tableBody=[];
+    for(let r=0;r<maxRows;r++){const row=[];for(const s of tableHeader){const seat=seatSeries[s][r];row.push(seat?seat.seatNo:"",seat?seat.roll:"");}tableBody.push(row);}
+    const maxSubRows=Math.max(...Object.values(seatSeries).map(group=>{const map={};group.forEach(s=>{const key=`${s.year||""} ${s.section||""}`.trim();map[key]=(map[key]||0)+1;});return Object.keys(map).length;}));
+    for(let subRow=0;subRow<maxSubRows;subRow++){const row=[];for(const s of tableHeader){const group=seatSeries[s];if(group&&group.length>0){const map={};group.forEach(st=>{const key=`${st.year||""} ${st.department||""} ${st.section||""}`.trim();map[key]=(map[key]||0)+1;});const entries=Object.entries(map);if(entries[subRow]){const[yrsec,cnt]=entries[subRow];row.push(yrsec,cnt.toString());}else row.push("","");}else row.push("","");}tableBody.push(row);}
+    const grandRow=new Array(tableHeader.length*2).fill("");const lsi=tableHeader.length*2-2;grandRow[lsi]="Total";grandRow[lsi+1]=students.length.toString();tableBody.push(grandRow);
+    doc.autoTable({head:[tableHeaderRow],body:tableBody,startY:y,theme:"grid",headStyles:{fillColor:[255,255,255],textColor:0,lineColor:0,lineWidth:0.5,fontStyle:"bold"},styles:{font:"times",fontSize:10,textColor:0,halign:"center",valign:"middle",lineColor:0,lineWidth:0.5,fontStyle:"normal"},didParseCell:function(data){if(data.cell.raw&&(data.cell.raw.match(/^[0-9]{2}[A-Z]+[0-9]+$/i)||data.cell.raw==="Total"||data.cell.raw===students.length.toString()))data.cell.styles.fontStyle="bold";},tableWidth:"auto",margin:{left:40,right:40}});
+    const subjectCounts={};students.forEach(s=>{const subj=getField(s,["Subject Code","SubjectCode","Subject"]);if(subj)subjectCounts[subj]=(subjectCounts[subj]||0)+1;});
+    let subjY=doc.lastAutoTable.finalY+25;doc.setFont("times","bold");doc.setFontSize(12);doc.text("Subject-wise Count:",60,subjY);subjY+=25;doc.setFont("times","normal");
+    Object.entries(subjectCounts).forEach(([subj,count])=>{doc.text(`${subj} - ${count}`,80,subjY);subjY+=14;});
+    doc.setFontSize(13);doc.text("Department Exam Cell In-charge",90,pageHeight-40);doc.text("Hall Invigilator",pageWidth-130,pageHeight-40,{align:"right"});
+  }
+  doc.save(`HallPlan_${dateForName}_${batchTextForName}_Exam${examType}.pdf`);
+}
 async function generateHallPlanSchedule(){
-  const selectedDate=document.getElementById("planDate").value;
-  const selectedBatch=document.getElementById("planBatch").value;
-  const selectedExam=document.getElementById("internalExam").value;
-  if(!selectedDate||!selectedBatch||!selectedExam){ alert("Please select Date, Batch, and Internal Exam"); return; }
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
+  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
   const u=JSON.parse(localStorage.getItem("user"));
-  if(!u||!u.department){ alert("Department information missing. Please login again."); return; }
-  try {
+  if(!u||!u.department){alert("Department information missing. Please login again.");return;}
+  try{
     const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});
     const data=Array.isArray(res)?res:res.success?res.data:res.result;
-    if(!data||data.length===0){ alert("No data to generate hall plan schedule."); return; }
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF("portrait","pt","a4");
-    const pageWidth=doc.internal.pageSize.getWidth();
-    const pageHeight=doc.internal.pageSize.getHeight();
-    const departmentFullName={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE"}[u.department]||u.department;
+    if(!data||data.length===0){alert("No data to generate hall plan schedule.");return;}
+    const {jsPDF}=window.jspdf;const doc=new jsPDF("portrait","pt","a4");
+    const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
+    const departmentFullName={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"}[u.department]||u.department;
     let imgData=null;
-    try {
-      const resp=await fetch("logo.jpeg");
-      if(resp.ok){ const blob=await resp.blob(); const bitmap=await createImageBitmap(blob); const canvas=document.createElement("canvas"); canvas.width=bitmap.width; canvas.height=bitmap.height; canvas.getContext("2d").drawImage(bitmap,0,0); imgData=canvas.toDataURL("image/jpeg"); }
-    } catch(e){ console.warn("Logo load failed:",e); }
-    const groupedByHall={};
-    data.forEach(row=>{ const hall=row["Hall No"]||row["HallNo"]; if(!groupedByHall[hall]) groupedByHall[hall]=[]; groupedByHall[hall].push(row); });
+    try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
+    const groupedByHall={};data.forEach(row=>{const hall=row["Hall No"]||row["HallNo"];if(!groupedByHall[hall])groupedByHall[hall]=[];groupedByHall[hall].push(row);});
     let y=230;
-    function addHeader(){
-      let yH=20;
-      if(imgData){ doc.addImage(imgData,"JPEG",(pageWidth-250)/2,yH,250,50); yH+=80; }
-      doc.setFont("times","bold"); doc.setFontSize(14);
-      doc.text("Office of the Controller of Examinations",pageWidth/2,90,{align:"center"});
-      doc.text("ODD Semester of 2025 – 2026",pageWidth/2,110,{align:"center"});
-      doc.text("Hall Plan Schedule",pageWidth/2,130,{align:"center"});
-      doc.setFont("times","normal"); doc.setFontSize(12);
-      doc.text(`DEPARTMENT OF ${departmentFullName}`,pageWidth/2,150,{align:"center"});
-      doc.text(`INTERNAL EXAMINATION - ${selectedExam}`,pageWidth/2,170,{align:"center"});
-      doc.text(`Date: ${selectedDate}`,70,190);
-      doc.text(`Session: ${selectedBatch}`,pageWidth-70,190,{align:"right"});
-      const tL=50,tR=pageWidth-50;
-      doc.setLineWidth(0.5); doc.rect(tL,200,tR-tL,25);
-      [110,200,350,500].forEach(x=>doc.line(x,200,x,225));
-      const hdrs=["Hall No","Course Code","Year & Section","Roll Number","Total"];
-      const ctrs=[80,155,275,425,525];
-      doc.setFont("times","bold"); doc.setFontSize(11);
-      hdrs.forEach((h,i)=>doc.text(h,ctrs[i],217,{align:"center"}));
-      y=225;
-    }
-    function addFooter(){ doc.setFont("times","normal"); doc.setFontSize(12); doc.text("Department Exam Cell In-charge",100,pageHeight-50); doc.text("HoD",pageWidth-100,pageHeight-50,{align:"right"}); }
+    function addHeader(){let yH=20;if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,yH,250,50);yH+=80;}doc.setFont("times","bold");doc.setFontSize(14);doc.text("Office of the Controller of Examinations",pageWidth/2,90,{align:"center"});doc.text("EVEN Semester of 2025 – 2026",pageWidth/2,110,{align:"center"});doc.text("Hall Plan Schedule",pageWidth/2,130,{align:"center"});doc.setFont("times","normal");doc.setFontSize(12);doc.text(`DEPARTMENT OF ${departmentFullName}`,pageWidth/2,150,{align:"center"});doc.text(`INTERNAL EXAMINATION - ${selectedExam}`,pageWidth/2,170,{align:"center"});doc.text(`Date: ${selectedDate}`,70,190);doc.text(`Session: ${selectedBatch}`,pageWidth-70,190,{align:"right"});const tL=50,tR=pageWidth-50;doc.setLineWidth(0.5);doc.rect(tL,200,tR-tL,25);[110,200,350,500].forEach(x=>doc.line(x,200,x,225));const hdrs=["Hall No","Course Code","Year & Section","Roll Number","Total"];const ctrs=[80,155,275,425,525];doc.setFont("times","bold");doc.setFontSize(11);hdrs.forEach((h,i)=>doc.text(h,ctrs[i],217,{align:"center"}));y=225;}
+    function addFooter(){doc.setFont("times","normal");doc.setFontSize(12);doc.text("Department Exam Cell In-charge",100,pageHeight-50);doc.text("HoD",pageWidth-100,pageHeight-50,{align:"right"});}
     addHeader();
     const tL=50,tR=pageWidth-50,colX=[tL,110,200,350,500,tR],ctrs=[80,155,275,425,525];
     for(const hall of Object.keys(groupedByHall)){
-      const hallStudents=groupedByHall[hall];
-      const courseGroups={};
-      hallStudents.forEach(s=>{ const course=s["Subject Code"]||s["Course Code"]||""; const year=s["Year"]||""; const section=s["Section"]||""; const key=`${course}_${year}_${section}`; if(!courseGroups[key]) courseGroups[key]=[]; courseGroups[key].push(s); });
-      const hallStartY=y; let hallEndY=y;
+      const hallStudents=groupedByHall[hall];const courseGroups={};
+      hallStudents.forEach(s=>{const course=s["Subject Code"]||s["Course Code"]||"";const year=s["Year"]||"";const section=s["Section"]||"";const key=`${course}_${year}_${section}`;if(!courseGroups[key])courseGroups[key]=[];courseGroups[key].push(s);});
+      const hallStartY=y;let hallEndY=y;
       Object.keys(courseGroups).forEach(key=>{
-        const [courseCode,year,section]=key.split("_");
-        const list=courseGroups[key];
+        const[courseCode,year,section]=key.split("_");const list=courseGroups[key];
         const rollNos=list.map(s=>s["Student Roll No"]||s["Register No"]||"").filter(Boolean).sort();
         const rollText=rollNos.length===1?rollNos[0]:rollNos.length>1?`${rollNos[0]} - ${rollNos[rollNos.length-1]}`:"-";
         const rowH=20;
-        if(y+rowH>pageHeight-80){ addFooter(); doc.addPage(); addHeader(); y=225; }
-        doc.rect(110,y,tR-110,rowH);
-        for(const x of colX.slice(2,-1)) doc.line(x,y,x,y+rowH);
-        doc.setFont("times","normal"); doc.setFontSize(11);
-        doc.text(courseCode,ctrs[1],y+14,{align:"center"});
-        doc.text(`${year} ${u.department} ${section}`,ctrs[2],y+14,{align:"center"});
-        doc.text(rollText,ctrs[3],y+14,{align:"center"});
-        doc.text(String(rollNos.length),ctrs[4],y+14,{align:"center"});
-        y+=rowH; hallEndY=y;
+        if(y+rowH>pageHeight-80){addFooter();doc.addPage();addHeader();y=225;}
+        doc.rect(110,y,tR-110,rowH);for(const x of colX.slice(2,-1))doc.line(x,y,x,y+rowH);
+        doc.setFont("times","normal");doc.setFontSize(11);doc.text(courseCode,ctrs[1],y+14,{align:"center"});doc.text(`${year} ${u.department} ${section}`,ctrs[2],y+14,{align:"center"});doc.text(rollText,ctrs[3],y+14,{align:"center"});doc.text(String(rollNos.length),ctrs[4],y+14,{align:"center"});
+        y+=rowH;hallEndY=y;
       });
-      doc.rect(50,hallStartY,60,hallEndY-hallStartY);
-      doc.text(hall,80,(hallStartY+hallEndY)/2-3,{align:"center"});
-      doc.line(50,hallEndY,pageWidth-50,hallEndY);
+      doc.rect(50,hallStartY,60,hallEndY-hallStartY);doc.text(hall,80,(hallStartY+hallEndY)/2-3,{align:"center"});doc.line(50,hallEndY,pageWidth-50,hallEndY);
     }
     addFooter();
     doc.save(`Hall_Plan_Schedule_${u.department}_${selectedDate}_${selectedBatch}.pdf`);
-  } catch(err){ console.error(err); alert("Error generating hall plan schedule: "+(err.message||err)); }
+  }catch(err){console.error(err);alert("Error generating hall plan schedule: "+(err.message||err));}
 }
 </script>
 </body>
